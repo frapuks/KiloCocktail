@@ -77,6 +77,23 @@ describe('EcranModifierPresta', () => {
     expect(d.getByRole('button', { name: 'Annuler' })).toBeTruthy()
   })
 
+  it('nomme la variante sans alcool dans le dialogue de retrait', () => {
+    const p = { ...presta, lignes: [presta.lignes[0], { ...presta.lignes[2], masquee: false }] }
+    ecran(creerDepotsFactices({ cocktails: [mojito], types, prestas: [p], verres }))
+    fireEvent.click(within(ligne('Nojito')).getByRole('button', { name: 'Retirer' }))
+    const d = within(screen.getByRole('dialog', { name: 'Retirer Nojito (sans alcool) ?' }))
+    expect(d.getByRole('button', { name: 'Masquer du comptage (garder les 2 servis)' })).toBeTruthy()
+    expect(d.getByRole('button', { name: 'Supprimer avec ses 2 servis' })).toBeTruthy()
+  })
+
+  it('accorde le dialogue de retrait pour un seul verre servi', () => {
+    ecran(creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres: { p1: [v('1', 'L1')] } }))
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    const d = within(screen.getByRole('dialog', { name: 'Retirer Mojito ?' }))
+    expect(d.getByRole('button', { name: 'Masquer du comptage (garder le 1 servi)' })).toBeTruthy()
+    expect(d.getByRole('button', { name: 'Supprimer avec son 1 servi' })).toBeTruthy()
+  })
+
   it('masque une ligne comptée', () => {
     const depots = ecran()
     fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
@@ -107,7 +124,7 @@ describe('EcranModifierPresta', () => {
   it('réaffiche une ligne masquée à la fin de son groupe', () => {
     ecran()
     const masquees = within(screen.getByRole('region', { name: 'Masquées' }))
-    expect(masquees.getByText('Nojito')).toBeTruthy()
+    expect(masquees.getByText('Nojito · sans alcool')).toBeTruthy()
     expect(masquees.getByText('2')).toBeTruthy()
     fireEvent.click(masquees.getByRole('button', { name: 'Réafficher' }))
     expect(screen.queryByRole('region', { name: 'Masquées' })).toBeNull()

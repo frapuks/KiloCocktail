@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useDepots } from '../../data/DepotsContext'
 import { signalerErreurEcriture } from '../../data/erreurs'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
-import { nomLigne, nomPresta } from '../../domain/affichage'
+import { libelleServis, nomLigne, nomPresta } from '../../domain/affichage'
 import {
   deplacerDansGroupe,
   masquer,
@@ -30,7 +30,7 @@ interface Brouillon {
 }
 
 type Dialogue =
-  | { genre: 'retrait'; ligne: Ligne; nom: string; total: number }
+  | { genre: 'retrait'; ligne: Ligne; nom: string; sousTitre: string | null; total: number }
   | { genre: 'abandon' }
   | { genre: 'suppression' }
   | null
@@ -91,7 +91,8 @@ export function EcranModifierPresta() {
       return
     }
     const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
-    setDialogue({ genre: 'retrait', ligne, nom: cocktail ? nomLigne(ligne, cocktail).nom : '', total })
+    const { nom, sousTitre } = cocktail ? nomLigne(ligne, cocktail) : { nom: '', sousTitre: null }
+    setDialogue({ genre: 'retrait', ligne, nom, sousTitre, total })
   }
 
   async function enregistrer() {
@@ -132,21 +133,22 @@ export function EcranModifierPresta() {
     if (!dialogue) return null
     const fermer = () => setDialogue(null)
     if (dialogue.genre === 'retrait') {
-      const { ligne, nom, total } = dialogue
+      const { ligne, nom, sousTitre, total } = dialogue
+      const servis = `${total} ${libelleServis(total)}`
       return (
         <Confirmation
-          titre={`Retirer ${nom} ?`}
+          titre={`Retirer ${nom}${sousTitre ? ` (${sousTitre})` : ''} ?`}
           onFermer={fermer}
           actions={[
             {
-              libelle: `Masquer du comptage (garder les ${total} servis)`,
+              libelle: `Masquer du comptage (garder ${total >= 2 ? 'les' : 'le'} ${servis})`,
               onClick: () => {
                 maj({ lignes: masquer(brouillon!.lignes, ligne.id) })
                 fermer()
               },
             },
             {
-              libelle: `Supprimer avec ses ${total} servis`,
+              libelle: `Supprimer avec ${total >= 2 ? 'ses' : 'son'} ${servis}`,
               danger: true,
               onClick: () => {
                 maj({
@@ -221,12 +223,15 @@ export function EcranModifierPresta() {
           <ul style={{ margin: 0, padding: 0 }}>
             {masquees.map((ligne) => {
               const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
+              const noms = cocktail ? nomLigne(ligne, cocktail) : null
               return (
                 <li
                   key={ligne.id}
                   style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}
                 >
-                  <span style={{ flex: 1 }}>{cocktail ? nomLigne(ligne, cocktail).nom : ''}</span>
+                  <span style={{ flex: 1 }}>
+                    {noms ? (noms.sousTitre ? `${noms.nom} · ${noms.sousTitre}` : noms.nom) : ''}
+                  </span>
                   <span>{totaux.get(ligne.id) ?? 0}</span>
                   <button
                     type="button"
