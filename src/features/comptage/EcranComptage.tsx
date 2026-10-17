@@ -76,7 +76,7 @@ export function EcranComptage() {
       '--rangees-portrait': cartes.length,
     } as CSSProperties
     return (
-      <section className="bande" style={style}>
+      <section key={variante} className="bande" style={style}>
         <h2 className={`bande-titre bande-titre-${variante}`}>{titre}</h2>
         <div className="grille">{cartes}</div>
       </section>
