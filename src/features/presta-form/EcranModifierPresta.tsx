@@ -269,7 +269,7 @@ export function EcranModifierPresta() {
           type="button"
           onClick={() => void enregistrer()}
           disabled={enCours}
-          style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}
+          style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)', opacity: enCours ? 0.6 : 1 }}
         >
           Enregistrer
         </button>
