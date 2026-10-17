@@ -102,3 +102,12 @@ it('redirige une presta terminée vers ses résultats', () => {
   rendreEcran(presta({ statut: 'terminee' }))
   expect(screen.getByText('Lieu : /prestas/p1/resultats')).toBeInTheDocument()
 })
+
+it('ne retire qu’un verre sur deux taps rapides avec un seul verre', () => {
+  const depots = rendreEcran(presta(), [verre('v1', 'L1', 1)])
+  const moins = screen.getByRole('button', { name: 'Retirer un Mojito' })
+  fireEvent.pointerDown(moins)
+  fireEvent.pointerDown(moins)
+  expect(depots.verres.retirer).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('−1')).toBeInTheDocument()
+})

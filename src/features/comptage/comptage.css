@@ -89,9 +89,8 @@
 @keyframes flash-plus { from { opacity: 0.9; } to { opacity: 0; } }
 @keyframes flash-moins { from { opacity: 1; } to { opacity: 0; } }
 
+.carte-titre { grid-area: nom; position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .carte-nom {
-  grid-area: nom;
-  position: relative;
   font: 800 clamp(28px, 3.8vw, 48px) / 1 var(--police-titre);
   overflow-wrap: anywhere;
 }
@@ -105,6 +104,8 @@
   font-size: 15px;
 }
 .carte-servis > span:first-of-type { font: 800 24px var(--police-titre); }
+.carte-rebond { display: inline-block; animation: rebond 260ms ease-out; }
+@keyframes rebond { 40% { transform: scale(1.35); } }
 .carte-sous-titre { color: var(--texte-2); font-size: 13px; }
 .carte-verre { flex: none; }
 
@@ -113,6 +114,7 @@
   align-self: start;
   position: relative;
   min-width: 104px;
+  height: 66px;
   padding: 4px 12px;
   border-radius: 999px;
   background: var(--texte);
@@ -139,4 +141,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .carte-flash { animation: none !important; display: none; }
+  .carte-rebond { animation: none; }
 }

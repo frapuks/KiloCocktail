@@ -10,7 +10,7 @@ interface Props {
   total: number
   variante: Variante
   onPlus(): void
-  onMoins(): void
+  onMoins(): boolean
 }
 
 const estValidation = (e: KeyboardEvent) => e.key === 'Enter' || e.key === ' '
@@ -34,7 +34,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onMoins
     setImpulsion((i) => ({ signe: 1, n: (i?.n ?? 0) + 1 }))
   }
   const moins = () => {
-    onMoins()
+    if (total === 0 || !onMoins()) return
     taper(-1)
     setImpulsion((i) => ({ signe: -1, n: (i?.n ?? 0) + 1 }))
   }
@@ -62,11 +62,15 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onMoins
           aria-hidden="true"
         />
       )}
-      <span className="carte-nom">{nom}</span>
+      <span className="carte-titre">
+        <span className="carte-nom">{nom}</span>
+        {sousTitre && <span className="carte-sous-titre">{sousTitre}</span>}
+      </span>
       <span className="carte-servis">
         <IconeVerre />
-        <span>{`${total} ${libelleServis(total)}`}</span>
-        {sousTitre && <span className="carte-sous-titre">{sousTitre}</span>}
+        <span key={impulsion?.n ?? 0} className={impulsion ? 'carte-rebond' : undefined}>{total}</span>
+        {' '}
+        <span>{libelleServis(total)}</span>
       </span>
       <span
         className={`carte-cumul ${cumul?.signe === -1 ? 'carte-cumul-moins' : ''}`}

@@ -42,9 +42,10 @@ export function EcranComptage() {
 
   const retirer = (ligneId: string) => {
     const verre = dernierVerre(donneesVerres.verres, ligneId, enCours.current)
-    if (!verre) return
+    if (!verre) return false
     enCours.current.add(verre.id)
     depots.verres.retirer(id, verre.id)
+    return true
   }
 
   const terminer = () => {

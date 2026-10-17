@@ -9,7 +9,7 @@ type Props = Parameters<typeof CarteCocktail>[0]
 
 function rendreCarte(p: Partial<Props> = {}) {
   const onPlus = vi.fn()
-  const onMoins = vi.fn()
+  const onMoins = vi.fn(() => true)
   render(
     <CarteCocktail nom="Nojito" sousTitre={null} total={5} variante="avec" onPlus={onPlus} onMoins={onMoins} {...p} />,
   )
@@ -82,12 +82,32 @@ it('désactive le bouton − à 0', () => {
 
 it('affiche nom, sous-titre et total accordé', () => {
   const { unmount } = render(
-    <CarteCocktail nom="Nojito" sousTitre="sans alcool" total={1} variante="sans" onPlus={() => {}} onMoins={() => {}} />,
+    <CarteCocktail nom="Nojito" sousTitre="sans alcool" total={1} variante="sans" onPlus={() => {}} onMoins={() => true} />,
   )
   expect(screen.getByText('Nojito')).toBeInTheDocument()
   expect(screen.getByText('sans alcool')).toBeInTheDocument()
-  expect(screen.getByText('1 servi')).toBeInTheDocument()
+  const servis = () => document.querySelector('.carte-servis') as HTMLElement
+  expect(servis()).toHaveTextContent('1 servi')
+  const ordre = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
+  expect(ordre(screen.getByText('Nojito'), screen.getByText('sans alcool'))).toBeTruthy()
+  expect(ordre(screen.getByText('sans alcool'), servis())).toBeTruthy()
   unmount()
-  render(<CarteCocktail nom="Mojito" sousTitre={null} total={14} variante="avec" onPlus={() => {}} onMoins={() => {}} />)
-  expect(screen.getByText('14 servis')).toBeInTheDocument()
+  render(<CarteCocktail nom="Mojito" sousTitre={null} total={14} variante="avec" onPlus={() => {}} onMoins={() => true} />)
+  expect(document.querySelector('.carte-servis')).toHaveTextContent('14 servis')
+})
+
+it('un tap sur le − désactivé (total 0) n’affiche rien et ne déclenche rien', () => {
+  const { moins, onMoins, onPlus } = rendreCarte({ total: 0 })
+  fireEvent.pointerDown(moins)
+  expect(onMoins).not.toHaveBeenCalled()
+  expect(onPlus).not.toHaveBeenCalled()
+  expect(screen.queryByText('−1')).not.toBeInTheDocument()
+})
+
+it('n’affiche −N que pour les retraits acceptés', () => {
+  const { moins, onMoins } = rendreCarte()
+  onMoins.mockReturnValueOnce(true).mockReturnValue(false)
+  fireEvent.pointerDown(moins)
+  fireEvent.pointerDown(moins)
+  expect(screen.getByText('−1')).toBeInTheDocument()
 })
