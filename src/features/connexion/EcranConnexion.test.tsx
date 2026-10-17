@@ -7,13 +7,6 @@ import { creerDepotsFactices } from '../../test/depotsFactices'
 import { rendre } from '../../test/rendre'
 import { EcranConnexion } from './EcranConnexion'
 
-vi.mock('../../data/auth', () => ({
-  ecouterUtilisateur: vi.fn(),
-  seConnecter: vi.fn(),
-  envoyerReinitialisation: vi.fn(),
-  seDeconnecter: vi.fn(),
-}))
-
 beforeEach(() => vi.resetAllMocks())
 afterEach(() => vi.restoreAllMocks())
 

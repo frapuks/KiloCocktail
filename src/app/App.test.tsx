@@ -1,14 +1,7 @@
 import { screen } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { creerDepotsFactices } from '../test/depotsFactices'
-import { rendreApp } from '../test/rendre'
-
-vi.mock('../data/auth', () => ({
-  ecouterUtilisateur: vi.fn(),
-  seConnecter: vi.fn(),
-  envoyerReinitialisation: vi.fn(),
-  seDeconnecter: vi.fn(),
-}))
+import { rendreApp } from '../test/rendreApp'
 
 const utilisateur = { uid: 'u1', email: 'a@b.fr' }
 
