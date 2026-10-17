@@ -5,7 +5,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
+  type ScreenReaderInstructions,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -21,6 +23,19 @@ interface Props<T extends { id: string }> {
   rendre(e: T): ReactNode
   onDeplacer(de: number, vers: number): void
   libelle: string
+}
+
+// Textes d'accessibilité de dnd-kit, en anglais par défaut.
+const consignes: ScreenReaderInstructions = {
+  draggable:
+    'Pour déplacer un élément, appuie sur Espace ou Entrée, utilise les flèches pour le déplacer, puis appuie de nouveau sur Espace ou Entrée pour le déposer, ou sur Échap pour annuler.',
+}
+
+const annonces: Announcements = {
+  onDragStart: () => 'Élément saisi.',
+  onDragOver: ({ active, over }) => (over && over.id !== active.id ? 'Élément déplacé.' : undefined),
+  onDragEnd: () => 'Élément déposé.',
+  onDragCancel: () => 'Déplacement annulé.',
 }
 
 function Element({ id, children }: { id: string; children: ReactNode }) {
@@ -77,7 +92,12 @@ export function ListeReordonnable<T extends { id: string }>({ elements, rendre, 
   }
 
   return (
-    <DndContext sensors={capteurs} collisionDetection={closestCenter} onDragEnd={fin}>
+    <DndContext
+      sensors={capteurs}
+      collisionDetection={closestCenter}
+      onDragEnd={fin}
+      accessibility={{ screenReaderInstructions: consignes, announcements: annonces }}
+    >
       <SortableContext items={elements.map((e) => e.id)} strategy={verticalListSortingStrategy}>
         <ul aria-label={libelle} style={{ margin: 0, padding: 0 }}>
           {elements.map((e) => (
