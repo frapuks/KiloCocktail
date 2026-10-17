@@ -10,3 +10,9 @@ export function trouverDoublon<T extends { id: string; nomNormalise: string; arc
   const cible = normaliserNom(nom);
   return elements.find((e) => e.id !== idExclu && e.nomNormalise === cible) ?? null;
 }
+
+export function messageDoublon(article: 'Un cocktail' | 'Un type', doublon: { nom: string; archive: boolean }): string {
+  return doublon.archive
+    ? `${article} “${doublon.nom}” existe déjà dans les archivés. Désarchive-le plutôt.`
+    : `${article} “${doublon.nom}” existe déjà`;
+}

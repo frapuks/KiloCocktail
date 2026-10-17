@@ -1,8 +1,9 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { ecouterUtilisateur, seDeconnecter } from '../../data/auth'
 import { useDepots } from '../../data/DepotsContext'
 import { useTypes } from '../../data/hooks'
-import { trouverDoublon } from '../../domain/noms'
+import { bouton, champ, FeuilleModale } from '../../ui/FeuilleModale'
+import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import type { TypeEvenement } from '../../domain/types'
 
 interface PropsFicheType {
@@ -11,26 +12,6 @@ interface PropsFicheType {
   onEnregistrer(nom: string): void
   onAnnuler(): void
   onArchiver?(): void
-}
-
-const champ: CSSProperties = {
-  minHeight: 44,
-  padding: '0 12px',
-  borderRadius: 8,
-  border: '1px solid var(--filet)',
-  background: 'transparent',
-  color: 'var(--texte)',
-  font: 'inherit',
-}
-const bouton: CSSProperties = {
-  minHeight: 44,
-  padding: '0 16px',
-  borderRadius: 8,
-  border: '1px solid var(--filet)',
-  background: 'transparent',
-  color: 'var(--texte)',
-  font: 'inherit',
-  fontWeight: 600,
 }
 
 export function FicheType({ type, types, onEnregistrer, onAnnuler, onArchiver }: PropsFicheType) {
@@ -45,81 +26,44 @@ export function FicheType({ type, types, onEnregistrer, onAnnuler, onArchiver }:
     }
     const doublon = trouverDoublon(types, nomPropre, type?.id)
     if (doublon) {
-      setErreur(
-        doublon.archive
-          ? `Un type “${doublon.nom}” existe déjà dans les archivés. Désarchive-le plutôt.`
-          : `Un type “${doublon.nom}” existe déjà`,
-      )
+      setErreur(messageDoublon('Un type', doublon))
       return
     }
     onEnregistrer(nomPropre)
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        zIndex: 20,
-      }}
-    >
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-label={type ? 'Modifier le type' : 'Nouveau type'}
-        onSubmit={(e) => {
-          e.preventDefault()
-          enregistrer()
-        }}
-        style={{
-          background: 'var(--fond)',
-          borderTop: '1px solid var(--filet)',
-          borderRadius: '12px 12px 0 0',
-          padding: 20,
-          width: '100%',
-          maxWidth: 520,
-          maxHeight: '100%',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}
-      >
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          Nom
-          <input
-            value={nom}
-            onChange={(e) => {
-              setNom(e.target.value)
-              setErreur(null)
-            }}
-            style={champ}
-          />
-        </label>
-        {erreur && (
-          <p role="alert" style={{ margin: 0, color: 'var(--moins)' }}>
-            {erreur}
-          </p>
+    <FeuilleModale libelle={type ? 'Modifier le type' : 'Nouveau type'} onSubmit={enregistrer}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        Nom
+        <input
+          value={nom}
+          onChange={(e) => {
+            setNom(e.target.value)
+            setErreur(null)
+          }}
+          style={champ}
+        />
+      </label>
+      {erreur && (
+        <p role="alert" style={{ margin: 0, color: 'var(--moins)' }}>
+          {erreur}
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button type="submit" style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}>
+          Enregistrer
+        </button>
+        <button type="button" onClick={onAnnuler} style={bouton}>
+          Annuler
+        </button>
+        {type && onArchiver && (
+          <button type="button" onClick={onArchiver} style={{ ...bouton, marginLeft: 'auto' }}>
+            Archiver
+          </button>
         )}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="submit" style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}>
-            Enregistrer
-          </button>
-          <button type="button" onClick={onAnnuler} style={bouton}>
-            Annuler
-          </button>
-          {type && onArchiver && (
-            <button type="button" onClick={onArchiver} style={{ ...bouton, marginLeft: 'auto' }}>
-              Archiver
-            </button>
-          )}
-        </div>
-      </form>
-    </div>
+      </div>
+    </FeuilleModale>
   )
 }
 
