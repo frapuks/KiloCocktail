@@ -32,7 +32,7 @@ export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail,
               <input
                 type="checkbox"
                 checked={lignes.some((l) => l.cocktailId === cocktail.id)}
-                onChange={() => onChange(basculerCocktail(lignes, cocktail, genId))}
+                onChange={() => onChange(basculerCocktail(lignes, cocktail, genId, variantes))}
               />
               {cocktail.nom}
             </label>

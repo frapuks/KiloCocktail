@@ -27,6 +27,12 @@ describe('lignes', () => {
     ]);
   });
 
+  it('n’ajoute que les variantes demandées quand on coche un cocktail', () => {
+    expect(basculerCocktail([], mojito, seq(), ['avec'])).toEqual([
+      { id: 'id0', cocktailId: 'm', variante: 'avec', masquee: false },
+    ]);
+  });
+
   it('décoche un cocktail en retirant toutes ses lignes', () => {
     const t = basculerCocktail([], mojito, seq());
     expect(basculerCocktail(t, mojito, seq())).toEqual([]);

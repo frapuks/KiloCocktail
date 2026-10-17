@@ -17,11 +17,16 @@ export function groupes(
   };
 }
 
-export function basculerCocktail(lignes: Ligne[], c: Cocktail, genId: () => string): Ligne[] {
+export function basculerCocktail(
+  lignes: Ligne[],
+  c: Cocktail,
+  genId: () => string,
+  variantes: Variante[] = variantesDisponibles(c),
+): Ligne[] {
   if (lignes.some((l) => l.cocktailId === c.id)) {
     return lignes.filter((l) => l.cocktailId !== c.id);
   }
-  const ajouts = variantesDisponibles(c).map<Ligne>((variante) => ({
+  const ajouts = variantes.map<Ligne>((variante) => ({
     id: genId(),
     cocktailId: c.id,
     variante,

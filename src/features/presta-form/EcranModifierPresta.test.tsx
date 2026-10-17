@@ -142,6 +142,28 @@ describe('EcranModifierPresta', () => {
     )
   })
 
+  it('n’ajoute pas une variante déjà présente quand le cocktail est partiellement présent', () => {
+    const depots = ecran()
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    clic('Supprimer avec ses 3 servis')
+    clic('+ Ajouter')
+    const feuille = within(screen.getByRole('dialog', { name: 'Ajouter des cocktails' }))
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
+    fireEvent.click(feuille.getByRole('button', { name: 'Ajouter' }))
+    clic('Enregistrer')
+    expect(depots.prestas.modifier).toHaveBeenCalledWith(
+      'p1',
+      expect.objectContaining({
+        lignes: [
+          presta.lignes[1],
+          presta.lignes[2],
+          { id: expect.any(String), cocktailId: 'm', variante: 'avec', masquee: false },
+        ],
+      }),
+      ['L1'],
+    )
+  })
+
   it('affiche une ligne dont le cocktail est archivé', () => {
     ecran()
     expect(carte().getByText('Spritz')).toBeTruthy()
