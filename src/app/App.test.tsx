@@ -18,9 +18,10 @@ it('affiche la barre d’onglets sur l’accueil', () => {
 })
 
 it('masque la barre d’onglets sur le comptage', () => {
-  rendreApp({ depots: creerDepotsFactices(), utilisateur, route: '/prestas/p1' })
-  expect(screen.getByRole('heading', { name: 'Comptage' })).toBeInTheDocument()
-  expect(screen.queryByRole('link', { name: 'Prestas' })).not.toBeInTheDocument()
+  const presta = { id: 'p1', date: '2026-10-17', client: 'Julie', typeId: null, statut: 'en-cours' as const, lignes: [] }
+  rendreApp({ depots: creerDepotsFactices({ prestas: [presta] }), utilisateur, route: '/prestas/p1' })
+  expect(screen.getByRole('heading', { name: 'Julie' })).toBeInTheDocument()
+  expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
 })
 
 it('initialise les types après connexion', () => {

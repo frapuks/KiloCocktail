@@ -1,0 +1,142 @@
+.comptage {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 12px;
+  gap: 12px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.comptage-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.comptage-retour {
+  color: var(--texte);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.comptage-titres { flex: 1 1 200px; min-width: 0; }
+.comptage-titres h1 { margin: 0; font: 800 28px/1 var(--police-titre); }
+.comptage-titres p { margin: 2px 0 0; color: var(--texte-2); font-size: 14px; }
+.comptage-actions { display: flex; gap: 8px; }
+.comptage-actions button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--filet);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--texte);
+  font: 600 15px var(--police-texte);
+}
+.comptage-vide { color: var(--texte-2); text-align: center; margin-top: 48px; }
+
+.bandes { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.bande { flex: var(--rangees-paysage) 1 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.bande-titre {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 13px var(--police-texte);
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: var(--texte-2);
+}
+.bande-titre::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--avec); }
+.bande-titre-sans::before { background: var(--sans); }
+
+.grille {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(120px, 1fr);
+  gap: 12px;
+}
+@media (orientation: portrait) {
+  .bande { flex-grow: var(--rangees-portrait); }
+  .grille { grid-template-columns: minmax(0, 1fr); }
+}
+
+.carte {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "nom plus" "servis plus" ". moins";
+  gap: 4px 12px;
+  padding: 14px;
+  border-radius: 16px;
+  color: var(--texte);
+  cursor: pointer;
+}
+.carte-avec { background: var(--avec); --creux: var(--avec-creux); --flash: var(--avec-flash); }
+.carte-sans { background: var(--sans); --creux: var(--sans-creux); --flash: var(--sans-flash); }
+
+.carte-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.carte-flash-plus { background: var(--flash); animation: flash-plus 340ms ease-out; }
+.carte-flash-moins { background: var(--creux); animation: flash-moins 400ms ease-out; }
+@keyframes flash-plus { from { opacity: 0.9; } to { opacity: 0; } }
+@keyframes flash-moins { from { opacity: 1; } to { opacity: 0; } }
+
+.carte-nom {
+  grid-area: nom;
+  position: relative;
+  font: 800 clamp(28px, 3.8vw, 48px) / 1 var(--police-titre);
+  overflow-wrap: anywhere;
+}
+.carte-servis {
+  grid-area: servis;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 15px;
+}
+.carte-servis > span:first-of-type { font: 800 24px var(--police-titre); }
+.carte-sous-titre { color: var(--texte-2); font-size: 13px; }
+.carte-verre { flex: none; }
+
+.carte-cumul {
+  grid-area: plus;
+  align-self: start;
+  position: relative;
+  min-width: 104px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--texte);
+  color: var(--creux);
+  text-align: center;
+  font: 800 52px / 1.1 var(--police-titre);
+}
+.carte-cumul-moins { background: var(--moins); }
+
+.carte-moins {
+  grid-area: moins;
+  justify-self: end;
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--filet);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--texte);
+  font: 600 22px / 1 var(--police-texte);
+  padding: 0;
+}
+.carte-moins:disabled { opacity: 0.35; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carte-flash { animation: none !important; display: none; }
+}
