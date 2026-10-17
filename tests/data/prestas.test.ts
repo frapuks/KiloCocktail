@@ -57,6 +57,17 @@ describe('dépôt des prestas', () => {
     expect(restants.map((v) => v.ligneId)).toEqual(['L2']);
   });
 
+  it('purge plus de 500 verres via plusieurs lots', async () => {
+    const id = prestas.creer(donnees);
+    for (let i = 0; i < 501; i++) verres.servir(id, 'L1');
+    await attendre(db);
+    await prestas.modifier(id, { ...donnees, lignes: [L2] }, ['L1']);
+    await attendre(db);
+    const p = await prochaineValeur((cb) => prestas.ecouter(id, cb));
+    expect(p!.lignes.map((l) => l.id)).toEqual(['L2']);
+    expect(await prestas.compterServis(id)).toBe(0);
+  }, 30000);
+
   it('change le statut', async () => {
     const id = prestas.creer(donnees);
     prestas.changerStatut(id, 'terminee');

@@ -54,8 +54,8 @@ export function depotPrestas(db: Firestore, uid: string): DepotPrestas {
         snap.docs.forEach((v) => aSupprimer.push(v.ref));
       }
       // La mise à jour de la presta part dans le premier lot, avec les premières suppressions.
-      const lots = decouper(aSupprimer, TAILLE_LOT);
-      if (lots.length === 0) lots.push([]);
+      // Le premier lot porte la mise à jour : 499 suppressions au plus, pour rester à 500 opérations.
+      const lots = [aSupprimer.slice(0, TAILLE_LOT - 1), ...decouper(aSupprimer.slice(TAILLE_LOT - 1), TAILLE_LOT)];
       lots.forEach((refs, i) => {
         const lot = writeBatch(db);
         if (i === 0) lot.update(doc(col, id), champs(d));

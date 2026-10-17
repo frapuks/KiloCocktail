@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { doc, setDoc, type Firestore } from 'firebase/firestore';
+import { disableNetwork, doc, enableNetwork, setDoc, type Firestore } from 'firebase/firestore';
 import { creerDepots } from '../../src/data/firestore';
 import { colVerres } from '../../src/data/firestore/chemins';
 import type { DepotVerres } from '../../src/data/depots';
@@ -61,5 +61,21 @@ describe('dépôt des verres', () => {
     expect(verres[0].enAttente).toBe(true);
     expect(etat).toEqual({ ecrituresEnAttente: true, verresEnAttente: 1 });
     await attendre(db);
+  });
+
+  it('signale une suppression hors connexion', async () => {
+    depot.servir(P, 'L1');
+    await attendre(db);
+    const avant = await prochaineValeur(ecouterTout, (v) => v.verres.length === 1 && !v.etat.ecrituresEnAttente);
+    await disableNetwork(db);
+    const suite = prochaineValeur(ecouterTout, (v) => v.verres.length === 0);
+    depot.retirer(P, avant.verres[0].id);
+    expect((await suite).etat).toEqual({ ecrituresEnAttente: true, verresEnAttente: 0 });
+    const fin = prochaineValeur(ecouterTout, (v) => !v.etat.ecrituresEnAttente);
+    await enableNetwork(db);
+    await attendre(db);
+    const { verres, etat } = await fin;
+    expect(verres).toHaveLength(0);
+    expect(etat.ecrituresEnAttente).toBe(false);
   });
 });
