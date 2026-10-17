@@ -40,7 +40,15 @@ export function EcranNouvellePresta() {
       <h1 style={{ fontFamily: 'var(--police-titre)', margin: 0 }}>Nouvelle presta</h1>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         Date
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={champ} />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => {
+            // Date effacée : on garde la précédente (jamais de presta sans date).
+            if (e.target.value) setDate(e.target.value)
+          }}
+          style={champ}
+        />
       </label>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         Client

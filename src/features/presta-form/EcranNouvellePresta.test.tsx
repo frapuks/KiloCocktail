@@ -32,6 +32,15 @@ describe('EcranNouvellePresta', () => {
     expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe(dateDuJour())
   })
 
+  it('ignore une date vidée', () => {
+    const depots = ecran()
+    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-12-31' } })
+    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '' } })
+    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-12-31')
+    fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
+    expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-12-31' }))
+  })
+
   it('n’affiche pas les cocktails archivés', () => {
     ecran()
     expect(screen.queryByText('Vieux')).toBeNull()

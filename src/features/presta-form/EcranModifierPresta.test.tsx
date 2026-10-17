@@ -44,6 +44,23 @@ function ecran(depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule],
   return depots
 }
 
+// Écran ouvert directement (lien, rechargement) : aucune page précédente dans l'historique.
+function ecranSansHistorique(p: Presta) {
+  const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [p], verres })
+  render(
+    <MemoryRouter initialEntries={['/prestas/p1/modifier']}>
+      <DepotsProvider depots={depots}>
+        <Routes>
+          <Route path="/prestas/:id" element={<p>COMPTAGE</p>} />
+          <Route path="/prestas/:id/resultats" element={<p>RÉSULTATS</p>} />
+          <Route path="/prestas/:id/modifier" element={<EcranModifierPresta />} />
+        </Routes>
+      </DepotsProvider>
+    </MemoryRouter>,
+  )
+  return depots
+}
+
 const carte = () => within(screen.getByRole('region', { name: 'Sur la carte' }))
 const ligne = (nom: string) => carte().getByText(nom).closest('li') as HTMLElement
 const clic = (nom: string | RegExp) => fireEvent.click(screen.getByRole('button', { name: nom }))
@@ -291,6 +308,27 @@ describe('EcranModifierPresta', () => {
     expect(screen.queryByText('ACCUEIL')).toBeNull()
     expect(screen.getByRole('button', { name: 'Supprimer' })).toBeEnabled()
     desabonner()
+  })
+
+  it('ignore une date vidée', async () => {
+    const depots = ecran()
+    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '' } })
+    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-10-17')
+    clic('Enregistrer')
+    expect(depots.prestas.modifier).toHaveBeenCalledWith('p1', expect.objectContaining({ date: '2026-10-17' }), [])
+    await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
+  })
+
+  it('sans page précédente, revient au comptage d’une presta en cours', async () => {
+    ecranSansHistorique(presta)
+    clic('Annuler')
+    await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
+  })
+
+  it('sans page précédente, revient aux résultats d’une presta terminée', async () => {
+    ecranSansHistorique({ ...presta, statut: 'terminee' })
+    clic('Enregistrer')
+    await waitFor(() => expect(screen.getByText('RÉSULTATS')).toBeTruthy())
   })
 
   it('retourne à l’accueil si la presta n’existe pas', async () => {

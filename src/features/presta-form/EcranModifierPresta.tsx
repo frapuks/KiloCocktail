@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDepots } from '../../data/DepotsContext'
 import { signalerErreurEcriture } from '../../data/erreurs'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
@@ -43,6 +43,7 @@ export function EcranModifierPresta() {
   const { id = '' } = useParams()
   const depots = useDepots()
   const navigate = useNavigate()
+  const location = useLocation()
   const presta = usePresta(id)
   const cocktailsHook = useCocktails()
   const typesHook = useTypes()
@@ -109,12 +110,18 @@ export function EcranModifierPresta() {
       signalerErreurEcriture(raison)
       return
     }
-    navigate(-1)
+    retour()
+  }
+
+  // Retour à la page précédente ; ouvert sans historique (lien, rechargement), vers la presta elle-même.
+  function retour() {
+    if (location.key !== 'default') navigate(-1)
+    else navigate(presta!.statut === 'en-cours' ? `/prestas/${id}` : `/prestas/${id}/resultats`, { replace: true })
   }
 
   function annuler() {
     if (modifie) setDialogue({ genre: 'abandon' })
-    else navigate(-1)
+    else retour()
   }
 
   async function supprimer() {
@@ -169,7 +176,7 @@ export function EcranModifierPresta() {
           titre="Abandonner les modifications ?"
           onFermer={fermer}
           actions={[
-            { libelle: 'Abandonner', danger: true, onClick: () => navigate(-1) },
+            { libelle: 'Abandonner', danger: true, onClick: retour },
             { libelle: 'Continuer à modifier', onClick: fermer },
           ]}
         />
@@ -192,7 +199,15 @@ export function EcranModifierPresta() {
       <h1 style={{ fontFamily: 'var(--police-titre)', margin: 0 }}>Modifier la presta</h1>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         Date
-        <input type="date" value={brouillon.date} onChange={(e) => maj({ date: e.target.value })} style={champ} />
+        <input
+          type="date"
+          value={brouillon.date}
+          onChange={(e) => {
+            // Date effacée : on garde la précédente (jamais de presta sans date).
+            if (e.target.value) maj({ date: e.target.value })
+          }}
+          style={champ}
+        />
       </label>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         Client
