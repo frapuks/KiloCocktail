@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 interface Props {
   titre: string
   message?: string
-  actions: { libelle: string; onClick(): void; danger?: boolean }[]
+  actions: { libelle: string; onClick(): void; danger?: boolean; desactive?: boolean }[]
   onFermer(): void
 }
 
@@ -54,6 +54,7 @@ export function Confirmation({ titre, message, actions, onFermer }: Props) {
             key={a.libelle}
             ref={i === 0 ? premiere : undefined}
             type="button"
+            disabled={a.desactive}
             onClick={a.onClick}
             style={{
               minHeight: 44,
@@ -63,6 +64,7 @@ export function Confirmation({ titre, message, actions, onFermer }: Props) {
               color: a.danger ? '#323232' : 'var(--texte)',
               font: 'inherit',
               fontWeight: 600,
+              opacity: a.desactive ? 0.6 : 1,
             }}
           >
             {a.libelle}

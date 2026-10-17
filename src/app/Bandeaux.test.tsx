@@ -23,12 +23,14 @@ afterEach(() => {
 })
 
 it('affiche le bandeau d’erreur d’écriture', async () => {
+  const journal = vi.spyOn(console, 'error').mockImplementation(() => {})
   render(<Bandeaux />)
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   await act(async () => {
     suivreEcriture(Promise.reject(new Error('refusé')))
   })
   expect(screen.getByText("Une modification n'a pas pu être sauvegardée")).toBeInTheDocument()
+  journal.mockRestore()
 })
 
 it('propose de recharger quand une nouvelle version est prête', async () => {

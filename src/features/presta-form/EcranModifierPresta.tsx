@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDepots } from '../../data/DepotsContext'
+import { signalerErreurEcriture } from '../../data/erreurs'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
 import { nomLigne, nomPresta } from '../../domain/affichage'
 import {
@@ -52,6 +53,8 @@ export function EcranModifierPresta() {
   const [brouillon, setBrouillon] = useState<Brouillon | null>(null)
   const [dialogue, setDialogue] = useState<Dialogue>(null)
   const [ajout, setAjout] = useState<Ligne[] | null>(null)
+  // Enregistrement ou suppression lancé : évite un second appel (et un double retour) sur un double tap.
+  const [enCours, setEnCours] = useState(false)
 
   useEffect(() => {
     if (presta === null) navigate('/', { replace: true })
@@ -93,13 +96,16 @@ export function EcranModifierPresta() {
 
   async function enregistrer() {
     const b = brouillon!
+    setEnCours(true)
     try {
       await depots.prestas.modifier(
         id,
         { date: b.date, client: b.client.trim() || null, typeId: b.typeId, lignes: b.lignes },
         b.lignesAPurger,
       )
-    } catch {
+    } catch (raison) {
+      setEnCours(false)
+      signalerErreurEcriture(raison)
       return
     }
     navigate(-1)
@@ -111,7 +117,14 @@ export function EcranModifierPresta() {
   }
 
   async function supprimer() {
-    await depots.prestas.supprimer(id)
+    setEnCours(true)
+    try {
+      await depots.prestas.supprimer(id)
+    } catch (raison) {
+      setEnCours(false)
+      signalerErreurEcriture(raison)
+      return
+    }
     navigate('/', { replace: true })
   }
 
@@ -165,7 +178,7 @@ export function EcranModifierPresta() {
         titre={`Supprimer “${nomPresta(presta!)}” et ses ${totalPresta(verres)} cocktails servis ?`}
         onFermer={fermer}
         actions={[
-          { libelle: 'Supprimer', danger: true, onClick: () => void supprimer() },
+          { libelle: 'Supprimer', danger: true, desactive: enCours, onClick: () => void supprimer() },
           { libelle: 'Annuler', onClick: fermer },
         ]}
       />
@@ -235,6 +248,7 @@ export function EcranModifierPresta() {
         <button
           type="button"
           onClick={() => void enregistrer()}
+          disabled={enCours}
           style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}
         >
           Enregistrer

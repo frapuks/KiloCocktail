@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DepotsProvider } from '../../data/DepotsContext'
+import { surErreurEcriture } from '../../data/erreurs'
 import type { Cocktail, Presta, Verre } from '../../domain/types'
 import { creerDepotsFactices } from '../../test/depotsFactices'
 import { EcranModifierPresta } from './EcranModifierPresta'
@@ -48,6 +49,10 @@ const ligne = (nom: string) => carte().getByText(nom).closest('li') as HTMLEleme
 const clic = (nom: string | RegExp) => fireEvent.click(screen.getByRole('button', { name: nom }))
 
 describe('EcranModifierPresta', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('préremplit date, client et type', () => {
     ecran()
     expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-10-17')
@@ -216,6 +221,59 @@ describe('EcranModifierPresta', () => {
     clic('Supprimer')
     expect(depots.prestas.supprimer).toHaveBeenCalledWith('p1')
     await waitFor(() => expect(screen.getByText('ACCUEIL')).toBeTruthy())
+  })
+
+  it('n’enregistre qu’une fois sur un double tap', async () => {
+    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    let terminer = () => {}
+    vi.mocked(depots.prestas.modifier).mockReturnValue(new Promise<void>((r) => (terminer = r)))
+    ecran(depots)
+    clic('Enregistrer')
+    clic('Enregistrer')
+    expect(depots.prestas.modifier).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
+    terminer()
+    await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
+  })
+
+  it('signale un échec d’enregistrement et reste sur l’écran', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const abonne = vi.fn()
+    const desabonner = surErreurEcriture(abonne)
+    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    vi.mocked(depots.prestas.modifier).mockRejectedValue(new Error('hors cache'))
+    ecran(depots)
+    clic('Enregistrer')
+    await waitFor(() => expect(abonne).toHaveBeenCalledTimes(1))
+    expect(screen.queryByText('COMPTAGE')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeEnabled()
+    desabonner()
+  })
+
+  it('ne supprime qu’une fois sur un double tap', () => {
+    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    vi.mocked(depots.prestas.supprimer).mockReturnValue(new Promise<void>(() => {}))
+    ecran(depots)
+    clic('Supprimer la presta')
+    clic('Supprimer')
+    clic('Supprimer')
+    expect(depots.prestas.supprimer).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Supprimer' })).toBeDisabled()
+  })
+
+  it('signale un échec de suppression sans rejet non géré', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const abonne = vi.fn()
+    const desabonner = surErreurEcriture(abonne)
+    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    vi.mocked(depots.prestas.supprimer).mockRejectedValue(new Error('hors cache'))
+    ecran(depots)
+    clic('Supprimer la presta')
+    clic('Supprimer')
+    await waitFor(() => expect(abonne).toHaveBeenCalledTimes(1))
+    expect(screen.queryByText('ACCUEIL')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Supprimer' })).toBeEnabled()
+    desabonner()
   })
 
   it('retourne à l’accueil si la presta n’existe pas', async () => {

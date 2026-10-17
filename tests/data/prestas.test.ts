@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
 import { creerDepots } from '../../src/data/firestore';
-import type { DepotPrestas, DepotVerres, DonneesPresta } from '../../src/data/depots';
+import type { DepotPrestas, DepotVerres, Desabonner, DonneesPresta } from '../../src/data/depots';
 import type { Ligne } from '../../src/domain/types';
 import { attendre, preparerEmulateur, prochaineValeur, viderFirestore } from './support';
 
@@ -22,6 +22,18 @@ const L1: Ligne = { id: 'L1', cocktailId: 'c1', variante: 'avec', masquee: false
 const L2: Ligne = { id: 'L2', cocktailId: 'c2', variante: 'sans', masquee: false };
 const L3: Ligne = { id: 'L3', cocktailId: 'c3', variante: 'avec', masquee: true };
 const donnees: DonneesPresta = { date: '2026-10-17', client: 'Dupont', typeId: 'anniversaire', lignes: [L2, L1, L3] };
+
+// modifier et supprimer lisent les verres dans le cache local : comme l'écran Modifier, on les écoute d'abord.
+function ecouterVerres(id: string, nombre: number): Promise<Desabonner> {
+  return new Promise((resolve) => {
+    let pret = false;
+    const arreter = verres.ecouter(id, (v, etat) => {
+      if (pret || v.length !== nombre || etat.ecrituresEnAttente) return;
+      pret = true;
+      resolve(arreter);
+    });
+  });
+}
 
 
 describe('dépôt des prestas', () => {
@@ -45,8 +57,10 @@ describe('dépôt des prestas', () => {
     verres.servir(id, 'L1');
     verres.servir(id, 'L2');
     await attendre(db);
+    const arreter = await ecouterVerres(id, 3);
     await prestas.modifier(id, { ...donnees, client: 'Martin', lignes: [L2] }, ['L1']);
     await attendre(db);
+    arreter();
     const p = await prochaineValeur((cb) => prestas.ecouter(id, cb));
     expect(p!.client).toBe('Martin');
     expect(p!.lignes.map((l) => l.id)).toEqual(['L2']);
@@ -61,8 +75,10 @@ describe('dépôt des prestas', () => {
     const id = prestas.creer(donnees);
     for (let i = 0; i < 501; i++) verres.servir(id, 'L1');
     await attendre(db);
+    const arreter = await ecouterVerres(id, 501);
     await prestas.modifier(id, { ...donnees, lignes: [L2] }, ['L1']);
     await attendre(db);
+    arreter();
     const p = await prochaineValeur((cb) => prestas.ecouter(id, cb));
     expect(p!.lignes.map((l) => l.id)).toEqual(['L2']);
     expect(await prestas.compterServis(id)).toBe(0);
@@ -80,8 +96,10 @@ describe('dépôt des prestas', () => {
     verres.servir(id, 'L1');
     verres.servir(id, 'L2');
     await attendre(db);
+    const arreter = await ecouterVerres(id, 2);
     await prestas.supprimer(id);
     await attendre(db);
+    arreter();
     expect(await prochaineValeur((cb) => prestas.ecouter(id, cb))).toBeNull();
     expect(await prochaineValeur<unknown[]>((cb) => verres.ecouter(id, (v) => cb(v)))).toHaveLength(0);
     expect(await prestas.compterServis(id)).toBe(0);

@@ -1,7 +1,7 @@
 import {
   doc,
   getCountFromServer,
-  getDocs,
+  getDocsFromCache,
   onSnapshot,
   query,
   setDoc,
@@ -47,10 +47,12 @@ export function depotPrestas(db: Firestore, uid: string): DepotPrestas {
       suivreEcriture(setDoc(ref, { ...champs(d), statut: 'en-cours' }));
       return ref.id;
     },
+    // Lecture des verres depuis le cache local : l'écran Modifier les écoute déjà, et le cache répond
+    // tout de suite, même sur un réseau faible (getDocs attendrait le serveur).
     async modifier(id, d, lignesAPurger) {
       const aSupprimer: DocumentReference[] = [];
       for (const ids of decouper(lignesAPurger, TAILLE_IN)) {
-        const snap = await getDocs(query(colVerres(db, uid, id), where('ligneId', 'in', ids)));
+        const snap = await getDocsFromCache(query(colVerres(db, uid, id), where('ligneId', 'in', ids)));
         snap.docs.forEach((v) => aSupprimer.push(v.ref));
       }
       // La mise à jour de la presta part dans le premier lot, avec les premières suppressions.
@@ -67,7 +69,7 @@ export function depotPrestas(db: Firestore, uid: string): DepotPrestas {
       suivreEcriture(updateDoc(doc(col, id), { statut }));
     },
     async supprimer(id) {
-      const snap = await getDocs(colVerres(db, uid, id));
+      const snap = await getDocsFromCache(colVerres(db, uid, id));
       decouper(
         snap.docs.map((v) => v.ref),
         TAILLE_LOT,
