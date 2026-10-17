@@ -9,11 +9,15 @@ import '@fontsource/figtree/600.css'
 import '@fontsource/figtree/700.css'
 import './ui/theme.css'
 import { App } from './app/App'
+import { db } from './data/firebase'
+import { creerDepots } from './data/firestore'
+
+const fabriqueDepots = (uid: string) => creerDepots(db, uid)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <App fabriqueDepots={fabriqueDepots} />
     </BrowserRouter>
   </StrictMode>,
 )
