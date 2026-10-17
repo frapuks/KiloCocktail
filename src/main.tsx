@@ -12,6 +12,9 @@ import { App } from './app/App'
 import { db } from './data/firebase'
 import { creerDepots } from './data/firestore'
 
+// Demande au navigateur de ne pas purger le stockage local (résultat ignoré).
+navigator.storage?.persist?.()?.catch(() => {})
+
 const fabriqueDepots = (uid: string) => creerDepots(db, uid)
 
 createRoot(document.getElementById('root')!).render(
