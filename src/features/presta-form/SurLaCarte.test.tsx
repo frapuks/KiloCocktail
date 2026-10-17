@@ -1,0 +1,64 @@
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Cocktail, Ligne } from '../../domain/types'
+import { SurLaCarte } from './SurLaCarte'
+
+const cocktails: Cocktail[] = [
+  { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', variantes: 'les-deux', nomSansAlcool: 'Nojito', archive: false },
+  { id: 'd', nom: 'Daiquiri', nomNormalise: 'daiquiri', variantes: 'avec', nomSansAlcool: null, archive: false },
+]
+const l = (id: string, cocktailId: string, variante: 'avec' | 'sans', masquee = false): Ligne => ({
+  id, cocktailId, variante, masquee,
+})
+
+describe('SurLaCarte', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('regroupe et nomme les lignes', () => {
+    render(
+      <SurLaCarte
+        lignes={[l('1', 'm', 'avec'), l('2', 'm', 'sans'), l('3', 'd', 'avec', true)]}
+        cocktails={cocktails}
+        onDeplacer={() => {}}
+      />,
+    )
+    const avec = within(screen.getByRole('list', { name: 'Avec alcool' }))
+    const sans = within(screen.getByRole('list', { name: 'Sans alcool' }))
+    expect(avec.getByText('Mojito')).toBeTruthy()
+    expect(avec.queryByText('Daiquiri')).toBeNull()
+    expect(sans.getByText('Nojito')).toBeTruthy()
+    expect(sans.getByText('sans alcool')).toBeTruthy()
+    expect(screen.queryByText('Retirer')).toBeNull()
+  })
+
+  it('n’affiche pas un groupe vide', () => {
+    render(<SurLaCarte lignes={[l('1', 'd', 'avec')]} cocktails={cocktails} onDeplacer={() => {}} />)
+    expect(screen.queryByText('Sans alcool')).toBeNull()
+  })
+
+  it('déplace au clavier', async () => {
+    // jsdom renvoie des rectangles vides : on donne à chaque élément une position distincte.
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const li = this.closest('li')
+      const index = li ? Array.from(li.parentElement!.children).indexOf(li) : 0
+      const top = index * 50
+      return { top, bottom: top + 50, left: 0, right: 200, width: 200, height: 50, x: 0, y: top, toJSON: () => ({}) }
+    })
+    const onDeplacer = vi.fn()
+    render(
+      <SurLaCarte lignes={[l('1', 'm', 'avec'), l('2', 'd', 'avec')]} cocktails={cocktails} onDeplacer={onDeplacer} />,
+    )
+    const poignee = screen.getAllByRole('button', { name: 'Déplacer' })[0]
+    poignee.focus()
+    const touche = async (key: string, code: string) => {
+      await act(async () => {
+        fireEvent.keyDown(poignee, { key, code })
+        await new Promise((r) => setTimeout(r, 0))
+      })
+    }
+    await touche(' ', 'Space')
+    await touche('ArrowDown', 'ArrowDown')
+    await touche(' ', 'Space')
+    expect(onDeplacer).toHaveBeenCalledWith('avec', 0, 1)
+  })
+})
