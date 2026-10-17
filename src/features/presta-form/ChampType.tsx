@@ -14,7 +14,7 @@ const AJOUTER = '__ajouter__'
 
 export function ChampType({ types, valeur, onChange, onCreer }: Props) {
   const [fiche, setFiche] = useState(false)
-  const actifs = types.filter((t) => !t.archive).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+  const actifs = types.filter((t) => !t.archive || t.id === valeur).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
 
   return (
     <>
