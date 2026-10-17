@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import type { Cocktail, Ligne, Presta, Verre } from '../../domain/types'
 import { creerDepotsFactices } from '../../test/depotsFactices'
 import { rendre } from '../../test/rendre'
@@ -110,4 +110,15 @@ it('ne retire qu’un verre sur deux taps rapides avec un seul verre', () => {
   fireEvent.pointerDown(moins)
   expect(depots.verres.retirer).toHaveBeenCalledTimes(1)
   expect(screen.getByText('−1')).toBeInTheDocument()
+})
+
+it('annule le verre servi quand le toucher devient un défilement', () => {
+  const depots = rendreEcran()
+  vi.mocked(depots.verres.servir).mockReturnValueOnce('verre-servi')
+  const carte = screen.getByRole('button', { name: 'Nojito' })
+  fireEvent.pointerDown(carte, { pointerId: 3 })
+  fireEvent.pointerCancel(carte, { pointerId: 3 })
+  expect(depots.verres.servir).toHaveBeenCalledWith('p1', 'L2')
+  expect(depots.verres.retirer).toHaveBeenCalledTimes(1)
+  expect(depots.verres.retirer).toHaveBeenCalledWith('p1', 'verre-servi')
 })

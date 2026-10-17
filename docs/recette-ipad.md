@@ -31,3 +31,8 @@ Maquette de référence (v5) : https://claude.ai/artifact/4CpJ7k3LCPJA8EAUhnfUwg
 - [ ] Portrait : accueil, cocktails, résultats, formulaire de presta.
 - [ ] Cumul « +N » / « −N » visible environ 1,3 s après le dernier tap, sans retard perceptible du +1.
 - [ ] Aucun zoom, sélection de texte ni menu contextuel lors de taps rapides.
+
+## Défilement
+
+- [ ] Portrait sur l'iPad : faire défiler la liste des cartes en partant d'une carte ne compte aucun verre (aucun total ne bouge, aucun « +1 » ne reste affiché).
+- [ ] Sur le téléphone, faire défiler la liste en partant d'une carte ne compte aucun verre.

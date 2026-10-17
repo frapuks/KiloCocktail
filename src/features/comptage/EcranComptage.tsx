@@ -20,6 +20,8 @@ export function EcranComptage() {
   const donneesVerres = useVerres(id)
   // Verres dont le retrait est lancé mais pas encore reflété par un instantané.
   const enCours = useRef(new Set<string>())
+  // Dernier verre servi par carte : annulé si le toucher devient un défilement (pointercancel).
+  const derniersServis = useRef(new Map<string, string>())
 
   const verres = donneesVerres?.verres
   useEffect(() => {
@@ -48,6 +50,18 @@ export function EcranComptage() {
     return true
   }
 
+  const servir = (ligneId: string) => {
+    derniersServis.current.set(ligneId, depots.verres.servir(id, ligneId))
+  }
+
+  const annulerServir = (ligneId: string) => {
+    const verreId = derniersServis.current.get(ligneId)
+    if (!verreId) return
+    derniersServis.current.delete(ligneId)
+    enCours.current.add(verreId)
+    depots.verres.retirer(id, verreId)
+  }
+
   const terminer = () => {
     depots.prestas.changerStatut(id, 'terminee')
     navigate(`/prestas/${id}/resultats`)
@@ -65,7 +79,8 @@ export function EcranComptage() {
           sousTitre={sousTitre}
           total={totaux.get(ligne.id) ?? 0}
           variante={variante}
-          onPlus={() => depots.verres.servir(id, ligne.id)}
+          onPlus={() => servir(ligne.id)}
+          onAnnulerPlus={() => annulerServir(ligne.id)}
           onMoins={() => retirer(ligne.id)}
         />,
       ]

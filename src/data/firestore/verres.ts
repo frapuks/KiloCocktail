@@ -58,6 +58,7 @@ export function depotVerres(db: Firestore, uid: string): DepotVerres {
           appareil: identifiantAppareil(),
         }),
       );
+      return ref.id;
     },
     retirer(prestaId, verreId) {
       let ids = enCours.get(prestaId);

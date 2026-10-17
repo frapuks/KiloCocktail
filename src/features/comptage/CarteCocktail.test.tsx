@@ -10,12 +10,23 @@ type Props = Parameters<typeof CarteCocktail>[0]
 function rendreCarte(p: Partial<Props> = {}) {
   const onPlus = vi.fn()
   const onMoins = vi.fn(() => true)
+  const onAnnulerPlus = vi.fn()
   render(
-    <CarteCocktail nom="Nojito" sousTitre={null} total={5} variante="avec" onPlus={onPlus} onMoins={onMoins} {...p} />,
+    <CarteCocktail
+      nom="Nojito"
+      sousTitre={null}
+      total={5}
+      variante="avec"
+      onPlus={onPlus}
+      onAnnulerPlus={onAnnulerPlus}
+      onMoins={onMoins}
+      {...p}
+    />,
   )
   return {
     onPlus,
     onMoins,
+    onAnnulerPlus,
     carte: screen.getByRole('button', { name: 'Nojito' }),
     moins: screen.getByRole('button', { name: 'Retirer un Nojito' }),
   }
@@ -82,7 +93,7 @@ it('désactive le bouton − à 0', () => {
 
 it('affiche nom, sous-titre et total accordé', () => {
   const { unmount } = render(
-    <CarteCocktail nom="Nojito" sousTitre="sans alcool" total={1} variante="sans" onPlus={() => {}} onMoins={() => true} />,
+    <CarteCocktail nom="Nojito" sousTitre="sans alcool" total={1} variante="sans" onPlus={() => {}} onAnnulerPlus={() => {}} onMoins={() => true} />,
   )
   expect(screen.getByText('Nojito')).toBeInTheDocument()
   expect(screen.getByText('sans alcool')).toBeInTheDocument()
@@ -92,7 +103,7 @@ it('affiche nom, sous-titre et total accordé', () => {
   expect(ordre(screen.getByText('Nojito'), screen.getByText('sans alcool'))).toBeTruthy()
   expect(ordre(screen.getByText('sans alcool'), servis())).toBeTruthy()
   unmount()
-  render(<CarteCocktail nom="Mojito" sousTitre={null} total={14} variante="avec" onPlus={() => {}} onMoins={() => true} />)
+  render(<CarteCocktail nom="Mojito" sousTitre={null} total={14} variante="avec" onPlus={() => {}} onAnnulerPlus={() => {}} onMoins={() => true} />)
   expect(document.querySelector('.carte-servis')).toHaveTextContent('14 servis')
 })
 
@@ -110,4 +121,33 @@ it('n’affiche −N que pour les retraits acceptés', () => {
   fireEvent.pointerDown(moins)
   fireEvent.pointerDown(moins)
   expect(screen.getByText('−1')).toBeInTheDocument()
+})
+
+it('annule le +1 quand le navigateur prend le geste pour un défilement', () => {
+  const { carte, onPlus, onAnnulerPlus } = rendreCarte()
+  fireEvent.pointerDown(carte, { pointerId: 7 })
+  fireEvent.pointerCancel(carte, { pointerId: 7 })
+  expect(onPlus).toHaveBeenCalledTimes(1)
+  expect(onAnnulerPlus).toHaveBeenCalledTimes(1)
+  expect(screen.queryByText('+1')).not.toBeInTheDocument()
+  fireEvent.pointerCancel(carte, { pointerId: 7 })
+  expect(onAnnulerPlus).toHaveBeenCalledTimes(1)
+})
+
+it('n’annule que le dernier tap d’un cumul', () => {
+  const { carte, onAnnulerPlus } = rendreCarte()
+  fireEvent.pointerDown(carte, { pointerId: 1 })
+  fireEvent.pointerDown(carte, { pointerId: 2 })
+  fireEvent.pointerCancel(carte, { pointerId: 2 })
+  expect(onAnnulerPlus).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('+1')).toBeInTheDocument()
+})
+
+it('ignore l’annulation d’un autre pointeur que celui du dernier +1', () => {
+  const { carte, onAnnulerPlus } = rendreCarte()
+  fireEvent.pointerDown(carte, { pointerId: 1 })
+  fireEvent.pointerDown(carte, { pointerId: 2 })
+  fireEvent.pointerCancel(carte, { pointerId: 1 })
+  expect(onAnnulerPlus).not.toHaveBeenCalled()
+  expect(screen.getByText('+2')).toBeInTheDocument()
 })

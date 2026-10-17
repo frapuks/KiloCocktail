@@ -10,3 +10,9 @@ export function cumulerTap(c: Cumul, signe: 1 | -1, maintenant: number): Cumul {
 export function libelleCumul(c: Exclude<Cumul, null>): string {
   return c.signe === 1 ? `+${c.n}` : `−${c.n}`;
 }
+
+// Annule le dernier tap du cumul (geste repris par le navigateur pour un défilement).
+export function annulerTap(c: Cumul): Cumul {
+  if (c === null || c.n <= 1) return null;
+  return { ...c, n: c.n - 1 };
+}

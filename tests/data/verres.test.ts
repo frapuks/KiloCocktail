@@ -24,12 +24,12 @@ type Instantane = { verres: Verre[]; etat: EtatSauvegarde };
 const ecouterTout = (cb: (v: Instantane) => void) => depot.ecouter(P, (verres, etat) => cb({ verres, etat }));
 
 describe('dépôt des verres', () => {
-  it('sert un verre', async () => {
-    depot.servir(P, 'L1');
+  it('sert un verre et renvoie son id', async () => {
+    const idVerre = depot.servir(P, 'L1');
     await attendre(db);
     const { verres, etat } = await prochaineValeur(ecouterTout, (v) => !v.etat.ecrituresEnAttente);
     expect(verres).toHaveLength(1);
-    expect(verres[0]).toMatchObject({ ligneId: 'L1', enAttente: false });
+    expect(verres[0]).toMatchObject({ id: idVerre, ligneId: 'L1', enAttente: false });
     expect(etat).toEqual({ ecrituresEnAttente: false, verresEnAttente: 0 });
   });
 

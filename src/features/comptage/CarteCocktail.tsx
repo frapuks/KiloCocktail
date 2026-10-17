@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { libelleCumul } from '../../domain/cumul'
 import type { Variante } from '../../domain/types'
 import { libelleServis } from '../../domain/affichage'
@@ -10,6 +10,7 @@ interface Props {
   total: number
   variante: Variante
   onPlus(): void
+  onAnnulerPlus(): void
   onMoins(): boolean
 }
 
@@ -23,18 +24,22 @@ function IconeVerre() {
   )
 }
 
-export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onMoins }: Props) {
-  const { cumul, taper } = useCumul()
+export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnulerPlus, onMoins }: Props) {
+  const { cumul, taper, annuler } = useCumul()
+  // Pointeur du dernier +1, tant qu'il peut encore être annulé par un pointercancel (défilement).
+  const dernierPlus = useRef<{ pointerId: number } | null>(null)
   // Relance l'animation à chaque tap.
   const [impulsion, setImpulsion] = useState<{ signe: 1 | -1; n: number } | null>(null)
 
-  const plus = () => {
+  const plus = (pointerId: number | null) => {
+    dernierPlus.current = pointerId === null ? null : { pointerId }
     onPlus()
     taper(1)
     setImpulsion((i) => ({ signe: 1, n: (i?.n ?? 0) + 1 }))
   }
   const moins = () => {
     if (total === 0 || !onMoins()) return
+    dernierPlus.current = null
     taper(-1)
     setImpulsion((i) => ({ signe: -1, n: (i?.n ?? 0) + 1 }))
   }
@@ -47,12 +52,19 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onMoins
       aria-label={nom}
       onPointerDown={(e: PointerEvent) => {
         if ((e.target as Element).closest('button')) return
-        plus()
+        plus(e.pointerId)
+      }}
+      onPointerCancel={(e: PointerEvent) => {
+        const dernier = dernierPlus.current
+        if (!dernier || dernier.pointerId !== e.pointerId) return
+        dernierPlus.current = null
+        annuler()
+        onAnnulerPlus()
       }}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget || !estValidation(e)) return
         e.preventDefault()
-        plus()
+        plus(null)
       }}
     >
       {impulsion && (

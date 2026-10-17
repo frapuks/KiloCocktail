@@ -26,6 +26,7 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
   const prestas = donnees.prestas ?? []
   const verres = donnees.verres ?? {}
   const etat = donnees.etat ?? ETAT_PAR_DEFAUT
+  let verresServis = 0
 
   const ecouteursVerres = new Map<string, Set<(v: Verre[], e: EtatSauvegarde) => void>>()
   const ecouteursPresta = new Map<string, Set<(p: Presta | null) => void>>()
@@ -77,7 +78,7 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
         cb(verres[prestaId] ?? [], etat)
         return ajouter(ecouteursVerres, prestaId, cb)
       }),
-      servir: vi.fn(),
+      servir: vi.fn(() => `verre-${++verresServis}`),
       retirer: vi.fn(),
     },
     emettre: {

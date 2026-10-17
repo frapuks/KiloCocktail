@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cumulerTap, libelleCumul } from './cumul';
+import { annulerTap, cumulerTap, libelleCumul } from './cumul';
 
 describe('cumul', () => {
   it('démarre à +1 puis cumule tant que le délai court', () => {
@@ -15,5 +15,11 @@ describe('cumul', () => {
   it('affiche le cumul avec le vrai signe moins', () => {
     expect(libelleCumul({ signe: 1, n: 3, expireA: 0 })).toBe('+3');
     expect(libelleCumul({ signe: -1, n: 2, expireA: 0 })).toBe('−2');
+  });
+  it('annule le dernier tap : N−1, ou plus rien si c’était le premier', () => {
+    const deux = cumulerTap(cumulerTap(null, 1, 0), 1, 100);
+    expect(annulerTap(deux)).toEqual({ signe: 1, n: 1, expireA: 1400 });
+    expect(annulerTap(cumulerTap(null, 1, 0))).toBeNull();
+    expect(annulerTap(null)).toBeNull();
   });
 });
