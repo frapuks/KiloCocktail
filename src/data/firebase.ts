@@ -6,8 +6,9 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore'
+import { verifierConfiguration } from './configuration'
 
-const utiliseEmulateurs = import.meta.env.VITE_USE_EMULATORS === 'true'
+const { utiliseEmulateurs } = verifierConfiguration(import.meta.env)
 
 export const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
