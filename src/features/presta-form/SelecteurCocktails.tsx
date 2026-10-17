@@ -11,12 +11,13 @@ interface Props {
   lignes: Ligne[]
   onChange(lignes: Ligne[]): void
   onCreerCocktail(d: DonneesCocktail): string
+  catalogue?: Cocktail[]
 }
 
 const LIBELLES: Record<Variante, string> = { avec: 'Avec alcool', sans: 'Sans alcool' }
 const genId = () => crypto.randomUUID()
 
-export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail }: Props) {
+export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail, catalogue }: Props) {
   const [fiche, setFiche] = useState(false)
 
   return (
@@ -60,7 +61,7 @@ export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail 
       </button>
       {fiche && (
         <FicheCocktail
-          cocktails={options.map((o) => o.cocktail)}
+          cocktails={catalogue ?? options.map((o) => o.cocktail)}
           onAnnuler={() => setFiche(false)}
           onEnregistrer={(d) => {
             const id = onCreerCocktail(d)

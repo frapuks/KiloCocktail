@@ -68,6 +68,17 @@ describe('EcranNouvellePresta', () => {
     expect(carte('Avec alcool').getByText('Spritz')).toBeTruthy()
   })
 
+  it('refuse un nom déjà pris par un cocktail archivé', () => {
+    const depots = ecran()
+    fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
+    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'vieux' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Un cocktail “Vieux” existe déjà dans les archivés. Désarchive-le plutôt.',
+    )
+    expect(depots.cocktails.creer).not.toHaveBeenCalled()
+  })
+
   it('ajoute un type à la volée et le sélectionne', () => {
     const depots = ecran()
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: '__ajouter__' } })

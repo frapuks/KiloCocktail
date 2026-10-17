@@ -62,6 +62,7 @@ export function EcranNouvellePresta() {
           options={optionsAbsentes(cocktails, [])}
           lignes={lignes}
           onChange={setLignes}
+          catalogue={cocktails}
           onCreerCocktail={(d) => {
             const id = depots.cocktails.creer(d)
             setCocktailsCrees((c) => [...c, { id, ...d, nomNormalise: normaliserNom(d.nom), archive: false }])
