@@ -11,8 +11,6 @@ async function creerCompteEtSeConnecter(page: Page): Promise<void> {
   expect(reponse.ok()).toBe(true)
 
   await page.goto('/')
-  // Le bandeau « emulator mode » du SDK Auth recouvre la barre d'onglets en portrait.
-  await page.addStyleTag({ content: '.firebase-emulator-warning { display: none !important; }' })
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Mot de passe', { exact: true }).fill(MOT_DE_PASSE)
   await page.getByRole('button', { name: 'Se connecter' }).click()
