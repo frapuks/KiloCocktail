@@ -94,20 +94,8 @@
   font: 800 clamp(28px, 3.8vw, 48px) / 1 var(--police-titre);
   overflow-wrap: anywhere;
 }
-.carte-servis {
-  grid-area: servis;
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
-  font-size: 15px;
-}
-.carte-servis > span:first-of-type { font: 800 24px var(--police-titre); }
-.carte-rebond { display: inline-block; animation: rebond 260ms ease-out; }
-@keyframes rebond { 40% { transform: scale(1.35); } }
+.carte-servis { grid-area: servis; position: relative; }
 .carte-sous-titre { color: var(--texte-2); font-size: 13px; }
-.carte-verre { flex: none; }
 
 .carte-cumul {
   grid-area: plus;
@@ -141,5 +129,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .carte-flash { animation: none !important; display: none; }
-  .carte-rebond { animation: none; }
 }

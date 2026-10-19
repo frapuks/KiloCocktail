@@ -4,21 +4,17 @@ import { useCocktails } from '../../data/hooks'
 import type { Cocktail } from '../../domain/types'
 import { FicheCocktail } from './FicheCocktail'
 
-const pastille: CSSProperties = { fontSize: 12, padding: '2px 8px', borderRadius: 999, color: 'var(--texte)' }
-
-function Pastilles({ cocktail }: { cocktail: Cocktail }) {
-  const avec = cocktail.variantes !== 'sans'
-  const sans = cocktail.variantes !== 'avec'
-  return (
-    <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-      {avec && <span style={{ ...pastille, background: 'var(--avec)' }}>Avec alcool</span>}
-      {sans && <span style={{ ...pastille, background: 'var(--sans)' }}>Sans alcool</span>}
-      {cocktail.variantes === 'les-deux' && cocktail.nomSansAlcool && (
-        <span style={{ color: 'var(--texte-2)' }}>→ {cocktail.nomSansAlcool}</span>
-      )}
-    </span>
-  )
+const pastille: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  padding: '3px 10px',
+  borderRadius: 999,
+  color: 'var(--texte)',
+  whiteSpace: 'nowrap',
 }
+
+// Largeur fixe par colonne : les pastilles restent alignées d'une ligne à l'autre, même quand une colonne est vide.
+const LARGEUR_COLONNE = 104
 
 export function EcranCocktails() {
   const depots = useDepots()
@@ -34,23 +30,34 @@ export function EcranCocktails() {
 
   return (
     <main style={{ padding: 16, paddingBottom: 96 }}>
-      <h1 style={{ fontFamily: 'var(--police-titre)', fontWeight: 800 }}>Cocktails</h1>
-      <button
-        type="button"
-        onClick={() => setFiche('nouveau')}
-        style={{
-          minHeight: 44,
-          padding: '0 16px',
-          borderRadius: 8,
-          border: 'none',
-          background: 'var(--avec)',
-          color: 'var(--texte)',
-          font: 'inherit',
-          fontWeight: 600,
-        }}
-      >
-        + Nouveau cocktail
-      </button>
+      {/* Même en-tête que Prestas : marge haute du h1 par défaut reprise, bouton en marge négative. */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: '1.34em' }}>
+        <h1 style={{ margin: 0, fontFamily: 'var(--police-titre)', fontWeight: 800 }}>Cocktails</h1>
+        <button
+          type="button"
+          onClick={() => setFiche('nouveau')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            minHeight: 48,
+            margin: '-6px 0',
+            padding: '0 20px',
+            border: 'none',
+            borderRadius: 12,
+            background: 'var(--avec)',
+            color: 'var(--texte)',
+            fontSize: 17,
+            fontWeight: 700,
+            fontFamily: 'inherit',
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Nouveau cocktail
+        </button>
+      </header>
 
       <ul style={{ listStyle: 'none', padding: 0, margin: '16px 0' }}>
         {actifs.map((c) => (
@@ -62,10 +69,10 @@ export function EcranCocktails() {
                 width: '100%',
                 minHeight: 56,
                 padding: '8px 0',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: 4,
+                display: 'grid',
+                gridTemplateColumns: `1fr ${LARGEUR_COLONNE}px ${LARGEUR_COLONNE}px`,
+                alignItems: 'center',
+                columnGap: 8,
                 background: 'transparent',
                 border: 'none',
                 color: 'var(--texte)',
@@ -73,8 +80,18 @@ export function EcranCocktails() {
                 textAlign: 'left',
               }}
             >
-              <span style={{ fontWeight: 600 }}>{c.nom}</span>
-              <Pastilles cocktail={c} />
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                <span style={{ fontWeight: 600 }}>{c.nom}</span>
+                {c.variantes === 'les-deux' && c.nomSansAlcool && (
+                  <span style={{ color: 'var(--texte-2)', fontSize: 14 }}>→ {c.nomSansAlcool}</span>
+                )}
+              </span>
+              <span style={{ justifySelf: 'center' }}>
+                {c.variantes !== 'sans' && <span style={{ ...pastille, background: 'var(--avec)' }}>Avec alcool</span>}
+              </span>
+              <span style={{ justifySelf: 'center' }}>
+                {c.variantes !== 'avec' && <span style={{ ...pastille, background: 'var(--sans)' }}>Sans alcool</span>}
+              </span>
             </button>
           </li>
         ))}

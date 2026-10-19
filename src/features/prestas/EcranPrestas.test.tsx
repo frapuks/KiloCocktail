@@ -63,7 +63,8 @@ it('affiche nom, type, date et total servi', async () => {
   expect(screen.getByText('Julie Martin')).toBeInTheDocument()
   expect(screen.getByText('Anniversaire')).toBeInTheDocument()
   expect(screen.getByText('17/10/2026')).toBeInTheDocument()
-  expect(await screen.findByText('39 servis')).toBeInTheDocument()
+  expect(await screen.findByText('39')).toBeInTheDocument()
+  expect(screen.getByRole('link')).toHaveTextContent('39 servis')
 })
 
 it('affiche « — » quand le total est indisponible', async () => {

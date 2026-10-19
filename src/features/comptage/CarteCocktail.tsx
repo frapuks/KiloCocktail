@@ -1,7 +1,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { libelleCumul } from '../../domain/cumul'
 import type { Variante } from '../../domain/types'
-import { libelleServis } from '../../domain/affichage'
+import { CompteurServis } from '../../ui/CompteurServis'
 import { useCumul } from './useCumul'
 
 interface Props {
@@ -15,14 +15,6 @@ interface Props {
 }
 
 const estValidation = (e: KeyboardEvent) => e.key === 'Enter' || e.key === ' '
-
-function IconeVerre() {
-  return (
-    <svg className="carte-verre" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-      <path d="M5 3h14l-2 17a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L5 3z" />
-    </svg>
-  )
-}
 
 export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnulerPlus, onMoins }: Props) {
   const { cumul, taper, annuler } = useCumul()
@@ -78,12 +70,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
         <span className="carte-nom">{nom}</span>
         {sousTitre && <span className="carte-sous-titre">{sousTitre}</span>}
       </span>
-      <span className="carte-servis">
-        <IconeVerre />
-        <span key={impulsion?.n ?? 0} className={impulsion ? 'carte-rebond' : undefined}>{total}</span>
-        {' '}
-        <span>{libelleServis(total)}</span>
-      </span>
+      <CompteurServis total={total} rebond={impulsion?.n} className="carte-servis" />
       <span
         className={`carte-cumul ${cumul?.signe === -1 ? 'carte-cumul-moins' : ''}`}
         style={{ opacity: cumul ? 1 : 0 }}

@@ -72,6 +72,7 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
       changerStatut: vi.fn(),
       supprimer: vi.fn(() => Promise.resolve()),
       compterServis: vi.fn(() => Promise.resolve(0)),
+      dernierTotalServis: vi.fn(() => null),
     },
     verres: {
       ecouter: vi.fn((prestaId, cb) => {

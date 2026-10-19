@@ -24,7 +24,8 @@ export interface DepotPrestas {
   modifier(id: string, d: DonneesPresta, lignesAPurger: string[]): Promise<void>;
   changerStatut(id: string, statut: StatutPresta): void;
   supprimer(id: string): Promise<void>;
-  compterServis(id: string): Promise<number | null>;        // null si le serveur est injoignable
+  compterServis(id: string): Promise<number | null>;        // dernier total connu, ou null, si le serveur est injoignable
+  dernierTotalServis(id: string): number | null;            // total en cache local, sans attendre le serveur
 }
 export interface DepotVerres {
   ecouter(prestaId: string, cb: (verres: Verre[], etat: EtatSauvegarde) => void): Desabonner;

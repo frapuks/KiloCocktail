@@ -47,7 +47,7 @@ describe('EcranCocktails', () => {
   it('crée un cocktail', () => {
     const depots = creerDepotsFactices()
     rendre(<EcranCocktails />, { depots })
-    fireEvent.click(screen.getByRole('button', { name: '+ Nouveau cocktail' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', variantes: 'avec', nomSansAlcool: null })
@@ -76,7 +76,7 @@ describe('EcranCocktails', () => {
   it('« Annuler » ferme la fiche sans enregistrer', () => {
     const depots = creerDepotsFactices()
     rendre(<EcranCocktails />, { depots })
-    fireEvent.click(screen.getByRole('button', { name: '+ Nouveau cocktail' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(depots.cocktails.creer).not.toHaveBeenCalled()

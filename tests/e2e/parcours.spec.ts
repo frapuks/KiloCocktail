@@ -19,7 +19,7 @@ async function creerCompteEtSeConnecter(page: Page): Promise<void> {
 
 async function creerCocktail(page: Page, nom: string, nomSansAlcool?: string): Promise<void> {
   await page.getByRole('link', { name: 'Cocktails' }).click()
-  await page.getByRole('button', { name: '+ Nouveau cocktail' }).click()
+  await page.getByRole('button', { name: 'Nouveau cocktail' }).click()
   await page.getByLabel('Nom', { exact: true }).fill(nom)
   if (nomSansAlcool) {
     await page.getByLabel('Les deux').check()
