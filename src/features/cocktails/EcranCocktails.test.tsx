@@ -14,14 +14,14 @@ describe('EcranCocktails', () => {
     const depots = creerDepotsFactices({
       cocktails: [
         c('1', 'Spritz'),
-        c('2', 'Mojito', { alcool: false }),
+        c('2', 'Nojito', { alcool: false }),
         c('3', 'Mojito'),
         c('4', 'Vieux', { alcool: false, archive: true }),
       ],
     })
     rendre(<EcranCocktails />, { depots })
-    const lignes = screen.getAllByRole('button', { name: /(Mojito|Spritz)/ }).map((b) => b.textContent ?? '')
-    expect(lignes).toEqual(['MojitoAvec alcool', 'MojitoSans alcool', 'SpritzAvec alcool'])
+    const lignes = screen.getAllByRole('button', { name: /(Mojito|Nojito|Spritz)/ }).map((b) => b.textContent ?? '')
+    expect(lignes).toEqual(['MojitoAvec alcool', 'NojitoSans alcool', 'SpritzAvec alcool'])
     expect(screen.getAllByText('Avec alcool')).toHaveLength(2)
     expect(screen.getAllByText('Sans alcool')).toHaveLength(1)
     expect(screen.getByText('Vieux · sans alcool')).toBeTruthy()

@@ -3,16 +3,17 @@ import type { Cocktail } from './types';
 import { comparerCocktails, dateDuJour, formatDate, formatDateLongue, libelleServis, nomLigne, nomPresta } from './affichage';
 
 const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
-const nojito: Cocktail = { ...mojito, id: 'n', alcool: false };
+const nojito: Cocktail = { ...mojito, id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false };
 const mule: Cocktail = { id: 'u', nom: 'Moscow Mule', nomNormalise: 'moscow mule', alcool: true, archive: false };
 
 describe('affichage', () => {
   it('nomme un cocktail avec alcool sans sous-titre, sans alcool avec sous-titre', () => {
     expect(nomLigne(mojito)).toEqual({ nom: 'Mojito', sousTitre: null });
-    expect(nomLigne(nojito)).toEqual({ nom: 'Mojito', sousTitre: 'sans alcool' });
+    expect(nomLigne(nojito)).toEqual({ nom: 'Nojito', sousTitre: 'sans alcool' });
   });
-  it('compare par nom puis avec alcool avant sans', () => {
-    expect([nojito, mule, mojito].sort(comparerCocktails)).toEqual([mojito, nojito, mule]);
+  it('compare par nom, sans tenir compte des accents ni de la casse', () => {
+    const ecume: Cocktail = { ...mule, id: 'e', nom: 'écume' };
+    expect([nojito, mule, ecume, mojito].sort(comparerCocktails)).toEqual([ecume, mojito, mule, nojito]);
   });
   it('formate les dates', () => {
     expect(formatDate('2026-10-17')).toBe('17/10/2026');

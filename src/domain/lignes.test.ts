@@ -6,7 +6,7 @@ import {
 } from './lignes';
 
 const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
-const nojito: Cocktail = { ...mojito, id: 'n', alcool: false };
+const nojito: Cocktail = { ...mojito, id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false };
 const mule: Cocktail = { id: 'u', nom: 'Moscow Mule', nomNormalise: 'moscow mule', alcool: true, archive: false };
 const spritz: Cocktail = { id: 's', nom: 'Spritz', nomNormalise: 'spritz', alcool: true, archive: true };
 
@@ -68,7 +68,7 @@ describe('lignes', () => {
     expect(typeRetrait(3)).toBe('choix');
   });
 
-  it('propose les cocktails actifs absents, triés par nom puis avec avant sans', () => {
+  it('propose les cocktails actifs absents, triés par nom', () => {
     expect(optionsAbsentes([spritz, nojito, mule, mojito], [l('L', 'u', true)])).toEqual([mojito, nojito]);
   });
 });

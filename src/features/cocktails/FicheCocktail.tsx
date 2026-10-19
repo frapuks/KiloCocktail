@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DonneesCocktail } from '../../data/depots'
 import { bouton, champ, FeuilleModale } from '../../ui/FeuilleModale'
-import { messageDoublonCocktail, trouverDoublonCocktail } from '../../domain/noms'
+import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import type { Cocktail } from '../../domain/types'
 
 interface Props {
@@ -30,9 +30,9 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
       setErreur('Donne un nom au cocktail')
       return
     }
-    const doublon = trouverDoublonCocktail(cocktails, nomPropre, alcool, cocktail?.id)
+    const doublon = trouverDoublon(cocktails, nomPropre, cocktail?.id)
     if (doublon) {
-      setErreur(messageDoublonCocktail(doublon))
+      setErreur(messageDoublon('Un cocktail', doublon))
       return
     }
     onEnregistrer({ nom: nomPropre, alcool })

@@ -5,9 +5,7 @@ export function nomLigne(c: Cocktail): { nom: string; sousTitre: 'sans alcool' |
 }
 
 export function comparerCocktails(a: Cocktail, b: Cocktail): number {
-  const parNom = a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
-  if (parNom !== 0) return parNom;
-  return Number(b.alcool) - Number(a.alcool);
+  return a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
 }
 
 function decouper(date: string): [number, number, number] {

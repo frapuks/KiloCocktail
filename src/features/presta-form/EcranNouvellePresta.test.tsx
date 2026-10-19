@@ -96,7 +96,7 @@ describe('EcranNouvellePresta', () => {
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'vieux' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(screen.getByRole('alert').textContent).toBe(
-      'Un cocktail “Vieux” avec alcool existe déjà dans les archivés. Désarchive-le plutôt.',
+      'Un cocktail “Vieux” existe déjà dans les archivés. Désarchive-le plutôt.',
     )
     expect(depots.cocktails.creer).not.toHaveBeenCalled()
   })

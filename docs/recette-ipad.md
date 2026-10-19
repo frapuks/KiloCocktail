@@ -7,7 +7,7 @@ Maquette de référence (v5) : https://claude.ai/artifact/4CpJ7k3LCPJA8EAUhnfUwg
 - [ ] Ouvrir l'URL de l'appli dans Safari sur l'iPad.
 - [ ] « Ajouter à l'écran d'accueil », puis lancer l'appli depuis l'icône (plein écran, sans barre Safari).
 - [ ] Se connecter avec le compte du barman.
-- [ ] Saisir le catalogue de cocktails (un cocktail par version : avec ou sans alcool, homonymes possibles).
+- [ ] Saisir le catalogue de cocktails (un cocktail par version : avec ou sans alcool, chacun avec un nom différent).
 
 ## Soirée simulée en mode avion
 

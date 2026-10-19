@@ -5,7 +5,7 @@ import type { Cocktail } from '../../domain/types'
 import { FicheCocktail } from './FicheCocktail'
 
 const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false }
-const nojito: Cocktail = { ...mojito, id: 'n', alcool: false }
+const nojito: Cocktail = { ...mojito, id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false }
 
 function monter(props: Partial<ComponentProps<typeof FicheCocktail>> = {}) {
   const onEnregistrer = vi.fn()
@@ -31,37 +31,30 @@ describe('FicheCocktail', () => {
     expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false })
   })
 
-  it('accepte un homonyme de l’autre version', () => {
+  it('refuse un homonyme, même dans l’autre version', () => {
     const { onEnregistrer } = monter({ cocktails: [mojito] })
     saisirNom('Mojito')
     fireEvent.click(screen.getByLabelText('Sans alcool'))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false })
-  })
-
-  it('refuse de passer en sans alcool si l’homonyme sans alcool existe', () => {
-    const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, nojito] })
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
-    enregistrer()
-    expect(screen.getByRole('alert').textContent).toBe('Un cocktail “Mojito” sans alcool existe déjà')
+    expect(screen.getByRole('alert').textContent).toBe('Un cocktail “Mojito” existe déjà')
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
-  it('signale un homonyme archivé de la même version', () => {
+  it('signale un homonyme archivé', () => {
     const { onEnregistrer } = monter({ cocktails: [{ ...nojito, archive: true }] })
-    saisirNom('Mojito')
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
+    saisirNom('nojito')
     enregistrer()
     expect(
-      screen.getByText('Un cocktail “Mojito” sans alcool existe déjà dans les archivés. Désarchive-le plutôt.'),
+      screen.getByText('Un cocktail “Nojito” existe déjà dans les archivés. Désarchive-le plutôt.'),
     ).toBeTruthy()
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
-  it('enregistre sans changement alors que l’homonyme de l’autre version existe', () => {
+  it('passe en sans alcool sans changer de nom', () => {
     const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, nojito] })
+    fireEvent.click(screen.getByLabelText('Sans alcool'))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: true })
+    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false })
   })
 
   it('refuse un nom vide', () => {
@@ -72,11 +65,11 @@ describe('FicheCocktail', () => {
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
-  it('refuse un doublon actif de la même version', () => {
+  it('refuse un doublon actif', () => {
     const { onEnregistrer } = monter({ cocktails: [mojito] })
     saisirNom('mojito')
     enregistrer()
-    expect(screen.getByText('Un cocktail “Mojito” avec alcool existe déjà')).toBeTruthy()
+    expect(screen.getByText('Un cocktail “Mojito” existe déjà')).toBeTruthy()
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 

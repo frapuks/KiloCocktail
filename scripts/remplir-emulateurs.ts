@@ -55,7 +55,7 @@ const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean }
   { id: 'margarita', nom: 'Margarita', alcool: true },
   { id: 'cosmopolitan', nom: 'Cosmopolitan', alcool: true },
   { id: 'moscow-mule', nom: 'Moscow Mule', alcool: true },
-  { id: 'moscow-mule-sans-alcool', nom: 'Moscow Mule', alcool: false },
+  { id: 'virgin-mule', nom: 'Virgin Mule', alcool: false },
   { id: 'gin-tonic', nom: 'Gin Tonic', alcool: true },
   { id: 'limonade-maison', nom: 'Limonade maison', alcool: false },
   { id: 'cafe-frappe', nom: 'Café frappé', alcool: false },
@@ -91,7 +91,7 @@ const PRESTAS: PrestaDemo[] = [
   },
   {
     decalageJours: -41, client: 'Acme SAS', typeId: 'soiree-entreprise', statut: 'terminee', servis: [30, 90],
-    cocktails: ['gin-tonic', 'moscow-mule', 'moscow-mule-sans-alcool', 'margarita', 'cafe-frappe'],
+    cocktails: ['gin-tonic', 'moscow-mule', 'virgin-mule', 'margarita', 'cafe-frappe'],
   },
   {
     decalageJours: -20, client: 'Léa & Thomas', typeId: 'mariage', statut: 'terminee', servis: [40, 120],
@@ -107,7 +107,7 @@ const PRESTAS: PrestaDemo[] = [
   },
   {
     decalageJours: 0, client: 'Nadia Benali', typeId: 'anniversaire', statut: 'en-cours', servis: [0, 12],
-    cocktails: ['mojito', 'nojito', 'margarita', 'moscow-mule', 'moscow-mule-sans-alcool', 'limonade-maison'],
+    cocktails: ['mojito', 'nojito', 'margarita', 'moscow-mule', 'virgin-mule', 'limonade-maison'],
   },
   {
     decalageJours: 5, client: 'Studio Pixel', typeId: 'soiree-entreprise', statut: 'en-cours', servis: [0, 0],

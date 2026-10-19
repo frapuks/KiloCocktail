@@ -4,11 +4,11 @@ Date : 2026-10-19
 
 ## Objectif
 
-Simplifier la gestion des cocktails avec et sans alcool. Un cocktail qui existe dans les deux versions devient **deux cocktails distincts** dans le catalogue (ex. « Mojito » et « Nojito », ou deux « Moscow Mule »). Chaque cocktail porte un booléen `alcool`.
+Simplifier la gestion des cocktails avec et sans alcool. Un cocktail qui existe dans les deux versions devient **deux cocktails distincts** dans le catalogue (ex. « Mojito » et « Nojito », « Moscow Mule » et « Virgin Mule »). Chaque cocktail porte un booléen `alcool`.
 
 ## Décisions
 
-- **Unicité par couple (nom, alcool).** Deux cocktails peuvent porter le même nom s'ils diffèrent par `alcool`. La règle s'applique à la création **et** à la modification : passer « Mojito » avec alcool en sans alcool échoue si un « Mojito » sans alcool existe déjà (actif ou archivé).
+- **Noms uniques dans tout le catalogue** (révisé le 2026-10-19, remplace l'unicité par couple (nom, alcool)). Deux cocktails ne peuvent pas porter le même nom, quel que soit `alcool` : c'est à l'utilisateur de nommer différemment les deux versions (« Mojito » / « Nojito »). La règle vaut en création et en modification, face aux cocktails actifs comme archivés. Changer `alcool` sans changer le nom n'est jamais bloqué.
 - **`alcool` reste modifiable et tout suit.** Le groupe d'une ligne de presta se lit sur `cocktail.alcool` ; changer le booléen déplace le cocktail de groupe dans toutes les prestas, passées comprises. Ce changement est vu comme une correction de saisie.
 - **Pas de migration.** Firebase n'est pas encore en production ; seul le script de remplissage des émulateurs est mis à jour.
 
@@ -32,9 +32,8 @@ export interface Ligne { id: string; cocktailId: string; masquee: boolean }
 
 ### `noms.ts`
 
-- `trouverDoublon` reste générique pour les types d'événement (nom seul).
-- Nouvelle recherche de doublon pour les cocktails : même `nomNormalise` **et** même `alcool`, en excluant l'id en cours de modification.
-- Le message de doublon d'un cocktail précise la version : « Un cocktail “Mojito” sans alcool existe déjà » (et la variante « … dans les archivés. Désarchive-le plutôt. »).
+- `trouverDoublon` (nom normalisé seul, en excluant l'id en cours de modification) sert aux cocktails comme aux types d'événement.
+- Message : « Un cocktail “Mojito” existe déjà » (et la variante « … dans les archivés. Désarchive-le plutôt. »).
 
 ### `lignes.ts`
 
@@ -42,7 +41,7 @@ export interface Ligne { id: string; cocktailId: string; masquee: boolean }
 - `groupes(lignes, cocktails, options)` — répartit selon `cocktail.alcool` ; une ligne dont le cocktail est introuvable est ignorée.
 - `deplacerDansGroupe(lignes, cocktails, variante, de, vers)` — même logique de groupe.
 - `basculerCocktail(lignes, cocktail, genId)` — ajoute ou retire **une** ligne.
-- `optionsAbsentes(cocktails, lignes): Cocktail[]` — cocktails actifs absents de la carte, triés par nom puis avec alcool avant sans alcool.
+- `optionsAbsentes(cocktails, lignes): Cocktail[]` — cocktails actifs absents de la carte, triés par nom (`comparerCocktails`).
 - Supprimés : `variantesDisponibles`, `basculerVariante`.
 
 ### `affichage.ts`
@@ -59,14 +58,14 @@ export interface Ligne { id: string; cocktailId: string; masquee: boolean }
 
 ## Données de démo
 
-`scripts/remplir-emulateurs.ts` : chaque cocktail « les deux » devient deux documents (`mojito` / `nojito`, `moscow-mule` / `moscow-mule-sans-alcool`, etc.) ; les lignes des prestas de démo pointent vers le bon document.
+`scripts/remplir-emulateurs.ts` : chaque cocktail « les deux » devient deux documents (`mojito` / `nojito`, `moscow-mule` / `virgin-mule` « Virgin Mule », etc. — tous les noms distincts) ; les lignes des prestas de démo pointent vers le bon document.
 
 ## Tests
 
 - Adapter toutes les données de test au nouveau modèle.
 - Nouveaux cas :
-  - doublon (nom, alcool) refusé en création et en modification, y compris le passage avec → sans alcool face à un homonyme sans alcool existant (actif ou archivé) ;
-  - deux homonymes acceptés s'ils diffèrent par `alcool` ;
+  - homonyme refusé en création et en modification, même s'il diffère par `alcool` (actif ou archivé) ;
+  - changer `alcool` sans changer le nom est accepté ;
   - `groupes` et `deplacerDansGroupe` lisent `cocktail.alcool` ;
   - une ligne change de groupe quand le booléen de son cocktail change.
 - Adapter le test du dépôt sur émulateur (`tests/data/cocktails.test.ts`) et le parcours e2e.
