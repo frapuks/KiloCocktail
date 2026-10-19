@@ -18,8 +18,8 @@ describe('noms', () => {
   });
   it('formule le message de doublon, avec la variante archivé', () => {
     expect(messageDoublon('Un type', { nom: 'Anniversaire', archive: false })).toBe('Un type “Anniversaire” existe déjà');
-    expect(messageDoublon('Un cocktail', { nom: 'Mojito', archive: true })).toBe(
-      'Un cocktail “Mojito” existe déjà dans les archivés. Désarchive-le plutôt.',
+    expect(messageDoublon('Un type', { nom: 'Anniversaire', archive: true })).toBe(
+      'Un type “Anniversaire” existe déjà dans les archivés. Désarchive-le plutôt.',
     );
   });
   it('cherche un doublon de cocktail sur le couple (nom, alcool)', () => {

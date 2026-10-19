@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { DonneesCocktail } from '../../data/depots'
 import { bouton, champ, FeuilleModale } from '../../ui/FeuilleModale'
-import { messageDoublon, trouverDoublon } from '../../domain/noms'
-import type { Cocktail, Variantes } from '../../domain/types'
+import { messageDoublonCocktail, trouverDoublonCocktail } from '../../domain/noms'
+import type { Cocktail } from '../../domain/types'
 
 interface Props {
   cocktail?: Cocktail
@@ -12,16 +12,14 @@ interface Props {
   onArchiver?(): void
 }
 
-const OPTIONS: { valeur: Variantes; libelle: string }[] = [
-  { valeur: 'avec', libelle: 'Avec alcool uniquement' },
-  { valeur: 'sans', libelle: 'Sans alcool uniquement' },
-  { valeur: 'les-deux', libelle: 'Les deux' },
+const OPTIONS: { valeur: boolean; libelle: string }[] = [
+  { valeur: true, libelle: 'Avec alcool' },
+  { valeur: false, libelle: 'Sans alcool' },
 ]
 
 export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, onArchiver }: Props) {
   const [nom, setNom] = useState(cocktail?.nom ?? '')
-  const [variantes, setVariantes] = useState<Variantes>(cocktail?.variantes ?? 'avec')
-  const [nomSansAlcool, setNomSansAlcool] = useState(cocktail?.nomSansAlcool ?? '')
+  const [alcool, setAlcool] = useState(cocktail?.alcool ?? true)
   const [erreur, setErreur] = useState<string | null>(null)
 
   const renomme = cocktail !== undefined && nom.trim() !== cocktail.nom
@@ -32,17 +30,12 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
       setErreur('Donne un nom au cocktail')
       return
     }
-    const doublon = trouverDoublon(cocktails, nomPropre, cocktail?.id)
+    const doublon = trouverDoublonCocktail(cocktails, nomPropre, alcool, cocktail?.id)
     if (doublon) {
-      setErreur(messageDoublon('Un cocktail', doublon))
+      setErreur(messageDoublonCocktail(doublon))
       return
     }
-    const sans = nomSansAlcool.trim()
-    onEnregistrer({
-      nom: nomPropre,
-      variantes,
-      nomSansAlcool: variantes === 'les-deux' && sans ? sans : null,
-    })
+    onEnregistrer({ nom: nomPropre, alcool })
   }
 
   return (
@@ -62,25 +55,19 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
         <p style={{ margin: 0, color: 'var(--texte-2)' }}>Le nouveau nom s'affichera aussi dans les prestas passées.</p>
       )}
       <fieldset style={{ border: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <legend style={{ padding: 0, marginBottom: 4 }}>Variantes</legend>
+        <legend style={{ padding: 0, marginBottom: 4 }}>Alcool</legend>
         {OPTIONS.map((o) => (
-          <label key={o.valeur} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+          <label key={String(o.valeur)} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
             <input
               type="radio"
-              name="variantes"
-              checked={variantes === o.valeur}
-              onChange={() => setVariantes(o.valeur)}
+              name="alcool"
+              checked={alcool === o.valeur}
+              onChange={() => setAlcool(o.valeur)}
             />
             {o.libelle}
           </label>
         ))}
       </fieldset>
-      {variantes === 'les-deux' && (
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          Nom de la version sans alcool
-          <input value={nomSansAlcool} onChange={(e) => setNomSansAlcool(e.target.value)} style={champ} />
-        </label>
-      )}
       {erreur && (
         <p role="alert" style={{ margin: 0, color: 'var(--moins)' }}>
           {erreur}

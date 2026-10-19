@@ -6,28 +6,25 @@ import { rendre } from '../../test/rendre'
 import { EcranCocktails } from './EcranCocktails'
 
 const c = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cocktail => ({
-  id, nom, nomNormalise: nom.toLowerCase(), variantes: 'avec', nomSansAlcool: null, archive: false, ...extra,
+  id, nom, nomNormalise: nom.toLowerCase(), alcool: true, archive: false, ...extra,
 })
 
 describe('EcranCocktails', () => {
-  it('liste les cocktails actifs par ordre alphabétique avec leurs variantes', () => {
+  it('liste les cocktails actifs triés, une pastille par ligne', () => {
     const depots = creerDepotsFactices({
       cocktails: [
-        c('2', 'Mojito', { variantes: 'les-deux', nomSansAlcool: 'Nojito' }),
-        c('1', 'Daiquiri'),
-        c('3', 'Virgin', { variantes: 'sans' }),
-        c('4', 'Vieux', { archive: true }),
+        c('1', 'Spritz'),
+        c('2', 'Mojito', { alcool: false }),
+        c('3', 'Mojito'),
+        c('4', 'Vieux', { alcool: false, archive: true }),
       ],
     })
     rendre(<EcranCocktails />, { depots })
-    const noms = screen.getAllByRole('button', { name: /(Daiquiri|Mojito|Virgin)/ }).map((b) => b.textContent ?? '')
-    expect(noms).toHaveLength(3)
-    expect(noms[0]).toContain('Daiquiri')
-    expect(noms[1]).toContain('Mojito')
-    expect(noms[2]).toContain('Virgin')
+    const lignes = screen.getAllByRole('button', { name: /(Mojito|Spritz)/ }).map((b) => b.textContent ?? '')
+    expect(lignes).toEqual(['MojitoAvec alcool', 'MojitoSans alcool', 'SpritzAvec alcool'])
     expect(screen.getAllByText('Avec alcool')).toHaveLength(2)
-    expect(screen.getAllByText('Sans alcool')).toHaveLength(2)
-    expect(screen.getByText('→ Nojito')).toBeTruthy()
+    expect(screen.getAllByText('Sans alcool')).toHaveLength(1)
+    expect(screen.getByText('Vieux · sans alcool')).toBeTruthy()
   })
 
   it('range les archivés dans une section repliée et désarchive', () => {
@@ -50,7 +47,7 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', variantes: 'avec', nomSansAlcool: null })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -60,7 +57,7 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: /Daiquiri/ }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Daiquiri fraise' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', variantes: 'avec', nomSansAlcool: null })
+    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 

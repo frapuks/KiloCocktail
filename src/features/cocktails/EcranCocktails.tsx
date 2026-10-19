@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails } from '../../data/hooks'
+import { comparerCocktails } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { FicheCocktail } from './FicheCocktail'
 
@@ -24,9 +25,8 @@ export function EcranCocktails() {
 
   if (!cocktails) return <p style={{ padding: 16, color: 'var(--texte-2)' }}>Chargement…</p>
 
-  const trier = (a: Cocktail, b: Cocktail) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' })
-  const actifs = cocktails.filter((c) => !c.archive).sort(trier)
-  const archives = cocktails.filter((c) => c.archive).sort(trier)
+  const actifs = cocktails.filter((c) => !c.archive).sort(comparerCocktails)
+  const archives = cocktails.filter((c) => c.archive).sort(comparerCocktails)
 
   return (
     <main style={{ padding: 16, paddingBottom: 96 }}>
@@ -70,7 +70,7 @@ export function EcranCocktails() {
                 minHeight: 56,
                 padding: '8px 0',
                 display: 'grid',
-                gridTemplateColumns: `1fr ${LARGEUR_COLONNE}px ${LARGEUR_COLONNE}px`,
+                gridTemplateColumns: `1fr ${LARGEUR_COLONNE}px`,
                 alignItems: 'center',
                 columnGap: 8,
                 background: 'transparent',
@@ -80,17 +80,11 @@ export function EcranCocktails() {
                 textAlign: 'left',
               }}
             >
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <span style={{ fontWeight: 600 }}>{c.nom}</span>
-                {c.variantes === 'les-deux' && c.nomSansAlcool && (
-                  <span style={{ color: 'var(--texte-2)', fontSize: 14 }}>→ {c.nomSansAlcool}</span>
-                )}
-              </span>
+              <span style={{ fontWeight: 600, minWidth: 0 }}>{c.nom}</span>
               <span style={{ justifySelf: 'center' }}>
-                {c.variantes !== 'sans' && <span style={{ ...pastille, background: 'var(--avec)' }}>Avec alcool</span>}
-              </span>
-              <span style={{ justifySelf: 'center' }}>
-                {c.variantes !== 'avec' && <span style={{ ...pastille, background: 'var(--sans)' }}>Sans alcool</span>}
+                <span style={{ ...pastille, background: c.alcool ? 'var(--avec)' : 'var(--sans)' }}>
+                  {c.alcool ? 'Avec alcool' : 'Sans alcool'}
+                </span>
               </span>
             </button>
           </li>
@@ -115,7 +109,7 @@ export function EcranCocktails() {
                   borderBottom: '1px solid var(--filet)',
                 }}
               >
-                <span style={{ color: 'var(--texte-2)' }}>{c.nom}</span>
+                <span style={{ color: 'var(--texte-2)' }}>{c.alcool ? c.nom : `${c.nom} · sans alcool`}</span>
                 <button
                   type="button"
                   onClick={() => depots.cocktails.archiver(c.id, false)}
