@@ -7,18 +7,18 @@ import { rendre } from '../../test/rendre'
 import { EcranResultats } from './EcranResultats'
 
 const cocktail = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cocktail => ({
-  id, nom, nomNormalise: nom.toLowerCase(), variantes: 'les-deux', nomSansAlcool: null, archive: false, ...extra,
+  id, nom, nomNormalise: nom.toLowerCase(), alcool: true, archive: false, ...extra,
 })
-const ligne = (id: string, cocktailId: string, variante: 'avec' | 'sans', masquee = false): Ligne => ({
-  id, cocktailId, variante, masquee,
+const ligne = (id: string, cocktailId: string, masquee = false): Ligne => ({
+  id, cocktailId, masquee,
 })
 const verre = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe, enAttente: false })
 
-const cocktails = [cocktail('c1', 'Mojito'), cocktail('c2', 'Mojito', { nomSansAlcool: 'Nojito' }), cocktail('c3', 'Vieux')]
+const cocktails = [cocktail('c1', 'Mojito'), cocktail('c2', 'Mojito', { alcool: false }), cocktail('c3', 'Vieux')]
 const type: TypeEvenement = { id: 't1', nom: 'Anniversaire', nomNormalise: 'anniversaire', archive: false }
 const presta = (p: Partial<Presta> = {}): Presta => ({
   id: 'p1', date: '2026-10-17', client: 'Julie Martin', typeId: 't1', statut: 'en-cours',
-  lignes: [ligne('L1', 'c1', 'avec'), ligne('L2', 'c2', 'sans'), ligne('L3', 'c3', 'avec', true), ligne('L4', 'c1', 'sans')],
+  lignes: [ligne('L1', 'c1'), ligne('L2', 'c2'), ligne('L3', 'c3', true)],
   ...p,
 })
 const verres = [verre('v1', 'L1', 1), verre('v2', 'L1', 2), verre('v3', 'L2', 3), verre('v4', 'L3', 4)]
@@ -55,7 +55,7 @@ it('liste une ligne par variante, masquées comprises, dans l’ordre du comptag
   rendreEcran()
   expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Avec alcool', 'Sans alcool'])
   const lignes = screen.getAllByRole('listitem').map((li) => li.textContent)
-  expect(lignes).toEqual(['Mojito2', 'Vieux1', 'Nojitosans alcool1', 'Mojitosans alcool0'])
+  expect(lignes).toEqual(['Mojito2', 'Vieux1', 'Mojitosans alcool1'])
 })
 
 it('affiche un type archivé', () => {

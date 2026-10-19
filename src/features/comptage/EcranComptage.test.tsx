@@ -7,22 +7,22 @@ import { rendre } from '../../test/rendre'
 import { EcranComptage } from './EcranComptage'
 
 const cocktail = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cocktail => ({
-  id, nom, nomNormalise: nom.toLowerCase(), variantes: 'les-deux', nomSansAlcool: null, archive: false, ...extra,
+  id, nom, nomNormalise: nom.toLowerCase(), alcool: true, archive: false, ...extra,
 })
-const ligne = (id: string, cocktailId: string, variante: 'avec' | 'sans', masquee = false): Ligne => ({
-  id, cocktailId, variante, masquee,
+const ligne = (id: string, cocktailId: string, masquee = false): Ligne => ({
+  id, cocktailId, masquee,
 })
 const verre = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe, enAttente: false })
 
 const cocktails = [
   cocktail('c1', 'Mojito'),
-  cocktail('c2', 'Mojito', { nomSansAlcool: 'Nojito' }),
+  cocktail('c2', 'Mojito', { alcool: false }),
   cocktail('c3', 'Vieux', { archive: true }),
 ]
 const type = { id: 't1', nom: 'Anniversaire', nomNormalise: 'anniversaire', archive: false }
 const presta = (p: Partial<Presta> = {}): Presta => ({
   id: 'p1', date: '2026-10-17', client: 'Julie Martin', typeId: 't1', statut: 'en-cours',
-  lignes: [ligne('L1', 'c1', 'avec'), ligne('L2', 'c2', 'sans'), ligne('L3', 'c3', 'avec'), ligne('L4', 'c1', 'sans', true)],
+  lignes: [ligne('L1', 'c1'), ligne('L2', 'c2'), ligne('L3', 'c3'), ligne('L4', 'c1', true)],
   ...p,
 })
 
@@ -55,9 +55,9 @@ it('affiche l’en-tête de la presta', () => {
 it('range les cartes en groupes Avec alcool puis Sans alcool, sans les masquées', () => {
   rendreEcran()
   expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Avec alcool', 'Sans alcool'])
-  const noms = ['Mojito', 'Vieux', 'Nojito']
+  const noms = ['Mojito', 'Vieux', 'Mojito, sans alcool']
   const cartes = screen.getAllByRole('button').filter((b) => noms.includes(b.getAttribute('aria-label') ?? ''))
-  expect(cartes.map((c) => c.getAttribute('aria-label'))).toEqual(['Mojito', 'Vieux', 'Nojito'])
+  expect(cartes.map((c) => c.getAttribute('aria-label'))).toEqual(['Mojito', 'Vieux', 'Mojito, sans alcool'])
 })
 
 it('affiche une ligne dont le cocktail est archivé', () => {
@@ -67,8 +67,13 @@ it('affiche une ligne dont le cocktail est archivé', () => {
 
 it('sert un verre sur la bonne ligne', () => {
   const depots = rendreEcran()
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'Nojito' }))
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Mojito, sans alcool' }))
   expect(depots.verres.servir).toHaveBeenCalledWith('p1', 'L2')
+})
+
+it('nomme le bouton − d’une ligne sans alcool', () => {
+  rendreEcran()
+  expect(screen.getByRole('button', { name: 'Retirer un Mojito sans alcool' })).toBeInTheDocument()
 })
 
 it('retire le dernier verre de la ligne', () => {
@@ -115,7 +120,7 @@ it('ne retire qu’un verre sur deux taps rapides avec un seul verre', () => {
 it('annule le verre servi quand le toucher devient un défilement', () => {
   const depots = rendreEcran()
   vi.mocked(depots.verres.servir).mockReturnValueOnce('verre-servi')
-  const carte = screen.getByRole('button', { name: 'Nojito' })
+  const carte = screen.getByRole('button', { name: 'Mojito, sans alcool' })
   fireEvent.pointerDown(carte, { pointerId: 3 })
   fireEvent.pointerCancel(carte, { pointerId: 3 })
   expect(depots.verres.servir).toHaveBeenCalledWith('p1', 'L2')

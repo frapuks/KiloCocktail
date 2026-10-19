@@ -25,7 +25,6 @@ Points relevés pendant les revues de code du MVP, jugés non bloquants. À repr
 - Mocks d'auth partagés non réinitialisés globalement (`mockReset`).
 
 ## Accessibilité et finitions
-- `aria-label` des cartes de comptage sans « sans alcool » (deux cartes « Mojito » pour VoiceOver).
 - Focus initial sur le bouton dangereux dans les confirmations ; pas de piège de focus ni d'autofocus dans les fiches.
 - Barre d'onglets : aucun onglet actif sur les résultats d'une presta.
 - Couleurs en dur (`#323232`, `rgba(0,0,0,0.18)`) à remplacer par les jetons du thème.

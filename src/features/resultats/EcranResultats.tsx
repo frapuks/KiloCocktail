@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
 import { formatDate, nomLigne } from '../../domain/affichage'
+import { varianteDe } from '../../domain/lignes'
 import { totauxParLigne } from '../../domain/verres'
 import './resultats.css'
 
@@ -27,11 +28,10 @@ export function EcranResultats() {
 
   const groupe = (titre: string, variante: 'avec' | 'sans') => {
     const items = presta.lignes
-      .filter((l) => l.variante === variante)
       .flatMap((ligne) => {
         const c = cocktails.find((k) => k.id === ligne.cocktailId)
-        if (!c) return []
-        const { nom, sousTitre } = nomLigne(ligne, c)
+        if (!c || varianteDe(c) !== variante) return []
+        const { nom, sousTitre } = nomLigne(c)
         return [
           <li key={ligne.id} className="resultats-ligne">
             <span className="resultats-nom">

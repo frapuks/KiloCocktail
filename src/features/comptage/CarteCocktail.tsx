@@ -41,7 +41,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
       className={`carte carte-${variante}`}
       role="button"
       tabIndex={0}
-      aria-label={nom}
+      aria-label={sousTitre ? `${nom}, ${sousTitre}` : nom}
       onPointerDown={(e: PointerEvent) => {
         if ((e.target as Element).closest('button')) return
         plus(e.pointerId)
@@ -81,7 +81,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
       <button
         type="button"
         className="carte-moins"
-        aria-label={`Retirer un ${nom}`}
+        aria-label={`Retirer un ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
         disabled={total === 0}
         onPointerDown={(e) => {
           e.stopPropagation()

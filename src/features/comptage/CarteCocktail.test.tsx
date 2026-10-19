@@ -107,6 +107,14 @@ it('affiche nom, sous-titre et total accordé', () => {
   expect(document.querySelector('.carte-servis')).toHaveTextContent('14 servis')
 })
 
+it('nomme la carte et le bouton − avec le sous-titre', () => {
+  render(
+    <CarteCocktail nom="Mojito" sousTitre="sans alcool" total={1} variante="sans" onPlus={() => {}} onAnnulerPlus={() => {}} onMoins={() => true} />,
+  )
+  expect(screen.getByRole('button', { name: 'Mojito, sans alcool' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Retirer un Mojito sans alcool' })).toBeInTheDocument()
+})
+
 it('un tap sur le − désactivé (total 0) n’affiche rien et ne déclenche rien', () => {
   const { moins, onMoins, onPlus } = rendreCarte({ total: 0 })
   fireEvent.pointerDown(moins)

@@ -40,7 +40,7 @@ export function EcranComptage() {
   const totaux = totauxParLigne(donneesVerres.verres)
   const type = types.find((t) => t.id === presta.typeId)
   const date = formatDateLongue(presta.date)
-  const { avec, sans } = groupes(presta.lignes)
+  const { avec, sans } = groupes(presta.lignes, cocktails)
 
   const retirer = (ligneId: string) => {
     const verre = dernierVerre(donneesVerres.verres, ligneId, enCours.current)
@@ -71,7 +71,7 @@ export function EcranComptage() {
     const cartes = lignes.flatMap((ligne) => {
       const c = cocktails.find((k) => k.id === ligne.cocktailId)
       if (!c) return []
-      const { nom, sousTitre } = nomLigne(ligne, c)
+      const { nom, sousTitre } = nomLigne(c)
       return [
         <CarteCocktail
           key={ligne.id}
