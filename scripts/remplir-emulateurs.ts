@@ -18,7 +18,7 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import { normaliserNom } from '../src/domain/noms.ts';
-import type { Ligne, StatutPresta, Variante, Variantes } from '../src/domain/types.ts';
+import type { Ligne, StatutPresta } from '../src/domain/types.ts';
 
 const PROJET = 'demo-kilococktail';
 const EMAIL = 'barman@kilococktail.test';
@@ -46,27 +46,33 @@ const TYPES = [
   { id: 'soiree-privee', nom: 'Soirée privée' },
 ];
 
-const COCKTAILS: { id: string; nom: string; variantes: Variantes; nomSansAlcool?: string; archive?: boolean }[] = [
-  { id: 'mojito', nom: 'Mojito', variantes: 'les-deux', nomSansAlcool: 'Nojito' },
-  { id: 'pina-colada', nom: 'Piña Colada', variantes: 'les-deux', nomSansAlcool: 'Virgin Colada' },
-  { id: 'spritz', nom: 'Spritz', variantes: 'avec' },
-  { id: 'margarita', nom: 'Margarita', variantes: 'avec' },
-  { id: 'cosmopolitan', nom: 'Cosmopolitan', variantes: 'avec' },
-  { id: 'moscow-mule', nom: 'Moscow Mule', variantes: 'les-deux' },
-  { id: 'gin-tonic', nom: 'Gin Tonic', variantes: 'avec' },
-  { id: 'limonade-maison', nom: 'Limonade maison', variantes: 'sans' },
-  { id: 'cafe-frappe', nom: 'Café frappé', variantes: 'sans' },
-  { id: 'blue-lagoon', nom: 'Blue Lagoon', variantes: 'avec', archive: true },
-  { id: 'caipirinha', nom: 'Caïpirinha', variantes: 'avec' },
-  { id: 'daiquiri', nom: 'Daïquiri', variantes: 'les-deux', nomSansAlcool: 'Virgin Daïquiri' },
-  { id: 'negroni', nom: 'Negroni', variantes: 'avec' },
-  { id: 'espresso-martini', nom: 'Espresso Martini', variantes: 'avec' },
-  { id: 'sex-on-the-beach', nom: 'Sex on the Beach', variantes: 'les-deux', nomSansAlcool: 'Safe Sex on the Beach' },
-  { id: 'tequila-sunrise', nom: 'Tequila Sunrise', variantes: 'les-deux', nomSansAlcool: 'Sunrise' },
-  { id: 'bellini', nom: 'Bellini', variantes: 'avec' },
-  { id: 'americano', nom: 'Americano', variantes: 'avec', archive: true },
-  { id: 'citronnade-menthe', nom: 'Citronnade à la menthe', variantes: 'sans' },
-  { id: 'the-glace-peche', nom: 'Thé glacé pêche', variantes: 'sans' },
+const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean }[] = [
+  { id: 'mojito', nom: 'Mojito', alcool: true },
+  { id: 'nojito', nom: 'Nojito', alcool: false },
+  { id: 'pina-colada', nom: 'Piña Colada', alcool: true },
+  { id: 'virgin-colada', nom: 'Virgin Colada', alcool: false },
+  { id: 'spritz', nom: 'Spritz', alcool: true },
+  { id: 'margarita', nom: 'Margarita', alcool: true },
+  { id: 'cosmopolitan', nom: 'Cosmopolitan', alcool: true },
+  { id: 'moscow-mule', nom: 'Moscow Mule', alcool: true },
+  { id: 'moscow-mule-sans-alcool', nom: 'Moscow Mule', alcool: false },
+  { id: 'gin-tonic', nom: 'Gin Tonic', alcool: true },
+  { id: 'limonade-maison', nom: 'Limonade maison', alcool: false },
+  { id: 'cafe-frappe', nom: 'Café frappé', alcool: false },
+  { id: 'blue-lagoon', nom: 'Blue Lagoon', alcool: true, archive: true },
+  { id: 'caipirinha', nom: 'Caïpirinha', alcool: true },
+  { id: 'daiquiri', nom: 'Daïquiri', alcool: true },
+  { id: 'virgin-daiquiri', nom: 'Virgin Daïquiri', alcool: false },
+  { id: 'negroni', nom: 'Negroni', alcool: true },
+  { id: 'espresso-martini', nom: 'Espresso Martini', alcool: true },
+  { id: 'sex-on-the-beach', nom: 'Sex on the Beach', alcool: true },
+  { id: 'safe-sex-on-the-beach', nom: 'Safe Sex on the Beach', alcool: false },
+  { id: 'tequila-sunrise', nom: 'Tequila Sunrise', alcool: true },
+  { id: 'sunrise', nom: 'Sunrise', alcool: false },
+  { id: 'bellini', nom: 'Bellini', alcool: true },
+  { id: 'americano', nom: 'Americano', alcool: true, archive: true },
+  { id: 'citronnade-menthe', nom: 'Citronnade à la menthe', alcool: false },
+  { id: 'the-glace-peche', nom: 'Thé glacé pêche', alcool: false },
 ];
 
 interface PrestaDemo {
@@ -74,78 +80,78 @@ interface PrestaDemo {
   client: string | null;
   typeId: string | null;
   statut: StatutPresta;
-  cocktails: { id: string; variantes?: Variante[] }[];
+  cocktails: string[];
   servis: [number, number]; // fourchette de verres par ligne
 }
 
 const PRESTAS: PrestaDemo[] = [
   {
     decalageJours: -62, client: 'Julie Martin', typeId: 'anniversaire', statut: 'terminee', servis: [10, 40],
-    cocktails: [{ id: 'mojito' }, { id: 'spritz' }, { id: 'limonade-maison' }],
+    cocktails: ['mojito', 'nojito', 'spritz', 'limonade-maison'],
   },
   {
     decalageJours: -41, client: 'Acme SAS', typeId: 'soiree-entreprise', statut: 'terminee', servis: [30, 90],
-    cocktails: [{ id: 'gin-tonic' }, { id: 'moscow-mule' }, { id: 'margarita' }, { id: 'cafe-frappe' }],
+    cocktails: ['gin-tonic', 'moscow-mule', 'moscow-mule-sans-alcool', 'margarita', 'cafe-frappe'],
   },
   {
     decalageJours: -20, client: 'Léa & Thomas', typeId: 'mariage', statut: 'terminee', servis: [40, 120],
-    cocktails: [{ id: 'mojito' }, { id: 'pina-colada' }, { id: 'cosmopolitan' }, { id: 'spritz' }],
+    cocktails: ['mojito', 'nojito', 'pina-colada', 'virgin-colada', 'cosmopolitan', 'spritz'],
   },
   {
     decalageJours: -9, client: null, typeId: 'cocktail-dinatoire', statut: 'terminee', servis: [5, 25],
-    cocktails: [{ id: 'spritz' }, { id: 'pina-colada', variantes: ['sans'] }],
+    cocktails: ['spritz', 'virgin-colada'],
   },
   {
     decalageJours: -2, client: 'Mairie de Lyon', typeId: null, statut: 'terminee', servis: [15, 50],
-    cocktails: [{ id: 'gin-tonic' }, { id: 'limonade-maison' }, { id: 'mojito', variantes: ['avec'] }],
+    cocktails: ['gin-tonic', 'limonade-maison', 'mojito'],
   },
   {
     decalageJours: 0, client: 'Nadia Benali', typeId: 'anniversaire', statut: 'en-cours', servis: [0, 12],
-    cocktails: [{ id: 'mojito' }, { id: 'margarita' }, { id: 'moscow-mule' }, { id: 'limonade-maison' }],
+    cocktails: ['mojito', 'nojito', 'margarita', 'moscow-mule', 'moscow-mule-sans-alcool', 'limonade-maison'],
   },
   {
     decalageJours: 5, client: 'Studio Pixel', typeId: 'soiree-entreprise', statut: 'en-cours', servis: [0, 0],
-    cocktails: [{ id: 'cosmopolitan' }, { id: 'gin-tonic' }, { id: 'cafe-frappe' }],
+    cocktails: ['cosmopolitan', 'gin-tonic', 'cafe-frappe'],
   },
   {
     decalageJours: -180, client: 'Camille Durand', typeId: 'anniversaire', statut: 'terminee', servis: [8, 30],
-    cocktails: [{ id: 'caipirinha' }, { id: 'daiquiri' }, { id: 'the-glace-peche' }],
+    cocktails: ['caipirinha', 'daiquiri', 'virgin-daiquiri', 'the-glace-peche'],
   },
   {
     decalageJours: -165, client: 'BNP Paribas', typeId: 'soiree-entreprise', statut: 'terminee', servis: [50, 140],
-    cocktails: [{ id: 'negroni' }, { id: 'espresso-martini' }, { id: 'gin-tonic' }, { id: 'citronnade-menthe' }],
+    cocktails: ['negroni', 'espresso-martini', 'gin-tonic', 'citronnade-menthe'],
   },
   {
     decalageJours: -150, client: 'Sarah & Mehdi', typeId: 'mariage', statut: 'terminee', servis: [60, 160],
-    cocktails: [{ id: 'bellini' }, { id: 'mojito' }, { id: 'sex-on-the-beach' }, { id: 'tequila-sunrise' }],
+    cocktails: ['bellini', 'mojito', 'nojito', 'sex-on-the-beach', 'safe-sex-on-the-beach', 'tequila-sunrise', 'sunrise'],
   },
   {
     decalageJours: -133, client: 'Famille Rousseau', typeId: 'bapteme', statut: 'terminee', servis: [5, 20],
-    cocktails: [{ id: 'bellini' }, { id: 'limonade-maison' }, { id: 'the-glace-peche' }],
+    cocktails: ['bellini', 'limonade-maison', 'the-glace-peche'],
   },
   {
     decalageJours: -118, client: 'Galerie Nord', typeId: 'cocktail-dinatoire', statut: 'terminee', servis: [15, 45],
-    cocktails: [{ id: 'americano' }, { id: 'negroni' }, { id: 'spritz' }],
+    cocktails: ['americano', 'negroni', 'spritz'],
   },
   {
     decalageJours: -104, client: null, typeId: null, statut: 'terminee', servis: [10, 35],
-    cocktails: [{ id: 'blue-lagoon' }, { id: 'pina-colada' }, { id: 'caipirinha' }],
+    cocktails: ['blue-lagoon', 'pina-colada', 'virgin-colada', 'caipirinha'],
   },
   {
     decalageJours: -90, client: 'Hugo Lefebvre', typeId: 'anniversaire', statut: 'terminee', servis: [12, 40],
-    cocktails: [{ id: 'sex-on-the-beach' }, { id: 'margarita' }, { id: 'moscow-mule', variantes: ['avec'] }],
+    cocktails: ['sex-on-the-beach', 'safe-sex-on-the-beach', 'margarita', 'moscow-mule'],
   },
   {
     decalageJours: -76, client: 'Decathlon Lille', typeId: 'soiree-entreprise', statut: 'terminee', servis: [40, 110],
-    cocktails: [{ id: 'mojito' }, { id: 'gin-tonic' }, { id: 'espresso-martini' }, { id: 'cafe-frappe' }],
+    cocktails: ['mojito', 'nojito', 'gin-tonic', 'espresso-martini', 'cafe-frappe'],
   },
   {
     decalageJours: -55, client: 'Emma & Lucas', typeId: 'mariage', statut: 'terminee', servis: [70, 180],
-    cocktails: [{ id: 'spritz' }, { id: 'daiquiri' }, { id: 'cosmopolitan' }, { id: 'citronnade-menthe' }],
+    cocktails: ['spritz', 'daiquiri', 'virgin-daiquiri', 'cosmopolitan', 'citronnade-menthe'],
   },
   {
     decalageJours: -30, client: 'Association Les Lilas', typeId: 'cocktail-dinatoire', statut: 'terminee', servis: [10, 30],
-    cocktails: [{ id: 'tequila-sunrise', variantes: ['sans'] }, { id: 'limonade-maison' }, { id: 'bellini' }],
+    cocktails: ['sunrise', 'limonade-maison', 'bellini'],
   },
 ];
 
@@ -153,12 +159,6 @@ function dateIso(decalageJours: number): string {
   const d = new Date();
   d.setDate(d.getDate() + decalageJours);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function variantesDe(id: string): Variante[] {
-  const c = COCKTAILS.find((x) => x.id === id);
-  if (!c) throw new Error(`Cocktail inconnu : ${id}`);
-  return c.variantes === 'les-deux' ? ['avec', 'sans'] : [c.variantes];
 }
 
 async function connecter(): Promise<{ db: Firestore; uid: string }> {
@@ -199,8 +199,7 @@ async function main() {
     lot.set(doc(db, ...racine, 'cocktails', c.id), {
       nom: c.nom,
       nomNormalise: normaliserNom(c.nom),
-      variantes: c.variantes,
-      nomSansAlcool: c.nomSansAlcool ?? null,
+      alcool: c.alcool,
       archive: c.archive ?? false,
     });
   }
@@ -209,9 +208,7 @@ async function main() {
   let totalVerres = 0;
   for (const [i, p] of PRESTAS.entries()) {
     const prestaId = `presta-${i + 1}`;
-    const lignes: Ligne[] = p.cocktails.flatMap(({ id, variantes }) =>
-      (variantes ?? variantesDe(id)).map((variante) => ({ id: crypto.randomUUID(), cocktailId: id, variante, masquee: false })),
-    );
+    const lignes: Ligne[] = p.cocktails.map((cocktailId) => ({ id: crypto.randomUUID(), cocktailId, masquee: false }));
     const date = dateIso(p.decalageJours);
     const lotPresta = writeBatch(db);
     lotPresta.set(doc(db, ...racine, 'prestas', prestaId), { date, client: p.client, typeId: p.typeId, lignes, statut: p.statut });

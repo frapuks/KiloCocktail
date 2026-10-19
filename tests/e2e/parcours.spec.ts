@@ -17,33 +17,31 @@ async function creerCompteEtSeConnecter(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Nouvelle presta' })).toBeVisible()
 }
 
-async function creerCocktail(page: Page, nom: string, nomSansAlcool?: string): Promise<void> {
+async function creerCocktail(page: Page, nom: string, alcool = true): Promise<void> {
   await page.getByRole('link', { name: 'Cocktails' }).click()
   await page.getByRole('button', { name: 'Nouveau cocktail' }).click()
   await page.getByLabel('Nom', { exact: true }).fill(nom)
-  if (nomSansAlcool) {
-    await page.getByLabel('Les deux').check()
-    await page.getByLabel('Nom de la version sans alcool').fill(nomSansAlcool)
-  }
+  if (!alcool) await page.getByLabel('Sans alcool').check()
   await page.getByRole('button', { name: 'Enregistrer' }).click()
   await expect(page.getByRole('button', { name: new RegExp(nom) })).toBeVisible()
 }
 
-async function demarrerPresta(page: Page, client: string, cocktail: string): Promise<void> {
+async function demarrerPresta(page: Page, client: string, cocktails: string[]): Promise<void> {
   await page.getByRole('link', { name: 'Prestas' }).click()
   await page.getByRole('button', { name: 'Nouvelle presta' }).click()
   await page.getByLabel('Client').fill(client)
-  await page.getByRole('checkbox', { name: cocktail }).check()
+  for (const nom of cocktails) await page.getByRole('checkbox', { name: new RegExp(nom) }).check()
   await page.getByRole('button', { name: 'Commencer la presta' }).click()
 }
 
 test('parcours complet : cocktail, presta, comptage, résultats', async ({ page }) => {
   await creerCompteEtSeConnecter(page)
-  await creerCocktail(page, 'Mojito', 'Nojito')
-  await demarrerPresta(page, 'Julie Martin', 'Mojito')
+  await creerCocktail(page, 'Mojito')
+  await creerCocktail(page, 'Nojito', false)
+  await demarrerPresta(page, 'Julie Martin', ['Mojito', 'Nojito'])
 
   const mojito = page.getByRole('button', { name: 'Mojito', exact: true })
-  const nojito = page.getByRole('button', { name: 'Nojito', exact: true })
+  const nojito = page.getByRole('button', { name: 'Nojito, sans alcool', exact: true })
   await expect(mojito).toBeVisible()
   await expect(nojito).toBeVisible()
 
@@ -68,7 +66,7 @@ test('les noms longs ne débordent pas en portrait', async ({ page }) => {
   const nom = 'Moscow Mule Gingembre Royal'
   await creerCompteEtSeConnecter(page)
   await creerCocktail(page, nom)
-  await demarrerPresta(page, 'Client portrait', nom)
+  await demarrerPresta(page, 'Client portrait', [nom])
 
   const elementNom = page.locator('.carte-nom').filter({ hasText: nom })
   await expect(elementNom).toBeVisible()
