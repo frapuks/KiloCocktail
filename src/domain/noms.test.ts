@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { messageDoublon, normaliserNom, trouverDoublon } from './noms';
+import type { Cocktail } from './types';
+import { messageDoublon, messageDoublonCocktail, normaliserNom, trouverDoublon, trouverDoublonCocktail } from './noms';
+
+const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
+const nojito: Cocktail = { ...mojito, id: 'n', alcool: false };
 
 describe('noms', () => {
   it('normalise espaces, casse et accents', () => {
@@ -17,5 +21,16 @@ describe('noms', () => {
     expect(messageDoublon('Un cocktail', { nom: 'Mojito', archive: true })).toBe(
       'Un cocktail “Mojito” existe déjà dans les archivés. Désarchive-le plutôt.',
     );
+  });
+  it('cherche un doublon de cocktail sur le couple (nom, alcool)', () => {
+    expect(trouverDoublonCocktail([mojito], 'MOJITO', true)?.id).toBe('m');
+    expect(trouverDoublonCocktail([mojito], 'Mojito', false)).toBeNull();
+    expect(trouverDoublonCocktail([mojito, nojito], 'Mojito', false, 'm')?.id).toBe('n');
+    expect(trouverDoublonCocktail([mojito, nojito], 'Mojito', true, 'm')).toBeNull();
+  });
+  it('précise la version dans le message de doublon', () => {
+    expect(messageDoublonCocktail(nojito)).toBe('Un cocktail “Mojito” sans alcool existe déjà');
+    expect(messageDoublonCocktail({ ...mojito, archive: true })).toBe(
+      'Un cocktail “Mojito” avec alcool existe déjà dans les archivés. Désarchive-le plutôt.');
   });
 });

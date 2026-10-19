@@ -1,20 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { Cocktail, Ligne, Variante } from './types';
-import { dateDuJour, formatDate, formatDateLongue, libelleServis, nomLigne, nomPresta } from './affichage';
+import type { Cocktail } from './types';
+import { comparerCocktails, dateDuJour, formatDate, formatDateLongue, libelleServis, nomLigne, nomPresta } from './affichage';
 
-const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', variantes: 'les-deux', nomSansAlcool: 'Nojito', archive: false };
-const mule: Cocktail = { ...mojito, id: 'mm', nom: 'Moscow Mule', nomSansAlcool: null };
-const colada: Cocktail = { ...mojito, id: 'c', nom: 'Virgin Colada', variantes: 'sans', nomSansAlcool: null };
-const l = (cocktailId: string, variante: Variante): Ligne => ({ id: 'x', cocktailId, variante, masquee: false });
+const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
+const nojito: Cocktail = { ...mojito, id: 'n', alcool: false };
+const mule: Cocktail = { id: 'u', nom: 'Moscow Mule', nomNormalise: 'moscow mule', alcool: true, archive: false };
 
 describe('affichage', () => {
-  it('nomme une ligne avec alcool sans sous-titre', () => {
-    expect(nomLigne(l('m', 'avec'), mojito)).toEqual({ nom: 'Mojito', sousTitre: null });
+  it('nomme un cocktail avec alcool sans sous-titre, sans alcool avec sous-titre', () => {
+    expect(nomLigne(mojito)).toEqual({ nom: 'Mojito', sousTitre: null });
+    expect(nomLigne(nojito)).toEqual({ nom: 'Mojito', sousTitre: 'sans alcool' });
   });
-  it('utilise le nom sans alcool s’il existe, toujours avec le sous-titre', () => {
-    expect(nomLigne(l('m', 'sans'), mojito)).toEqual({ nom: 'Nojito', sousTitre: 'sans alcool' });
-    expect(nomLigne(l('mm', 'sans'), mule)).toEqual({ nom: 'Moscow Mule', sousTitre: 'sans alcool' });
-    expect(nomLigne(l('c', 'sans'), colada)).toEqual({ nom: 'Virgin Colada', sousTitre: 'sans alcool' });
+  it('compare par nom puis avec alcool avant sans', () => {
+    expect([nojito, mule, mojito].sort(comparerCocktails)).toEqual([mojito, nojito, mule]);
   });
   it('formate les dates', () => {
     expect(formatDate('2026-10-17')).toBe('17/10/2026');

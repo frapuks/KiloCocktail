@@ -1,49 +1,31 @@
 import type { Cocktail, Ligne, Variante } from './types';
+import { comparerCocktails } from './affichage';
 
-export function variantesDisponibles(c: Cocktail): Variante[] {
-  if (c.variantes === 'les-deux') return ['avec', 'sans'];
-  return [c.variantes];
+export function varianteDe(c: Cocktail): Variante {
+  return c.alcool ? 'avec' : 'sans';
 }
 
 export function groupes(
   lignes: Ligne[],
+  cocktails: Cocktail[],
   options: { masquees?: boolean } = {},
 ): { avec: Ligne[]; sans: Ligne[] } {
   const masquees = options.masquees ?? false;
+  const parId = new Map(cocktails.map((c) => [c.id, c]));
   const retenues = lignes.filter((l) => l.masquee === masquees);
-  return {
-    avec: retenues.filter((l) => l.variante === 'avec'),
-    sans: retenues.filter((l) => l.variante === 'sans'),
-  };
+  const dans = (v: Variante) =>
+    retenues.filter((l) => {
+      const c = parId.get(l.cocktailId);
+      return c !== undefined && varianteDe(c) === v;
+    });
+  return { avec: dans('avec'), sans: dans('sans') };
 }
 
-export function basculerCocktail(
-  lignes: Ligne[],
-  c: Cocktail,
-  genId: () => string,
-  variantes: Variante[] = variantesDisponibles(c),
-): Ligne[] {
+export function basculerCocktail(lignes: Ligne[], c: Cocktail, genId: () => string): Ligne[] {
   if (lignes.some((l) => l.cocktailId === c.id)) {
     return lignes.filter((l) => l.cocktailId !== c.id);
   }
-  const ajouts = variantes.map<Ligne>((variante) => ({
-    id: genId(),
-    cocktailId: c.id,
-    variante,
-    masquee: false,
-  }));
-  return [...lignes, ...ajouts];
-}
-
-export function basculerVariante(
-  lignes: Ligne[],
-  cocktailId: string,
-  variante: Variante,
-  genId: () => string,
-): Ligne[] {
-  const existe = lignes.some((l) => l.cocktailId === cocktailId && l.variante === variante);
-  if (existe) return lignes.filter((l) => !(l.cocktailId === cocktailId && l.variante === variante));
-  return [...lignes, { id: genId(), cocktailId, variante, masquee: false }];
+  return [...lignes, { id: genId(), cocktailId: c.id, masquee: false }];
 }
 
 function arrayMove<T>(tableau: T[], de: number, vers: number): T[] {
@@ -55,13 +37,16 @@ function arrayMove<T>(tableau: T[], de: number, vers: number): T[] {
 
 export function deplacerDansGroupe(
   lignes: Ligne[],
+  cocktails: Cocktail[],
   variante: Variante,
   de: number,
   vers: number,
 ): Ligne[] {
+  const parId = new Map(cocktails.map((c) => [c.id, c]));
   const indices: number[] = [];
   lignes.forEach((l, i) => {
-    if (l.variante === variante && !l.masquee) indices.push(i);
+    const c = parId.get(l.cocktailId);
+    if (c && varianteDe(c) === variante && !l.masquee) indices.push(i);
   });
   const reordonnees = arrayMove(indices.map((i) => lignes[i]), de, vers);
   const resultat = [...lignes];
@@ -89,18 +74,8 @@ export function typeRetrait(total: number): 'direct' | 'choix' {
   return total === 0 ? 'direct' : 'choix';
 }
 
-export function optionsAbsentes(
-  cocktails: Cocktail[],
-  lignes: Ligne[],
-): { cocktail: Cocktail; variantes: Variante[] }[] {
+export function optionsAbsentes(cocktails: Cocktail[], lignes: Ligne[]): Cocktail[] {
   return cocktails
-    .filter((c) => !c.archive)
-    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
-    .map((cocktail) => ({
-      cocktail,
-      variantes: variantesDisponibles(cocktail).filter(
-        (v) => !lignes.some((l) => l.cocktailId === cocktail.id && l.variante === v),
-      ),
-    }))
-    .filter((o) => o.variantes.length > 0);
+    .filter((c) => !c.archive && !lignes.some((l) => l.cocktailId === c.id))
+    .sort(comparerCocktails);
 }

@@ -9,8 +9,7 @@ function champs(d: DonneesCocktail) {
   return {
     nom: d.nom,
     nomNormalise: normaliserNom(d.nom),
-    variantes: d.variantes,
-    nomSansAlcool: d.nomSansAlcool,
+    alcool: d.alcool,
   };
 }
 
@@ -19,7 +18,7 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
   return {
     ecouter(cb) {
       return onSnapshot(col, (snap) => {
-        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Cocktail));
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data(), alcool: d.data().alcool ?? true }) as Cocktail));
       });
     },
     creer(d) {

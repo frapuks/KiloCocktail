@@ -1,8 +1,8 @@
-import type { Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Variantes, Verre } from '../domain/types';
+import type { Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
 import type { EtatSauvegarde } from '../domain/sauvegarde';
 
 export type Desabonner = () => void;
-export interface DonneesCocktail { nom: string; variantes: Variantes; nomSansAlcool: string | null }
+export interface DonneesCocktail { nom: string; alcool: boolean }
 export interface DonneesPresta { date: string; client: string | null; typeId: string | null; lignes: Ligne[] }
 export interface DepotCocktails {
   ecouter(cb: (cocktails: Cocktail[]) => void): Desabonner;  // tous, archivés compris

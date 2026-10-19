@@ -1,8 +1,13 @@
-import type { Cocktail, Ligne } from './types';
+import type { Cocktail } from './types';
 
-export function nomLigne(ligne: Ligne, cocktail: Cocktail): { nom: string; sousTitre: 'sans alcool' | null } {
-  if (ligne.variante === 'avec') return { nom: cocktail.nom, sousTitre: null };
-  return { nom: cocktail.nomSansAlcool ?? cocktail.nom, sousTitre: 'sans alcool' };
+export function nomLigne(c: Cocktail): { nom: string; sousTitre: 'sans alcool' | null } {
+  return { nom: c.nom, sousTitre: c.alcool ? null : 'sans alcool' };
+}
+
+export function comparerCocktails(a: Cocktail, b: Cocktail): number {
+  const parNom = a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
+  if (parNom !== 0) return parNom;
+  return Number(b.alcool) - Number(a.alcool);
 }
 
 function decouper(date: string): [number, number, number] {
