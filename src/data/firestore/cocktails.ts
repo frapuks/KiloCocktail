@@ -18,7 +18,18 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
   return {
     ecouter(cb) {
       return onSnapshot(col, (snap) => {
-        cb(snap.docs.map((d) => ({ id: d.id, ...d.data(), alcool: d.data().alcool ?? true }) as Cocktail));
+        cb(
+          snap.docs.map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              nom: data.nom,
+              nomNormalise: data.nomNormalise,
+              alcool: data.alcool ?? true,
+              archive: data.archive,
+            } as Cocktail;
+          }),
+        );
       });
     },
     creer(d) {

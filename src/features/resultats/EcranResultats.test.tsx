@@ -51,7 +51,7 @@ it('affiche « — » pour un client ou un type vide', () => {
   expect(screen.getAllByText('—')).toHaveLength(2)
 })
 
-it('liste une ligne par variante, masquées comprises, dans l’ordre du comptage', () => {
+it('liste une ligne par cocktail, masquées comprises, dans l’ordre du comptage', () => {
   rendreEcran()
   expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Avec alcool', 'Sans alcool'])
   const lignes = screen.getAllByRole('listitem').map((li) => li.textContent)

@@ -26,7 +26,7 @@ function decouper<T>(liste: T[], taille: number): T[][] {
 }
 
 function champs(d: DonneesPresta) {
-  return { date: d.date, client: d.client, typeId: d.typeId, lignes: d.lignes };
+  return { date: d.date, client: d.client, typeId: d.typeId, lignes: d.lignes.map(({ id, cocktailId, masquee }) => ({ id, cocktailId, masquee })) };
 }
 
 // Derniers totaux servis connus, gardés sur l'appareil : la liste les affiche tout de suite

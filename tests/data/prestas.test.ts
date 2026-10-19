@@ -18,9 +18,9 @@ beforeEach(async () => {
   verres = depots.verres;
 });
 
-const L1: Ligne = { id: 'L1', cocktailId: 'c1', variante: 'avec', masquee: false };
-const L2: Ligne = { id: 'L2', cocktailId: 'c2', variante: 'sans', masquee: false };
-const L3: Ligne = { id: 'L3', cocktailId: 'c3', variante: 'avec', masquee: true };
+const L1: Ligne = { id: 'L1', cocktailId: 'c1', masquee: false };
+const L2: Ligne = { id: 'L2', cocktailId: 'c2', masquee: false };
+const L3: Ligne = { id: 'L3', cocktailId: 'c3', masquee: true };
 const donnees: DonneesPresta = { date: '2026-10-17', client: 'Dupont', typeId: 'anniversaire', lignes: [L2, L1, L3] };
 
 // modifier et supprimer lisent les verres dans le cache local : comme l'écran Modifier, on les écoute d'abord.
@@ -45,6 +45,15 @@ describe('dépôt des prestas', () => {
     expect(p!.lignes.map((l) => l.id)).toEqual(['L2', 'L1', 'L3']);
     const liste = await prochaineValeur((cb) => prestas.ecouterListe(cb));
     expect(liste.map((x) => x.id)).toEqual([id]);
+  });
+
+  it('écrit les lignes sans champ hérité', async () => {
+    const heritee = { ...L1, variante: 'avec' } as Ligne;
+    const id = prestas.creer({ ...donnees, lignes: [heritee] });
+    await attendre(db);
+    const p = await prochaineValeur((cb) => prestas.ecouter(id, cb));
+    expect(p!.lignes).toEqual([L1]);
+    expect(Object.keys(p!.lignes[0]).sort()).toEqual(['cocktailId', 'id', 'masquee']);
   });
 
   it('renvoie null pour une presta inexistante', async () => {

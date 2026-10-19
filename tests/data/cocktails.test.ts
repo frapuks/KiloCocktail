@@ -52,4 +52,17 @@ describe('dépôt des cocktails', () => {
     await attendre(db);
     expect((await prochaineValeur(depot.ecouter))[0].alcool).toBe(true);
   });
+
+  it('ne garde pas en mémoire les champs hérités de l’ancien modèle', async () => {
+    await setDoc(doc(colCocktails(db, uid)), {
+      nom: 'Spritz',
+      nomNormalise: 'spritz',
+      archive: false,
+      variantes: 'les-deux',
+      nomSansAlcool: 'Spritz zéro',
+    });
+    await attendre(db);
+    const [c] = await prochaineValeur(depot.ecouter);
+    expect(Object.keys(c).sort()).toEqual(['alcool', 'archive', 'id', 'nom', 'nomNormalise']);
+  });
 });
