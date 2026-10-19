@@ -1,20 +1,20 @@
 import { useState } from 'react'
 import type { DonneesCocktail } from '../../data/depots'
-import { basculerCocktail, basculerVariante } from '../../domain/lignes'
+import { basculerCocktail } from '../../domain/lignes'
 import { normaliserNom } from '../../domain/noms'
-import type { Cocktail, Ligne, Variante } from '../../domain/types'
+import type { Cocktail, Ligne } from '../../domain/types'
 import { bouton } from '../../ui/FeuilleModale'
 import { FicheCocktail } from '../cocktails/FicheCocktail'
 
 interface Props {
-  options: { cocktail: Cocktail; variantes: Variante[] }[]
+  options: Cocktail[]
   lignes: Ligne[]
   onChange(lignes: Ligne[]): void
   onCreerCocktail(d: DonneesCocktail): string
   catalogue?: Cocktail[]
 }
 
-const LIBELLES: Record<Variante, string> = { avec: 'Avec alcool', sans: 'Sans alcool' }
+const pastille = { fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999, color: 'var(--texte)', whiteSpace: 'nowrap' } as const
 const genId = () => crypto.randomUUID()
 
 export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail, catalogue }: Props) {
@@ -23,36 +23,19 @@ export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail,
   return (
     <>
       <ul style={{ margin: 0, padding: 0 }}>
-        {options.map(({ cocktail, variantes }) => (
-          <li
-            key={cocktail.id}
-            style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, flexWrap: 'wrap' }}
-          >
-            <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+        {options.map((cocktail) => (
+          <li key={cocktail.id} style={{ listStyle: 'none', minHeight: 44 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
               <input
                 type="checkbox"
                 checked={lignes.some((l) => l.cocktailId === cocktail.id)}
-                onChange={() => onChange(basculerCocktail(lignes, cocktail, genId, variantes))}
+                onChange={() => onChange(basculerCocktail(lignes, cocktail, genId))}
               />
               {cocktail.nom}
+              <span style={{ ...pastille, background: cocktail.alcool ? 'var(--avec)' : 'var(--sans)' }}>
+                {cocktail.alcool ? 'Avec alcool' : 'Sans alcool'}
+              </span>
             </label>
-            {variantes.map((v) => {
-              const active = lignes.some((l) => l.cocktailId === cocktail.id && l.variante === v)
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => onChange(basculerVariante(lignes, cocktail.id, v, genId))}
-                  style={{
-                    ...bouton,
-                    background: active ? (v === 'avec' ? 'var(--avec)' : 'var(--sans)') : 'transparent',
-                  }}
-                >
-                  {LIBELLES[v]}
-                </button>
-              )
-            })}
           </li>
         ))}
       </ul>
@@ -61,7 +44,7 @@ export function SelecteurCocktails({ options, lignes, onChange, onCreerCocktail,
       </button>
       {fiche && (
         <FicheCocktail
-          cocktails={catalogue ?? options.map((o) => o.cocktail)}
+          cocktails={catalogue ?? options}
           onAnnuler={() => setFiche(false)}
           onEnregistrer={(d) => {
             const id = onCreerCocktail(d)

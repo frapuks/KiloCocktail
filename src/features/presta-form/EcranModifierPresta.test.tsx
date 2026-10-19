@@ -8,18 +8,19 @@ import { creerDepotsFactices } from '../../test/depotsFactices'
 import { EcranModifierPresta } from './EcranModifierPresta'
 
 const c = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cocktail => ({
-  id, nom, nomNormalise: nom.toLowerCase(), variantes: 'avec', nomSansAlcool: null, archive: false, ...extra,
+  id, nom, nomNormalise: nom.toLowerCase(), alcool: true, archive: false, ...extra,
 })
-const mojito = c('m', 'Mojito', { variantes: 'les-deux', nomSansAlcool: 'Nojito' })
+const mojito = c('m', 'Mojito')
+const nojito = c('n', 'Nojito', { alcool: false })
 const spritz = c('s', 'Spritz', { archive: true })
-const mule = c('mm', 'Moscow Mule', { variantes: 'les-deux' })
+const mule = c('mm', 'Moscow Mule')
 
 const presta: Presta = {
   id: 'p1', date: '2026-10-17', client: 'Julie Martin', typeId: 't1', statut: 'en-cours',
   lignes: [
-    { id: 'L1', cocktailId: 'm', variante: 'avec', masquee: false },
-    { id: 'L2', cocktailId: 's', variante: 'avec', masquee: false },
-    { id: 'L3', cocktailId: 'm', variante: 'sans', masquee: true },
+    { id: 'L1', cocktailId: 'm', masquee: false },
+    { id: 'L2', cocktailId: 's', masquee: false },
+    { id: 'L3', cocktailId: 'n', masquee: true },
   ],
 }
 const v = (id: string, ligneId: string): Verre => ({ id, ligneId, creeLe: 1, enAttente: false })
@@ -29,7 +30,7 @@ const types = [
   { id: 't2', nom: 'Anniversaire', nomNormalise: 'anniversaire', archive: false },
 ]
 
-function ecran(depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })) {
+function ecran(depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })) {
   render(
     <MemoryRouter initialEntries={['/prestas/p1', '/prestas/p1/modifier']} initialIndex={1}>
       <DepotsProvider depots={depots}>
@@ -46,7 +47,7 @@ function ecran(depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule],
 
 // Écran ouvert directement (lien, rechargement) : aucune page précédente dans l'historique.
 function ecranSansHistorique(p: Presta) {
-  const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [p], verres })
+  const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [p], verres })
   render(
     <MemoryRouter initialEntries={['/prestas/p1/modifier']}>
       <DepotsProvider depots={depots}>
@@ -94,9 +95,9 @@ describe('EcranModifierPresta', () => {
     expect(d.getByRole('button', { name: 'Annuler' })).toBeTruthy()
   })
 
-  it('nomme la variante sans alcool dans le dialogue de retrait', () => {
+  it('nomme la version sans alcool dans le dialogue de retrait', () => {
     const p = { ...presta, lignes: [presta.lignes[0], { ...presta.lignes[2], masquee: false }] }
-    ecran(creerDepotsFactices({ cocktails: [mojito], types, prestas: [p], verres }))
+    ecran(creerDepotsFactices({ cocktails: [mojito, nojito], types, prestas: [p], verres }))
     fireEvent.click(within(ligne('Nojito')).getByRole('button', { name: 'Retirer' }))
     const d = within(screen.getByRole('dialog', { name: 'Retirer Nojito (sans alcool) ?' }))
     expect(d.getByRole('button', { name: 'Masquer du comptage (garder les 2 servis)' })).toBeTruthy()
@@ -104,7 +105,7 @@ describe('EcranModifierPresta', () => {
   })
 
   it('accorde le dialogue de retrait pour un seul verre servi', () => {
-    ecran(creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres: { p1: [v('1', 'L1')] } }))
+    ecran(creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres: { p1: [v('1', 'L1')] } }))
     fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
     const d = within(screen.getByRole('dialog', { name: 'Retirer Mojito ?' }))
     expect(d.getByRole('button', { name: 'Masquer du comptage (garder le 1 servi)' })).toBeTruthy()
@@ -120,7 +121,7 @@ describe('EcranModifierPresta', () => {
     expect(depots.prestas.modifier).toHaveBeenCalledWith(
       'p1',
       expect.objectContaining({
-        lignes: [{ id: 'L1', cocktailId: 'm', variante: 'avec', masquee: true }, presta.lignes[1], presta.lignes[2]],
+        lignes: [{ id: 'L1', cocktailId: 'm', masquee: true }, presta.lignes[1], presta.lignes[2]],
       }),
       [],
     )
@@ -148,7 +149,7 @@ describe('EcranModifierPresta', () => {
     expect(within(screen.getByRole('list', { name: 'Sans alcool' })).getByText('Nojito')).toBeTruthy()
   })
 
-  it('ajoute seulement les cocktails et variantes absents', () => {
+  it('ajoute seulement les cocktails absents', () => {
     const depots = ecran()
     clic('+ Ajouter')
     const feuille = within(screen.getByRole('dialog', { name: 'Ajouter des cocktails' }))
@@ -166,40 +167,16 @@ describe('EcranModifierPresta', () => {
       expect.stringContaining('Spritz'),
       expect.stringContaining('Moscow Mule'),
     ])
-    expect(within(screen.getByRole('list', { name: 'Sans alcool' })).getByText('Moscow Mule')).toBeTruthy()
     clic('Enregistrer')
     expect(depots.prestas.modifier).toHaveBeenCalledWith(
       'p1',
       expect.objectContaining({
         lignes: [
           ...presta.lignes,
-          expect.objectContaining({ cocktailId: 'mm', variante: 'avec', masquee: false }),
-          expect.objectContaining({ cocktailId: 'mm', variante: 'sans', masquee: false }),
+          expect.objectContaining({ cocktailId: 'mm', masquee: false }),
         ],
       }),
       [],
-    )
-  })
-
-  it('n’ajoute pas une variante déjà présente quand le cocktail est partiellement présent', () => {
-    const depots = ecran()
-    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
-    clic('Supprimer avec ses 3 servis')
-    clic('+ Ajouter')
-    const feuille = within(screen.getByRole('dialog', { name: 'Ajouter des cocktails' }))
-    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
-    fireEvent.click(feuille.getByRole('button', { name: 'Ajouter' }))
-    clic('Enregistrer')
-    expect(depots.prestas.modifier).toHaveBeenCalledWith(
-      'p1',
-      expect.objectContaining({
-        lignes: [
-          presta.lignes[1],
-          presta.lignes[2],
-          { id: expect.any(String), cocktailId: 'm', variante: 'avec', masquee: false },
-        ],
-      }),
-      ['L1'],
     )
   })
 
@@ -258,7 +235,7 @@ describe('EcranModifierPresta', () => {
   })
 
   it('n’enregistre qu’une fois sur un double tap', async () => {
-    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     let terminer = () => {}
     vi.mocked(depots.prestas.modifier).mockReturnValue(new Promise<void>((r) => (terminer = r)))
     ecran(depots)
@@ -274,7 +251,7 @@ describe('EcranModifierPresta', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const abonne = vi.fn()
     const desabonner = surErreurEcriture(abonne)
-    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     vi.mocked(depots.prestas.modifier).mockRejectedValue(new Error('hors cache'))
     ecran(depots)
     clic('Enregistrer')
@@ -285,7 +262,7 @@ describe('EcranModifierPresta', () => {
   })
 
   it('ne supprime qu’une fois sur un double tap', () => {
-    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     vi.mocked(depots.prestas.supprimer).mockReturnValue(new Promise<void>(() => {}))
     ecran(depots)
     clic('Supprimer la presta')
@@ -299,7 +276,7 @@ describe('EcranModifierPresta', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const abonne = vi.fn()
     const desabonner = surErreurEcriture(abonne)
-    const depots = creerDepotsFactices({ cocktails: [mojito, spritz, mule], types, prestas: [presta], verres })
+    const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     vi.mocked(depots.prestas.supprimer).mockRejectedValue(new Error('hors cache'))
     ecran(depots)
     clic('Supprimer la presta')

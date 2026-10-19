@@ -81,7 +81,7 @@ export function EcranNouvellePresta() {
       <SurLaCarte
         lignes={lignes}
         cocktails={cocktails}
-        onDeplacer={(variante, de, vers) => setLignes((l) => deplacerDansGroupe(l, variante, de, vers))}
+        onDeplacer={(variante, de, vers) => setLignes((l) => deplacerDansGroupe(l, cocktails, variante, de, vers))}
       />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button

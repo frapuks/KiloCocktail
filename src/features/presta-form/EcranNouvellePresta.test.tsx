@@ -8,11 +8,12 @@ import { rendre } from '../../test/rendre'
 import { EcranNouvellePresta } from './EcranNouvellePresta'
 
 const c = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cocktail => ({
-  id, nom, nomNormalise: nom.toLowerCase(), variantes: 'avec', nomSansAlcool: null, archive: false, ...extra,
+  id, nom, nomNormalise: nom.toLowerCase(), alcool: true, archive: false, ...extra,
 })
-const mojito = c('m', 'Mojito', { variantes: 'les-deux', nomSansAlcool: 'Nojito' })
+const mojito = c('m', 'Mojito')
+const nojito = c('n', 'Nojito', { alcool: false })
 
-function ecran(depots = creerDepotsFactices({ cocktails: [mojito, c('d', 'Daiquiri'), c('v', 'Vieux', { archive: true })] })) {
+function ecran(depots = creerDepotsFactices({ cocktails: [mojito, nojito, c('d', 'Daiquiri'), c('v', 'Vieux', { archive: true })] })) {
   rendre(
     <Routes>
       <Route path="/" element={<p>ACCUEIL</p>} />
@@ -47,24 +48,36 @@ describe('EcranNouvellePresta', () => {
     expect(screen.getByText('Daiquiri')).toBeTruthy()
   })
 
-  it('coche toutes les variantes d’un cocktail', () => {
+  it('n’a plus de bouton de version par cocktail', () => {
     ecran()
-    fireEvent.click(screen.getByRole('checkbox', { name: /Mojito/ }))
-    expect(carte('Avec alcool').getByText('Mojito')).toBeTruthy()
-    expect(carte('Sans alcool').getByText('Nojito')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Sans alcool' })).toBeNull()
   })
 
-  it('éteint une variante, et décoche le cocktail quand plus aucune n’est active', () => {
+  it('range un cocktail coché selon son booléen', () => {
+    ecran()
+    fireEvent.click(screen.getByRole('checkbox', { name: /Nojito/ }))
+    expect(carte('Sans alcool').getByText('Nojito')).toBeTruthy()
+    expect(screen.queryByRole('list', { name: 'Avec alcool' })).toBeNull()
+  })
+
+  it('décoche un cocktail et le retire de la carte', () => {
     ecran()
     const case_ = screen.getByRole('checkbox', { name: /Mojito/ }) as HTMLInputElement
     fireEvent.click(case_)
-    const ligne = case_.closest('li') as HTMLElement
-    fireEvent.click(within(ligne).getByRole('button', { name: 'Sans alcool' }))
-    expect(screen.queryByRole('list', { name: 'Sans alcool' })).toBeNull()
-    expect(case_.checked).toBe(true)
-    fireEvent.click(within(ligne).getByRole('button', { name: 'Avec alcool' }))
+    expect(carte('Avec alcool').getByText('Mojito')).toBeTruthy()
+    fireEvent.click(case_)
     expect(case_.checked).toBe(false)
     expect(screen.queryByRole('list', { name: 'Avec alcool' })).toBeNull()
+  })
+
+  it('ajoute une seule ligne sans alcool pour un cocktail créé sans alcool', () => {
+    const depots = ecran()
+    fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
+    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Virgin Mary' } })
+    fireEvent.click(screen.getByLabelText('Sans alcool'))
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Virgin Mary', alcool: false })
+    expect(carte('Sans alcool').getAllByRole('listitem')).toHaveLength(1)
   })
 
   it('crée un cocktail à la volée et le coche', () => {
@@ -72,7 +85,7 @@ describe('EcranNouvellePresta', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', variantes: 'avec', nomSansAlcool: null })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true })
     expect((screen.getByRole('checkbox', { name: /Spritz/ }) as HTMLInputElement).checked).toBe(true)
     expect(carte('Avec alcool').getByText('Spritz')).toBeTruthy()
   })
@@ -83,7 +96,7 @@ describe('EcranNouvellePresta', () => {
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'vieux' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(screen.getByRole('alert').textContent).toBe(
-      'Un cocktail “Vieux” existe déjà dans les archivés. Désarchive-le plutôt.',
+      'Un cocktail “Vieux” avec alcool existe déjà dans les archivés. Désarchive-le plutôt.',
     )
     expect(depots.cocktails.creer).not.toHaveBeenCalled()
   })

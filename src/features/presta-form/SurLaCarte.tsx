@@ -18,7 +18,7 @@ const GROUPES: { variante: Variante; titre: string }[] = [
 ]
 
 export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer }: Props) {
-  const parGroupe = groupes(lignes)
+  const parGroupe = groupes(lignes, cocktails)
   return (
     <section aria-labelledby="titre-sur-la-carte">
       <h2 id="titre-sur-la-carte" style={{ fontFamily: 'var(--police-titre)' }}>
@@ -37,7 +37,7 @@ export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer }:
               rendre={(ligne) => {
                 const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
                 if (!cocktail) return null
-                const { nom, sousTitre } = nomLigne(ligne, cocktail)
+                const { nom, sousTitre } = nomLigne(cocktail)
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ flex: 1 }}>

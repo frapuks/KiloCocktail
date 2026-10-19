@@ -4,12 +4,11 @@ import type { Cocktail, Ligne } from '../../domain/types'
 import { SurLaCarte } from './SurLaCarte'
 
 const cocktails: Cocktail[] = [
-  { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', variantes: 'les-deux', nomSansAlcool: 'Nojito', archive: false },
-  { id: 'd', nom: 'Daiquiri', nomNormalise: 'daiquiri', variantes: 'avec', nomSansAlcool: null, archive: false },
+  { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false },
+  { id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false, archive: false },
+  { id: 'd', nom: 'Daiquiri', nomNormalise: 'daiquiri', alcool: true, archive: false },
 ]
-const l = (id: string, cocktailId: string, variante: 'avec' | 'sans', masquee = false): Ligne => ({
-  id, cocktailId, variante, masquee,
-})
+const l = (id: string, cocktailId: string, masquee = false): Ligne => ({ id, cocktailId, masquee })
 
 describe('SurLaCarte', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -17,7 +16,7 @@ describe('SurLaCarte', () => {
   it('regroupe et nomme les lignes', () => {
     render(
       <SurLaCarte
-        lignes={[l('1', 'm', 'avec'), l('2', 'm', 'sans'), l('3', 'd', 'avec', true)]}
+        lignes={[l('1', 'm'), l('2', 'n'), l('3', 'd', true)]}
         cocktails={cocktails}
         onDeplacer={() => {}}
       />,
@@ -32,7 +31,7 @@ describe('SurLaCarte', () => {
   })
 
   it('n’affiche pas un groupe vide', () => {
-    render(<SurLaCarte lignes={[l('1', 'd', 'avec')]} cocktails={cocktails} onDeplacer={() => {}} />)
+    render(<SurLaCarte lignes={[l('1', 'd')]} cocktails={cocktails} onDeplacer={() => {}} />)
     expect(screen.queryByText('Sans alcool')).toBeNull()
   })
 
@@ -46,7 +45,7 @@ describe('SurLaCarte', () => {
     })
     const onDeplacer = vi.fn()
     render(
-      <SurLaCarte lignes={[l('1', 'm', 'avec'), l('2', 'd', 'avec')]} cocktails={cocktails} onDeplacer={onDeplacer} />,
+      <SurLaCarte lignes={[l('1', 'm'), l('2', 'd')]} cocktails={cocktails} onDeplacer={onDeplacer} />,
     )
     const poignee = screen.getAllByRole('button', { name: 'Déplacer' })[0]
     poignee.focus()

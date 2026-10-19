@@ -92,7 +92,7 @@ export function EcranModifierPresta() {
       return
     }
     const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
-    const { nom, sousTitre } = cocktail ? nomLigne(ligne, cocktail) : { nom: '', sousTitre: null }
+    const { nom, sousTitre } = cocktail ? nomLigne(cocktail) : { nom: '', sousTitre: null }
     setDialogue({ genre: 'retrait', ligne, nom, sousTitre, total })
   }
 
@@ -227,7 +227,7 @@ export function EcranModifierPresta() {
         lignes={brouillon.lignes}
         cocktails={cocktails}
         totaux={totaux}
-        onDeplacer={(variante, de, vers) => maj({ lignes: deplacerDansGroupe(brouillon.lignes, variante, de, vers) })}
+        onDeplacer={(variante, de, vers) => maj({ lignes: deplacerDansGroupe(brouillon.lignes, cocktails, variante, de, vers) })}
         onRetirer={demanderRetrait}
       />
       {masquees.length > 0 && (
@@ -238,7 +238,7 @@ export function EcranModifierPresta() {
           <ul style={{ margin: 0, padding: 0 }}>
             {masquees.map((ligne) => {
               const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
-              const noms = cocktail ? nomLigne(ligne, cocktail) : null
+              const noms = cocktail ? nomLigne(cocktail) : null
               return (
                 <li
                   key={ligne.id}
