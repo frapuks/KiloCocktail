@@ -22,6 +22,7 @@ npm install
 - `npm run test:watch` : tests en mode surveillance
 - `npm run dev:emulateurs` : serveur de développement branché sur les émulateurs
 - `npm run emulateurs` : lance les émulateurs Auth et Firestore
+- `npm run remplir` : vide Firestore de l'émulateur et le remplit de données de démo (compte `barman@kilococktail.test` / `motdepasse123`)
 - `npm run test:data` : tests d'intégration et règles de sécurité (émulateurs)
 - `npm run test:e2e` : parcours de bout en bout Playwright (WebKit, iPad paysage) contre les émulateurs
 

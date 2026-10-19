@@ -15,7 +15,8 @@
     "test:data": "firebase emulators:exec --only auth,firestore --project demo-kilococktail \"vitest run --config vitest.data.config.ts\"",
     "dev:emulateurs": "vite --mode emulateurs",
     "icones": "pwa-assets-generator",
-    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-kilococktail \"playwright test\""
+    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-kilococktail \"playwright test\"",
+    "remplir": "node scripts/remplir-emulateurs.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
