@@ -14,7 +14,9 @@ const ONGLETS = [
 
 export function BarreOnglets() {
   const { pathname } = useLocation()
-  const actif = ONGLETS.find((o) => o.vers === pathname)?.vers ?? false
+  // Les feuilles ouvertes par-dessus la liste (/prestas/nouvelle, /prestas/:id/resultats) restent sous l'onglet
+  // Prestas ; le comptage (/prestas/:id) n'a pas de barre d'onglets.
+  const actif = pathname.startsWith('/prestas/') ? '/' : (ONGLETS.find((o) => o.vers === pathname)?.vers ?? false)
 
   return (
     <Paper

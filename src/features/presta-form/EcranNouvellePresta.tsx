@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails, useTypes } from '../../data/hooks'
 import { dateDuJour } from '../../domain/affichage'
-import { deplacerDansGroupe, optionsAbsentes } from '../../domain/lignes'
+import { deplacerDansGroupe, optionsAbsentes, retirer } from '../../domain/lignes'
 import type { Ligne } from '../../domain/types'
 import { ChampDate } from '../../ui/ChampDate'
 import { BoutonAnnulerFeuille, FeuilleModale } from '../../ui/FeuilleModale'
@@ -31,7 +31,12 @@ export function EcranNouvellePresta() {
   const cocktails = cocktailsHook ?? []
   const types = typesHook ?? []
 
+  // Un second tap avant que l'écran change ne crée pas une seconde presta.
+  const creee = useRef(false)
+
   function commencer() {
+    if (creee.current) return
+    creee.current = true
     const id = depots.prestas.creer({ date, client: client.trim() || null, typeId, lignes })
     navigate(`/prestas/${id}`, { replace: true })
   }
@@ -51,7 +56,7 @@ export function EcranNouvellePresta() {
         cocktails={cocktails}
         onDeplacer={(variante, de, vers) => setLignes((l) => deplacerDansGroupe(l, cocktails, variante, de, vers))}
         // Rien n'est encore compté : on retire sans confirmation.
-        onRetirer={(ligneId) => setLignes((l) => l.filter((x) => x.id !== ligneId))}
+        onRetirer={(ligneId) => setLignes((l) => retirer(l, ligneId))}
         onAjouter={() => setAjout(true)}
       />
       {ajout && (

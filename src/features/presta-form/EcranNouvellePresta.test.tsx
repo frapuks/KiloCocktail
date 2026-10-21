@@ -132,6 +132,14 @@ describe('EcranNouvellePresta', () => {
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ typeId: 't2' }))
   })
 
+  it('ne crée qu’une presta sur un double tap de « Commencer la presta »', () => {
+    const depots = ecran()
+    const bouton = screen.getByRole('button', { name: 'Commencer la presta' })
+    fireEvent.click(bouton)
+    fireEvent.click(bouton)
+    expect(depots.prestas.creer).toHaveBeenCalledTimes(1)
+  })
+
   it('commence la presta même sans cocktail', () => {
     const depots = ecran()
     fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
