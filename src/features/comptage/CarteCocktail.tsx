@@ -228,15 +228,12 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
         <IconButton
           aria-label={`Retirer un ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
           disabled={total === 0}
-          onPointerDown={(e) => {
-            e.stopPropagation()
-            moins()
-          }}
+          // Au tap complet (click), pas au contact : un défilement qui commence sur le bouton n'est pas un clic,
+          // donc ne retire pas de verre. Le clavier (Entrée, Espace) déclenche aussi ce clic.
+          onClick={moins}
           onKeyDown={(e) => {
-            if (!estValidation(e)) return
-            e.preventDefault()
-            e.stopPropagation()
-            if (!e.repeat) moins()
+            // Entrée maintenue : pas un retrait par répétition automatique.
+            if (e.repeat && estValidation(e)) e.preventDefault()
           }}
           sx={{
             width: 'clamp(40px, 26cqh, 56px)',

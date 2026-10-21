@@ -10,19 +10,10 @@ import { dateDuJour } from '../../domain/affichage'
 import { deplacerDansGroupe, optionsAbsentes } from '../../domain/lignes'
 import type { Ligne } from '../../domain/types'
 import { ChampDate } from '../../ui/ChampDate'
-import { FeuilleModale, useFermerFeuille } from '../../ui/FeuilleModale'
+import { BoutonAnnulerFeuille, FeuilleModale } from '../../ui/FeuilleModale'
 import { ChampType } from './ChampType'
 import { FeuilleAjoutCocktails } from './FeuilleAjoutCocktails'
 import { SurLaCarte } from './SurLaCarte'
-
-function BoutonAnnuler() {
-  const fermer = useFermerFeuille()
-  return (
-    <Button variant="outlined" color="inherit" onClick={fermer}>
-      Annuler
-    </Button>
-  )
-}
 
 // Feuille ouverte par-dessus la liste des prestas (route imbriquée sous « / ») :
 // Annuler ou un tap à côté la font redescendre, puis ramènent à la liste.
@@ -77,7 +68,7 @@ export function EcranNouvellePresta() {
         <Button variant="contained" onClick={commencer}>
           Commencer la presta
         </Button>
-        <BoutonAnnuler />
+        <BoutonAnnulerFeuille />
       </Box>
     </FeuilleModale>
   )

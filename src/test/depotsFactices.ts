@@ -78,7 +78,7 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
         return ajouter(ecouteursVerres, prestaId, cb)
       }),
       servir: vi.fn(() => `verre-${++verresServis}`),
-      retirer: vi.fn(),
+      retirer: vi.fn(() => Promise.resolve()),
     },
     emettre: {
       verres: (prestaId, v) => ecouteursVerres.get(prestaId)?.forEach((cb) => cb(v)),

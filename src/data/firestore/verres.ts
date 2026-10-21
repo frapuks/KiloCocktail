@@ -32,7 +32,9 @@ export function depotVerres(db: Firestore, uid: string): DepotVerres {
       return ref.id;
     },
     retirer(prestaId, verreId) {
-      suivreEcriture(deleteDoc(doc(colVerres(db, uid, prestaId), verreId)));
+      const p = deleteDoc(doc(colVerres(db, uid, prestaId), verreId));
+      suivreEcriture(p);
+      return p;
     },
   };
 }

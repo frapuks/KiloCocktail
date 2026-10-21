@@ -84,19 +84,13 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
       const liste = await concernes(id);
       return { prestas: liste.length, verres: liste.reduce((n, p) => n + p.verres.length, 0) };
     },
-    // Verres d'abord (par lots de 500, confirmés par le serveur), puis une transaction qui retire le cocktail
-    // de la carte des prestas et le supprime : la transaction relit chaque presta au moment d'écrire, donc une
-    // modification de sa carte faite entre-temps (autre appareil) est conservée. Suppression faite en ligne
-    // (concernes() lit sur le serveur) : on peut attendre les confirmations, et un échec remonte à l'écran.
+    // D'abord une transaction (en ligne) qui retire le cocktail de la carte des prestas et le supprime :
+    // elle relit chaque presta au moment d'écrire, donc une modification de sa carte faite entre-temps
+    // (autre appareil) est conservée ; un échec remonte à l'écran. Puis l'effacement des verres, par lots
+    // de 500 : écritures gardées par Firestore et rejouées au retour du réseau si la connexion tombe entre-temps.
+    // Dans cet ordre, une coupure ne laisse jamais un cocktail toujours présent dont les verres auraient disparu.
     async supprimer(id) {
       const liste = await concernes(id);
-      await Promise.all(
-        decouper(liste.flatMap((p) => p.verres), TAILLE_LOT).map((refs) => {
-          const lot = writeBatch(db);
-          refs.forEach((r) => lot.delete(r));
-          return lot.commit();
-        }),
-      );
       await runTransaction(db, async (tx) => {
         const actuelles = await Promise.all(liste.map((p) => tx.get(p.ref)));
         actuelles.forEach((snap) => {
@@ -106,6 +100,11 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
         });
         tx.delete(doc(col, id));
       });
+      for (const refs of decouper(liste.flatMap((p) => p.verres), TAILLE_LOT)) {
+        const lot = writeBatch(db);
+        refs.forEach((r) => lot.delete(r));
+        suivreEcriture(lot.commit());
+      }
     },
   };
 }

@@ -1,5 +1,7 @@
+import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
 import Stack from '@mui/material/Stack'
+import type { SxProps, Theme } from '@mui/material/styles'
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 
 interface Props {
@@ -20,6 +22,16 @@ const FermerFeuille = createContext<() => void>(() => {})
 
 // Referme la feuille englobante en jouant la glissade de sortie (feuilles avec onFermer).
 export const useFermerFeuille = () => useContext(FermerFeuille)
+
+// « Annuler » d'une feuille avec onFermer : la referme (glissade) sans rien faire d'autre.
+export function BoutonAnnulerFeuille({ sx }: { sx?: SxProps<Theme> }) {
+  const fermer = useFermerFeuille()
+  return (
+    <Button variant="outlined" color="inherit" onClick={fermer} sx={sx}>
+      Annuler
+    </Button>
+  )
+}
 
 // Feuille qui monte du bas de l'écran.
 export function FeuilleModale({ libelle, onSubmit, onFermer, onDemandeFermeture, fermee = false, children }: Props) {

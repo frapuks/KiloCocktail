@@ -13,8 +13,8 @@ import { comparerNoms } from '../../domain/affichage'
 import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import type { TypeEvenement } from '../../domain/types'
 import { ChampNom } from '../../ui/ChampNom'
-import { Confirmation } from '../../ui/Confirmation'
-import { FeuilleModale, useFermerFeuille } from '../../ui/FeuilleModale'
+import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
+import { BoutonAnnulerFeuille, FeuilleModale } from '../../ui/FeuilleModale'
 import { SectionArchives } from '../../ui/SectionArchives'
 
 // Message d'erreur pour un nom de type (déjà nettoyé), ou null s'il est accepté.
@@ -79,33 +79,16 @@ function LigneType({ type, types }: { type: TypeEvenement; types: TypeEvenement[
         </>
       )}
       {confirmation && (
-        <Confirmation
-          titre={`Archiver « ${type.nom} » ?`}
-          message="Il ne sera plus proposé pour les prestas. Celles qui l’ont déjà le gardent, et tu pourras le désarchiver."
+        <ConfirmationArchivage
+          nom={type.nom}
           onFermer={() => setConfirmation(false)}
-          actions={[
-            {
-              libelle: 'Archiver',
-              principale: true,
-              onClick: () => {
-                depots.types.archiver(type.id, true)
-                setConfirmation(false)
-              },
-            },
-            { libelle: 'Annuler', onClick: () => setConfirmation(false) },
-          ]}
+          onArchiver={() => {
+            depots.types.archiver(type.id, true)
+            setConfirmation(false)
+          }}
         />
       )}
     </ListItem>
-  )
-}
-
-function BoutonAnnuler() {
-  const fermer = useFermerFeuille()
-  return (
-    <Button variant="outlined" color="inherit" onClick={fermer} sx={{ alignSelf: 'flex-start' }}>
-      Annuler
-    </Button>
   )
 }
 
@@ -167,7 +150,7 @@ export function GestionTypes({ types, onFermer }: { types: TypeEvenement[]; onFe
         }}
         niveau="h3"
       />
-      <BoutonAnnuler />
+      <BoutonAnnulerFeuille sx={{ alignSelf: 'flex-start' }} />
     </FeuilleModale>
   )
 }

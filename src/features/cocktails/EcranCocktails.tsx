@@ -9,7 +9,7 @@ import { useDepots } from '../../data/DepotsContext'
 import { useCocktails } from '../../data/hooks'
 import { comparerNoms } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
-import { Confirmation } from '../../ui/Confirmation'
+import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
 import { PastilleAlcool } from '../../ui/PastilleAlcool'
@@ -126,22 +126,14 @@ export function EcranCocktails() {
         />
       )}
       {archivageAConfirmer && (
-        <Confirmation
-          titre={`Archiver « ${archivageAConfirmer.nom} » ?`}
-          message="Il ne sera plus proposé pour les prestas. Celles qui l’ont déjà le gardent, et tu pourras le désarchiver."
+        <ConfirmationArchivage
+          nom={archivageAConfirmer.nom}
           onFermer={() => setArchivageAConfirmer(null)}
-          actions={[
-            {
-              libelle: 'Archiver',
-              principale: true,
-              onClick: () => {
-                depots.cocktails.archiver(archivageAConfirmer.id, true)
-                setArchivageAConfirmer(null)
-                setFiche(null)
-              },
-            },
-            { libelle: 'Annuler', onClick: () => setArchivageAConfirmer(null) },
-          ]}
+          onArchiver={() => {
+            depots.cocktails.archiver(archivageAConfirmer.id, true)
+            setArchivageAConfirmer(null)
+            setFiche(null)
+          }}
         />
       )}
     </Box>

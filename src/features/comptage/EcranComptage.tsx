@@ -52,11 +52,17 @@ export function EcranComptage() {
   const date = formatDate(presta.date)
   const { avec, sans } = groupes(presta.lignes, cocktails)
 
+  // Le verre est écarté des retraits suivants tant que sa suppression est en cours ; si le serveur la refuse,
+  // il réapparaît dans l'instantané et doit redevenir retirable.
+  const lancerRetrait = (verreId: string) => {
+    enCours.current.add(verreId)
+    depots.verres.retirer(id, verreId).catch(() => enCours.current.delete(verreId))
+  }
+
   const retirer = (ligneId: string) => {
     const verre = dernierVerre(donneesVerres.verres, ligneId, enCours.current)
     if (!verre) return false
-    enCours.current.add(verre.id)
-    depots.verres.retirer(id, verre.id)
+    lancerRetrait(verre.id)
     return true
   }
 
@@ -68,8 +74,7 @@ export function EcranComptage() {
     const verreId = derniersServis.current.get(ligneId)
     if (!verreId) return
     derniersServis.current.delete(ligneId)
-    enCours.current.add(verreId)
-    depots.verres.retirer(id, verreId)
+    lancerRetrait(verreId)
   }
 
   const bande = (titre: string, variante: 'avec' | 'sans', lignes: Ligne[]) => {

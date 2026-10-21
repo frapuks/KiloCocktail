@@ -228,6 +228,14 @@ describe('EcranReglages', () => {
     expect((bouton as HTMLButtonElement).disabled).toBe(false)
   })
 
+  it('dit que la déconnexion a échoué si elle lève une erreur', async () => {
+    vi.mocked(seDeconnecter).mockRejectedValue(new Error('client arrêté'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    rendre(<EcranReglages />, { depots: creerDepotsFactices() })
+    fireEvent.click(screen.getByRole('button', { name: 'Se déconnecter' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('La déconnexion a échoué. Réessaie.')
+  })
+
   describe('modifier le mot de passe', () => {
     const saisir = (actuel: string, nouveau: string, confirmation = nouveau) => {
       fireEvent.click(screen.getByRole('button', { name: 'Modifier le mot de passe' }))

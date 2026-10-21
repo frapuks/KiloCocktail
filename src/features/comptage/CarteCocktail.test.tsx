@@ -72,8 +72,8 @@ it('compte chaque tap d’une rafale', () => {
 
 it('retire 1 avec le bouton − et cumule −N', () => {
   const { carte, moins, onMoins } = rendreCarte()
-  fireEvent.pointerDown(moins)
-  fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
+  fireEvent.click(moins)
   expect(onMoins).toHaveBeenCalledTimes(2)
   expect(screen.getByText('−2')).toBeInTheDocument()
   fireEvent.pointerDown(carte)
@@ -83,6 +83,16 @@ it('retire 1 avec le bouton − et cumule −N', () => {
 it('le bouton − ne déclenche pas le +1', () => {
   const { moins, onPlus } = rendreCarte()
   fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
+  expect(onPlus).not.toHaveBeenCalled()
+})
+
+it('un défilement qui commence sur le − ne retire pas de verre', () => {
+  // Contact puis pointercancel (le navigateur prend le geste) : pas de clic, donc pas de retrait.
+  const { moins, onMoins, onPlus } = rendreCarte()
+  fireEvent.pointerDown(moins, { pointerId: 1 })
+  fireEvent.pointerCancel(moins, { pointerId: 1 })
+  expect(onMoins).not.toHaveBeenCalled()
   expect(onPlus).not.toHaveBeenCalled()
 })
 
@@ -119,6 +129,7 @@ it('nomme la carte et le bouton − avec le sous-titre', () => {
 it('un tap sur le − désactivé (total 0) n’affiche rien et ne déclenche rien', () => {
   const { moins, onMoins, onPlus } = rendreCarte({ total: 0 })
   fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
   expect(onMoins).not.toHaveBeenCalled()
   expect(onPlus).not.toHaveBeenCalled()
   expect(screen.queryByText('−1')).not.toBeInTheDocument()
@@ -127,8 +138,8 @@ it('un tap sur le − désactivé (total 0) n’affiche rien et ne déclenche ri
 it('n’affiche −N que pour les retraits acceptés', () => {
   const { moins, onMoins } = rendreCarte()
   onMoins.mockReturnValueOnce(true).mockReturnValue(false)
-  fireEvent.pointerDown(moins)
-  fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
+  fireEvent.click(moins)
   expect(screen.getByText('−1')).toBeInTheDocument()
 })
 

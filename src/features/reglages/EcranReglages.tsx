@@ -18,6 +18,7 @@ function Compte() {
   const [email, setEmail] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   const [bloque, setBloque] = useState(false)
+  const [echec, setEchec] = useState(false)
   const [ficheMotDePasse, setFicheMotDePasse] = useState(false)
   const [motDePasseModifie, setMotDePasseModifie] = useState(false)
 
@@ -26,9 +27,13 @@ function Compte() {
   async function deconnecter() {
     setEnCours(true)
     setBloque(false)
+    setEchec(false)
     try {
       // Sur 'ok', l'écouteur d'authentification de RouteProtegee redirige vers /connexion.
       if ((await seDeconnecter()) === 'en-attente') setBloque(true)
+    } catch (raison) {
+      console.error('Déconnexion impossible :', raison)
+      setEchec(true)
     } finally {
       setEnCours(false)
     }
@@ -53,6 +58,7 @@ function Compte() {
         Se déconnecter
       </Button>
       {bloque && <Alert severity="warning">{MESSAGE_EN_ATTENTE}</Alert>}
+      {echec && <Alert severity="error">La déconnexion a échoué. Réessaie.</Alert>}
 
       {ficheMotDePasse && (
         <FicheMotDePasse

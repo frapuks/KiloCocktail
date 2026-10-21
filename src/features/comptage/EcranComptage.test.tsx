@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import { expect, it, vi } from 'vitest'
 import type { Cocktail, Ligne, Presta, Verre } from '../../domain/types'
@@ -80,15 +80,15 @@ it('nomme le bouton − d’une ligne sans alcool', () => {
 
 it('retire le dernier verre de la ligne', () => {
   const depots = rendreEcran(presta(), [verre('v1', 'L1', 1), verre('v3', 'L1', 3), verre('v2', 'L1', 2)])
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'Retirer un Mojito' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Retirer un Mojito' }))
   expect(depots.verres.retirer).toHaveBeenCalledWith('p1', 'v3')
 })
 
 it('retire deux verres distincts sur deux taps rapides', () => {
   const depots = rendreEcran(presta(), [verre('v1', 'L1', 1), verre('v2', 'L1', 2), verre('v3', 'L1', 3)])
   const moins = screen.getByRole('button', { name: 'Retirer un Mojito' })
-  fireEvent.pointerDown(moins)
-  fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
+  fireEvent.click(moins)
   const appels = (depots.verres.retirer as unknown as { mock: { calls: string[][] } }).mock.calls
   expect(appels.map((a) => a[1])).toEqual(['v3', 'v2'])
 })
@@ -120,8 +120,8 @@ it('redirige une presta terminée vers ses résultats', () => {
 it('ne retire qu’un verre sur deux taps rapides avec un seul verre', () => {
   const depots = rendreEcran(presta(), [verre('v1', 'L1', 1)])
   const moins = screen.getByRole('button', { name: 'Retirer un Mojito' })
-  fireEvent.pointerDown(moins)
-  fireEvent.pointerDown(moins)
+  fireEvent.click(moins)
+  fireEvent.click(moins)
   expect(depots.verres.retirer).toHaveBeenCalledTimes(1)
   expect(screen.getByText('−1')).toBeInTheDocument()
 })
@@ -135,4 +135,17 @@ it('annule le verre servi quand le toucher devient un défilement', () => {
   expect(depots.verres.servir).toHaveBeenCalledWith('p1', 'L2')
   expect(depots.verres.retirer).toHaveBeenCalledTimes(1)
   expect(depots.verres.retirer).toHaveBeenCalledWith('p1', 'verre-servi')
+})
+
+it('rend de nouveau retirable un verre dont le retrait est refusé', async () => {
+  const depots = rendreEcran(presta(), [verre('v1', 'L1', 1)])
+  vi.mocked(depots.verres.retirer).mockRejectedValueOnce(new Error('permission-denied'))
+  const moins = screen.getByRole('button', { name: 'Retirer un Mojito' })
+  fireEvent.click(moins)
+  // Le refus revient du serveur : le verre, toujours là, est de nouveau proposé au retrait suivant.
+  await waitFor(() => {
+    fireEvent.click(moins)
+    expect(depots.verres.retirer).toHaveBeenCalledTimes(2)
+  })
+  expect(vi.mocked(depots.verres.retirer).mock.calls.map((a) => a[1])).toEqual(['v1', 'v1'])
 })

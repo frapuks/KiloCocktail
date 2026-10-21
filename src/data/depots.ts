@@ -35,6 +35,7 @@ export interface DepotPrestas {
 export interface DepotVerres {
   ecouter(prestaId: string, cb: (verres: Verre[]) => void): Desabonner;
   servir(prestaId: string, ligneId: string): string;          // id du verre créé ; écriture en arrière-plan
-  retirer(prestaId: string, verreId: string): void;
+  // Rejette si le serveur refuse le retrait (le bandeau d'erreur est déjà affiché) ; reste en attente hors connexion.
+  retirer(prestaId: string, verreId: string): Promise<void>;
 }
 export interface Depots { cocktails: DepotCocktails; types: DepotTypes; prestas: DepotPrestas; verres: DepotVerres }
