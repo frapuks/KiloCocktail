@@ -15,6 +15,7 @@ import type { TypeEvenement } from '../../domain/types';
 import type { DepotTypes } from '../depots';
 import { suivreEcriture } from '../erreurs';
 import { colPrestas, colTypes } from './chemins';
+import { decouper, TAILLE_LOT } from './lots';
 
 const TYPES_DE_DEPART = [
   { id: 'anniversaire', nom: 'Anniversaire' },
@@ -40,14 +41,19 @@ export function depotTypes(db: Firestore, uid: string): DepotTypes {
     archiver(id, archive) {
       suivreEcriture(updateDoc(doc(col, id), { archive }));
     },
-    // Un seul lot : le type disparaît en même temps que des prestas qui l'utilisaient.
+    // Retire le type des prestas qui l'utilisaient, par lots de 500 opérations (limite Firestore) ; le type
+    // lui-même part avec le dernier lot (le seul, dans le cas courant).
     // Prestas lues sur le serveur (le cache local peut être incomplet) : hors connexion, la suppression est refusée.
     async supprimer(id) {
       const prestas = await getDocsFromServer(query(colPrestas(db, uid), where('typeId', '==', id)));
-      const lot = writeBatch(db);
-      prestas.docs.forEach((p) => lot.update(p.ref, { typeId: null }));
-      lot.delete(doc(col, id));
-      suivreEcriture(lot.commit());
+      const lots = decouper(prestas.docs, TAILLE_LOT - 1);
+      if (lots.length === 0) lots.push([]);
+      lots.forEach((refs, i) => {
+        const lot = writeBatch(db);
+        refs.forEach((p) => lot.update(p.ref, { typeId: null }));
+        if (i === lots.length - 1) lot.delete(doc(col, id));
+        suivreEcriture(lot.commit());
+      });
     },
     // Types de départ créés une seule fois par compte (marqueur sur le document de l'utilisateur) :
     // jamais recréés après que l'utilisateur les a supprimés. Lecture sur le serveur : hors connexion,

@@ -82,6 +82,8 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
       aria-label={sousTitre ? `${nom}, ${sousTitre}` : nom}
       onPointerDown={(e: PointerEvent<HTMLDivElement>) => {
         if ((e.target as Element).closest('button')) return
+        // Seul l'appui principal sert un verre (doigt, stylet, bouton gauche) : pas le clic droit ni le milieu.
+        if (e.button !== 0) return
         setAppuyee(true)
         lancerOnde(e.currentTarget, e.clientX, e.clientY)
         plus(e.pointerId)

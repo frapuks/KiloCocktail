@@ -188,3 +188,9 @@ it('ne compte qu’un verre quand la touche Entrée reste enfoncée', () => {
   fireEvent.keyDown(carte, { key: 'Enter', repeat: true })
   expect(onPlus).toHaveBeenCalledTimes(1)
 })
+
+it('ne compte pas de verre sur un clic droit', () => {
+  const { carte, onPlus } = rendreCarte()
+  fireEvent.pointerDown(carte, { button: 2 })
+  expect(onPlus).not.toHaveBeenCalled()
+})
