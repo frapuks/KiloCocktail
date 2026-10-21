@@ -4,7 +4,8 @@ export function nomLigne(c: Cocktail): { nom: string; sousTitre: 'sans alcool' |
   return { nom: c.nom, sousTitre: c.alcool ? null : 'sans alcool' };
 }
 
-export function comparerCocktails(a: Cocktail, b: Cocktail): number {
+// Ordre alphabétique des listes (cocktails, types) : en français, sans tenir compte de la casse ni des accents.
+export function comparerNoms(a: { nom: string }, b: { nom: string }): number {
   return a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
 }
 

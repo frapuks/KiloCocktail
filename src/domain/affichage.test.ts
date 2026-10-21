@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Cocktail } from './types';
-import { comparerCocktails, dateDuJour, formatDate, libelleServis, nomLigne, nomPresta } from './affichage';
+import { comparerNoms, dateDuJour, formatDate, libelleServis, nomLigne, nomPresta } from './affichage';
 
 const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
 const nojito: Cocktail = { ...mojito, id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false };
@@ -13,7 +13,7 @@ describe('affichage', () => {
   });
   it('compare par nom, sans tenir compte des accents ni de la casse', () => {
     const ecume: Cocktail = { ...mule, id: 'e', nom: 'écume' };
-    expect([nojito, mule, ecume, mojito].sort(comparerCocktails)).toEqual([ecume, mojito, mule, nojito]);
+    expect([nojito, mule, ecume, mojito].sort(comparerNoms)).toEqual([ecume, mojito, mule, nojito]);
   });
   it('formate les dates', () => {
     expect(formatDate('2026-10-17')).toBe('17/10/2026');

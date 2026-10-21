@@ -3,6 +3,7 @@ import {
   getDocsFromServer,
   onSnapshot,
   query,
+  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -36,17 +37,17 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
     const touchees = prestas.docs.flatMap((p) => {
       const lignes = (p.get('lignes') as Ligne[] | undefined) ?? [];
       const ids = lignes.filter((l) => l.cocktailId === id).map((l) => l.id);
-      return ids.length === 0 ? [] : [{ p, lignes, ids }];
+      return ids.length === 0 ? [] : [{ p, ids }];
     });
     return Promise.all(
-      touchees.map(async ({ p, lignes, ids }) => {
+      touchees.map(async ({ p, ids }) => {
         const snaps = await Promise.all(
           decouper(ids, TAILLE_IN).map((lot) =>
             getDocsFromServer(query(colVerres(db, uid, p.id), where('ligneId', 'in', lot))),
           ),
         );
         const verres: DocumentReference[] = snaps.flatMap((s) => s.docs.map((v) => v.ref));
-        return { ref: p.ref, lignes: lignes.filter((l) => l.cocktailId !== id), verres };
+        return { ref: p.ref, verres };
       }),
     );
   }
@@ -83,19 +84,28 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
       const liste = await concernes(id);
       return { prestas: liste.length, verres: liste.reduce((n, p) => n + p.verres.length, 0) };
     },
-    // Verres d'abord (par lots de 500), puis, dans un dernier lot, les cartes des prestas et le cocktail :
-    // le cocktail ne disparaît qu'une fois ses verres partis.
+    // Verres d'abord (par lots de 500, confirmés par le serveur), puis une transaction qui retire le cocktail
+    // de la carte des prestas et le supprime : la transaction relit chaque presta au moment d'écrire, donc une
+    // modification de sa carte faite entre-temps (autre appareil) est conservée. Suppression faite en ligne
+    // (concernes() lit sur le serveur) : on peut attendre les confirmations, et un échec remonte à l'écran.
     async supprimer(id) {
       const liste = await concernes(id);
-      for (const refs of decouper(liste.flatMap((p) => p.verres), TAILLE_LOT)) {
-        const lot = writeBatch(db);
-        refs.forEach((r) => lot.delete(r));
-        suivreEcriture(lot.commit());
-      }
-      const lot = writeBatch(db);
-      liste.forEach((p) => lot.update(p.ref, { lignes: p.lignes }));
-      lot.delete(doc(col, id));
-      suivreEcriture(lot.commit());
+      await Promise.all(
+        decouper(liste.flatMap((p) => p.verres), TAILLE_LOT).map((refs) => {
+          const lot = writeBatch(db);
+          refs.forEach((r) => lot.delete(r));
+          return lot.commit();
+        }),
+      );
+      await runTransaction(db, async (tx) => {
+        const actuelles = await Promise.all(liste.map((p) => tx.get(p.ref)));
+        actuelles.forEach((snap) => {
+          if (!snap.exists()) return;
+          const lignes = ((snap.get('lignes') as Ligne[] | undefined) ?? []).filter((l) => l.cocktailId !== id);
+          tx.update(snap.ref, { lignes });
+        });
+        tx.delete(doc(col, id));
+      });
     },
   };
 }

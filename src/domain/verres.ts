@@ -6,10 +6,6 @@ export function totauxParLigne(verres: Verre[]): Map<string, number> {
   return totaux;
 }
 
-export function totalLigne(verres: Verre[], ligneId: string): number {
-  return verres.filter((v) => v.ligneId === ligneId).length;
-}
-
 export function dernierVerre(
   verres: Verre[],
   ligneId: string,

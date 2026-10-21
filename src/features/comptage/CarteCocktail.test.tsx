@@ -169,3 +169,11 @@ it('ne compte pas de verre quand on touche le « − » grisé d’une carte à 
   expect(onPlus).not.toHaveBeenCalled()
   expect(onMoins).not.toHaveBeenCalled()
 })
+
+it('ne compte qu’un verre quand la touche Entrée reste enfoncée', () => {
+  const { carte, onPlus } = rendreCarte()
+  fireEvent.keyDown(carte, { key: 'Enter' })
+  fireEvent.keyDown(carte, { key: 'Enter', repeat: true })
+  fireEvent.keyDown(carte, { key: 'Enter', repeat: true })
+  expect(onPlus).toHaveBeenCalledTimes(1)
+})

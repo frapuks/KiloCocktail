@@ -13,6 +13,8 @@ Points relevés pendant les revues de code du MVP, jugés non bloquants. À repr
 - `onSnapshot` sans fonction d'erreur dans les dépôts : un écran peut rester vide si une écoute échoue.
 - `seDeconnecter` : minuteur jamais effacé, rejet tardif non traité.
 - Total servi des cartes de la liste (`compterServis`) : `getCountFromServer` ignore les verres encore en attente sur l'appareil ; sur réseau lent, la carte (et le total mémorisé) peut afficher moins que le comptage.
+- Plusieurs appareils : la purge d'une ligne (« Supprimer avec ses N servis ») et la suppression d'une presta lisent les verres dans le cache local (choix assumé : marche hors connexion). Des verres comptés sur un autre appareil et pas encore reçus restent orphelins (invisibles ; le Total des résultats les ignore, mais pas le total de la carte de la liste).
+- « Modifier une presta » : le brouillon est copié à l'ouverture et réécrit en entier à l'enregistrement ; une suppression de cocktail ou de type faite entre-temps ailleurs est écrasée (ligne ou typeId réapparaissent).
 - Liste des prestas : chaque carte lance sa propre requête de comptage à chaque affichage (N requêtes par retour sur l'onglet). Piste : ne recompter que les prestas en cours, ou stocker le total sur la presta.
 - `usePresta` / `useVerres` renvoient une fois les données de l'id précédent quand l'id change sans démontage.
 - Pas de vérification périodique d'une nouvelle version (`registration.update()`) : le bandeau n'apparaît qu'au lancement ou à la navigation.

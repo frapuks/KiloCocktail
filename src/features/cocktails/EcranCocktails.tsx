@@ -7,7 +7,7 @@ import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails } from '../../data/hooks'
-import { comparerCocktails } from '../../domain/affichage'
+import { comparerNoms } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { Confirmation } from '../../ui/Confirmation'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
@@ -61,8 +61,8 @@ export function EcranCocktails() {
   if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
   const visibles = cocktails.filter(gardeAlcool[filtre])
-  const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
-  const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
+  const actifs = visibles.filter((c) => !c.archive).sort(comparerNoms)
+  const archives = visibles.filter((c) => c.archive).sort(comparerNoms)
 
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>

@@ -1,5 +1,5 @@
 import type { Cocktail, Ligne, Variante } from './types';
-import { comparerCocktails } from './affichage';
+import { comparerNoms } from './affichage';
 
 export function varianteDe(c: Cocktail): Variante {
   return c.alcool ? 'avec' : 'sans';
@@ -77,5 +77,5 @@ export function typeRetrait(total: number): 'direct' | 'choix' {
 export function optionsAbsentes(cocktails: Cocktail[], lignes: Ligne[]): Cocktail[] {
   return cocktails
     .filter((c) => !c.archive && !lignes.some((l) => l.cocktailId === c.id))
-    .sort(comparerCocktails);
+    .sort(comparerNoms);
 }

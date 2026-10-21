@@ -1,5 +1,6 @@
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
+import { comparerNoms } from '../../domain/affichage'
 import type { TypeEvenement } from '../../domain/types'
 
 interface Props {
@@ -13,7 +14,7 @@ const AUCUN = ''
 // Menu aux couleurs de l'appli. Les types se créent et se renomment dans Réglages, pas ici.
 export function ChampType({ types, valeur, onChange }: Props) {
   // Un type archivé reste proposé s'il est déjà celui de la presta, pour ne pas le perdre en silence.
-  const proposes = types.filter((t) => !t.archive || t.id === valeur).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+  const proposes = types.filter((t) => !t.archive || t.id === valeur).sort(comparerNoms)
 
   return (
     <TextField

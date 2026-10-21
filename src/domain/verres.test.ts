@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Verre } from './types';
-import { totauxParLigne, totalLigne, dernierVerre, totalPresta } from './verres';
+import { totauxParLigne, dernierVerre, totalPresta } from './verres';
 
 const v = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe });
 const verres = [v('a', 'L1', 10), v('b', 'L1', 30), v('c', 'L1', 20), v('d', 'L2', 5)];
@@ -8,8 +8,6 @@ const verres = [v('a', 'L1', 10), v('b', 'L1', 30), v('c', 'L1', 20), v('d', 'L2
 describe('verres', () => {
   it('compte les verres par ligne', () => {
     expect(totauxParLigne(verres)).toEqual(new Map([['L1', 3], ['L2', 1]]));
-    expect(totalLigne(verres, 'L1')).toBe(3);
-    expect(totalLigne(verres, 'L9')).toBe(0);
     expect(totalPresta(verres)).toBe(4);
   });
   it('trouve le dernier verre d’une ligne par creeLe', () => {

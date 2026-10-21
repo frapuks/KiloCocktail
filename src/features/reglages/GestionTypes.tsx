@@ -9,6 +9,7 @@ import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { usePrestas } from '../../data/hooks'
+import { comparerNoms } from '../../domain/affichage'
 import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import type { TypeEvenement } from '../../domain/types'
 import { ChampNom } from '../../ui/ChampNom'
@@ -34,7 +35,6 @@ export function messageSuppression(nbPrestas: number): string {
   return `Le type sera supprimé de l’appli. ${impact} C’est définitif.`
 }
 
-const trier = (a: TypeEvenement, b: TypeEvenement) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' })
 
 // Renommage d'un type (actif ou archivé) : null si accepté et enregistré, sinon le message d'erreur.
 function renommerType(depots: ReturnType<typeof useDepots>, types: TypeEvenement[], type: TypeEvenement, nom: string) {
@@ -115,8 +115,8 @@ export function GestionTypes({ types, onFermer }: { types: TypeEvenement[]; onFe
   const depots = useDepots()
   const prestas = usePrestas()
   const [ajout, setAjout] = useState(false)
-  const actifs = types.filter((t) => !t.archive).sort(trier)
-  const archives = types.filter((t) => t.archive).sort(trier)
+  const actifs = types.filter((t) => !t.archive).sort(comparerNoms)
+  const archives = types.filter((t) => t.archive).sort(comparerNoms)
 
   return (
     <FeuilleModale libelle="Types d'événement" onFermer={onFermer}>

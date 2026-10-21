@@ -14,7 +14,7 @@ import { useDepots } from '../../data/DepotsContext'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
 import { formatDate, nomLigne } from '../../domain/affichage'
 import { varianteDe } from '../../domain/lignes'
-import { totalPresta, totauxParLigne } from '../../domain/verres'
+import { totauxParLigne } from '../../domain/verres'
 
 interface Props {
   // Présent : feuille ouverte depuis le comptage d'une presta en cours, qu'il suffit de refermer.
@@ -43,6 +43,11 @@ export function EcranResultats({ onFermer }: Props = {}) {
   if (!presta || !cocktails || !types || !donneesVerres) return null
 
   const totaux = totauxParLigne(donneesVerres.verres)
+  // Total = somme des lignes listées (cocktail connu), pour qu'il corresponde toujours à ce qui est affiché :
+  // un verre sans ligne (orphelin d'une purge faite ailleurs) n'y entre pas.
+  const total = presta.lignes
+    .filter((l) => cocktails.some((c) => c.id === l.cocktailId))
+    .reduce((n, l) => n + (totaux.get(l.id) ?? 0), 0)
   const type = types.find((t) => t.id === presta.typeId)
   const terminee = presta.statut === 'terminee'
 
@@ -120,7 +125,7 @@ export function EcranResultats({ onFermer }: Props = {}) {
       </Box>
       {groupe('Avec alcool', 'avec')}
       {groupe('Sans alcool', 'sans')}
-      {/* Tous les verres servis, cocktails masqués compris (ils sont listés au-dessus). */}
+      {/* Somme des lignes listées au-dessus, cocktails masqués compris. */}
       <Box
         sx={{
           display: 'flex',
@@ -137,7 +142,7 @@ export function EcranResultats({ onFermer }: Props = {}) {
           Total
         </Typography>
         <Typography component="span" sx={{ fontFamily: policeTitre, fontWeight: 800, fontSize: '1.75rem' }}>
-          {totalPresta(donneesVerres.verres)}
+          {total}
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', gap: 1 }}>

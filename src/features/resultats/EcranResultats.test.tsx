@@ -64,6 +64,22 @@ it('affiche le total de tous les verres servis, masqués compris', () => {
   expect(screen.getByText('Total').parentElement).toHaveTextContent('Total4')
 })
 
+it('ne compte pas dans le total un verre sans ligne (orphelin)', () => {
+  const depots = creerDepotsFactices({
+    cocktails,
+    types: [type],
+    prestas: [presta()],
+    verres: { p1: [...verres, verre('v9', 'ligne-disparue', 9)] },
+  })
+  rendre(
+    <Routes>
+      <Route path="/prestas/:id/resultats" element={<EcranResultats />} />
+    </Routes>,
+    { depots, route: '/prestas/p1/resultats' },
+  )
+  expect(screen.getByText('Total').parentElement).toHaveTextContent('Total4')
+})
+
 it('affiche un type archivé', () => {
   rendreEcran(presta(), [{ ...type, archive: true }])
   expect(screen.getByText('Anniversaire')).toBeInTheDocument()

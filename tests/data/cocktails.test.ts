@@ -86,8 +86,11 @@ describe('dépôt des cocktails', () => {
     await depot.supprimer(supprime);
     await attendre(db);
 
-    expect((await prochaineValeur(depot.ecouter)).map((c) => c.id)).toEqual([garde]);
-    const prestas = await prochaineValeur(depots.prestas.ecouterListe);
+    // La transaction s'applique sur le serveur : le cache local la voit à l'instantané suivant.
+    expect((await prochaineValeur(depot.ecouter, (l) => l.length === 1)).map((c) => c.id)).toEqual([garde]);
+    const prestas = await prochaineValeur(depots.prestas.ecouterListe, (l) =>
+      l.every((p) => p.lignes.every((li) => li.cocktailId !== supprime)),
+    );
     const lignesDe = (id: string) => prestas.find((p) => p.id === id)?.lignes.map((l) => l.id);
     expect(lignesDe(p1)).toEqual(['L2']);
     expect(lignesDe(p2)).toEqual([]);

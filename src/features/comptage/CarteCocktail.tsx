@@ -99,6 +99,8 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget || !estValidation(e)) return
         e.preventDefault()
+        // Touche maintenue : la répétition automatique ne compte pas un verre à chaque fois.
+        if (e.repeat) return
         lancerOnde(e.currentTarget, null, null)
         plus(null)
       }}
@@ -234,7 +236,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
             if (!estValidation(e)) return
             e.preventDefault()
             e.stopPropagation()
-            moins()
+            if (!e.repeat) moins()
           }}
           sx={{
             width: 'clamp(40px, 26cqh, 56px)',
