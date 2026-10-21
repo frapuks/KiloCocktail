@@ -1,18 +1,30 @@
-import { useState, type CSSProperties, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import LocalBarIcon from '@mui/icons-material/LocalBar'
+import Alert, { type AlertColor } from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { envoyerReinitialisation, seConnecter } from '../../data/auth'
-import { bouton, champ } from '../../ui/FeuilleModale'
 
 const MESSAGES_ERREUR: Record<string, string> = {
   identifiants: 'E-mail ou mot de passe incorrect',
   reseau: 'Pas de connexion internet, réessaie dans un instant',
 }
 
+interface Message {
+  texte: string
+  gravite: AlertColor
+}
+
 export function EcranConnexion() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Message | null>(null)
   const [enCours, setEnCours] = useState(false)
 
   async function soumettre(e: FormEvent) {
@@ -23,7 +35,8 @@ export function EcranConnexion() {
       await seConnecter(email, motDePasse)
       navigate('/')
     } catch (err) {
-      setMessage(MESSAGES_ERREUR[(err as Error).message] ?? 'Connexion impossible, réessaie')
+      const texte = MESSAGES_ERREUR[(err as Error).message] ?? 'Connexion impossible, réessaie'
+      setMessage({ texte, gravite: 'error' })
     } finally {
       setEnCours(false)
     }
@@ -31,130 +44,81 @@ export function EcranConnexion() {
 
   async function reinitialiser() {
     if (!email.trim()) {
-      setMessage("Saisis ton e-mail d'abord.")
+      setMessage({ texte: "Saisis ton e-mail d'abord.", gravite: 'warning' })
       return
     }
     try {
       await envoyerReinitialisation(email.trim())
-      setMessage('E-mail de réinitialisation envoyé.')
+      setMessage({ texte: 'E-mail de réinitialisation envoyé.', gravite: 'success' })
     } catch {
-      setMessage("L'e-mail n'a pas pu être envoyé")
+      setMessage({ texte: "L'e-mail n'a pas pu être envoyé", gravite: 'error' })
     }
   }
 
   return (
-    <main
-      style={{
-        minHeight: '100dvh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
+    <Box component="main" sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
           width: '100%',
           maxWidth: 380,
-          padding: '1.75rem 1.5rem',
-          borderRadius: 16,
-          background: 'var(--fond-barre)',
-          border: '1px solid var(--avec-creux)',
-          borderTop: '4px solid var(--avec)',
+          px: 3,
+          py: 3.5,
+          borderRadius: 4,
+          borderColor: 'primary.dark',
+          borderTop: 4,
+          borderTopColor: 'primary.main',
         }}
       >
-        <h1
-          style={{
-            margin: '0 0 1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            fontFamily: 'var(--police-titre)',
-            fontWeight: 800,
-            fontSize: 40,
-          }}
+        <Typography
+          variant="h1"
+          sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25, fontSize: 40 }}
         >
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            fill="none"
-            stroke="var(--avec-flash)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M4 4h16l-8 9-8-9zM12 13v7M8 20h8" />
-          </svg>
+          <LocalBarIcon sx={{ fontSize: 40, color: 'primary.light' }} />
           KiloCocktail
-        </h1>
+        </Typography>
         {!navigator.onLine && (
-          <p style={{ margin: '0 0 1rem', color: 'var(--texte-2)' }}>Connecte-toi à internet pour la première ouverture.</p>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            Connecte-toi à internet pour la première ouverture.
+          </Typography>
         )}
-        <form onSubmit={soumettre} style={{ display: 'grid', gap: '1rem' }}>
-          <label style={etiquette}>
-            E-mail
-            <input
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={champConnexion}
-            />
-          </label>
-          <label style={etiquette}>
-            Mot de passe
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={motDePasse}
-              onChange={(e) => setMotDePasse(e.target.value)}
-              style={champConnexion}
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={enCours}
-            style={{
-              ...bouton,
-              marginTop: 8,
-              background: 'var(--avec)',
-              borderColor: 'var(--avec)',
-              opacity: enCours ? 0.6 : 1,
-            }}
-          >
+        <Stack component="form" onSubmit={soumettre} spacing={2}>
+          <TextField
+            id="connexion-email"
+            label="E-mail"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            sx={champ}
+          />
+          <TextField
+            id="connexion-mot-de-passe"
+            label="Mot de passe"
+            type="password"
+            autoComplete="current-password"
+            value={motDePasse}
+            onChange={(e) => setMotDePasse(e.target.value)}
+            sx={champ}
+          />
+          <Button type="submit" variant="contained" size="large" loading={enCours} sx={{ mt: 1 }}>
             Se connecter
-          </button>
-          <button
-            type="button"
-            onClick={reinitialiser}
-            style={{ ...bouton, border: 'none', color: 'var(--texte-2)', fontWeight: 500 }}
-          >
+          </Button>
+          <Button type="button" color="inherit" onClick={reinitialiser} sx={{ color: 'text.secondary', fontWeight: 500 }}>
             Mot de passe oublié
-          </button>
-        </form>
+          </Button>
+        </Stack>
         {message && (
-          <p role="alert" style={{ margin: '1rem 0 0', textAlign: 'center', color: 'var(--moins)' }}>
-            {message}
-          </p>
+          <Alert severity={message.gravite} variant="outlined" sx={{ mt: 2 }}>
+            {message.texte}
+          </Alert>
         )}
-      </div>
-    </main>
+      </Paper>
+    </Box>
   )
 }
 
-const etiquette: CSSProperties = {
-  display: 'grid',
-  gap: 6,
-  fontSize: 14,
-  fontWeight: 600,
-  color: 'var(--texte-2)',
-}
-
-const champConnexion: CSSProperties = {
-  ...champ,
-  background: 'var(--fond)',
-  borderColor: 'var(--avec-creux)',
-  fontSize: 16,
+const champ = {
+  '& .MuiOutlinedInput-root': { bgcolor: 'background.default' },
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.dark' },
 }

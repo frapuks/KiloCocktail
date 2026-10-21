@@ -5,13 +5,15 @@ import type { DepotTypes } from '../../src/data/depots';
 import { attendre, preparerEmulateur, prochaineValeur, viderFirestore } from './support';
 
 let db: Firestore;
+let uid: string;
 let depot: DepotTypes;
 
 beforeEach(async () => {
   await viderFirestore();
   const prep = await preparerEmulateur();
   db = prep.db;
-  depot = creerDepots(db, prep.uid).types;
+  uid = prep.uid;
+  depot = creerDepots(db, uid).types;
 });
 
 describe('dépôt des types d’événement', () => {
@@ -46,5 +48,23 @@ describe('dépôt des types d’événement', () => {
     expect(await prochaineValeur(depot.ecouter)).toEqual([
       { id, nom: 'Noces', nomNormalise: 'noces', archive: true },
     ]);
+  });
+
+  it('supprime un type et le retire des prestas qui l’avaient, sans toucher aux autres', async () => {
+    const depots = creerDepots(db, uid);
+    const supprime = depot.creer('Mariage');
+    const garde = depot.creer('Anniversaire');
+    const p1 = depots.prestas.creer({ date: '2026-10-17', client: 'A', typeId: supprime, lignes: [] });
+    const p2 = depots.prestas.creer({ date: '2026-10-18', client: 'B', typeId: garde, lignes: [] });
+    await attendre(db);
+
+    await depot.supprimer(supprime);
+    await attendre(db);
+
+    expect((await prochaineValeur(depot.ecouter)).map((t) => t.id)).toEqual([garde]);
+    const prestas = await prochaineValeur(depots.prestas.ecouterListe);
+    const typeDe = (id: string) => prestas.find((p) => p.id === id)?.typeId;
+    expect(typeDe(p1)).toBeNull();
+    expect(typeDe(p2)).toBe(garde);
   });
 });

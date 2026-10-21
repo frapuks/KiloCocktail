@@ -21,16 +21,18 @@ async function creerCocktail(page: Page, nom: string, alcool = true): Promise<vo
   await page.getByRole('link', { name: 'Cocktails' }).click()
   await page.getByRole('button', { name: 'Nouveau cocktail' }).click()
   await page.getByLabel('Nom', { exact: true }).fill(nom)
-  if (!alcool) await page.getByLabel('Sans alcool').check()
+  if (!alcool) await page.getByLabel('Alcool', { exact: true }).uncheck()
   await page.getByRole('button', { name: 'Enregistrer' }).click()
-  await expect(page.getByRole('button', { name: new RegExp(nom) })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Modifier ${nom}`, exact: true })).toBeVisible()
 }
 
 async function demarrerPresta(page: Page, client: string, cocktails: string[]): Promise<void> {
   await page.getByRole('link', { name: 'Prestas' }).click()
   await page.getByRole('button', { name: 'Nouvelle presta' }).click()
   await page.getByLabel('Client').fill(client)
+  await page.getByRole('button', { name: '+ Ajouter un cocktail' }).click()
   for (const nom of cocktails) await page.getByRole('checkbox', { name: new RegExp(nom) }).check()
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   await page.getByRole('button', { name: 'Commencer la presta' }).click()
 }
 
@@ -49,30 +51,43 @@ test('parcours complet : cocktail, presta, comptage, résultats', async ({ page 
   await nojito.click()
   await page.getByRole('button', { name: 'Retirer un Mojito' }).click()
 
-  await page.getByRole('button', { name: 'Terminer' }).click()
-
-  const ligne = (nom: string) => page.locator('.resultats-ligne').filter({ hasText: nom })
+  await page.getByRole('button', { name: 'Résultats' }).click()
+  const ligne = (nom: string) => page.getByRole('dialog', { name: 'Résultats' }).getByRole('listitem').filter({ hasText: nom })
   await expect(ligne('Mojito')).toContainText('2')
   await expect(ligne('Nojito')).toContainText('1')
 
-  await page.goto('/')
+  // Terminer la presta ramène à la liste, où elle passe dans « Terminées ».
+  await page.getByRole('button', { name: 'Terminer la presta' }).click()
   const terminees = page.getByRole('region', { name: 'Terminées' })
   await expect(terminees).toContainText('Julie Martin')
   await expect(terminees).toContainText('3 servis')
 })
 
-test('les noms longs ne débordent pas en portrait', async ({ page }) => {
+test('les noms longs tiennent sur une ligne, coupés par « … », en portrait', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   const nom = 'Moscow Mule Gingembre Royal'
   await creerCompteEtSeConnecter(page)
   await creerCocktail(page, nom)
   await demarrerPresta(page, 'Client portrait', [nom])
 
-  const elementNom = page.locator('.carte-nom').filter({ hasText: nom })
+  const carte = page.getByRole('button', { name: nom, exact: true })
+  const elementNom = carte.getByText(nom, { exact: true })
   await expect(elementNom).toBeVisible()
-  const { scrollWidth, clientWidth } = await elementNom.evaluate((el) => ({
-    scrollWidth: el.scrollWidth,
-    clientWidth: el.clientWidth,
-  }))
-  expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1)
+  const mesure = await elementNom.evaluate((el) => {
+    const style = getComputedStyle(el)
+    return {
+      coupe: el.scrollWidth > el.clientWidth,
+      points: style.textOverflow,
+      hauteur: el.getBoundingClientRect().height,
+      ligne: parseFloat(style.lineHeight),
+    }
+  })
+  // Nom trop long pour une demi-largeur de téléphone : coupé par « … », sur une seule ligne.
+  expect(mesure.coupe).toBe(true)
+  expect(mesure.points).toBe('ellipsis')
+  expect(mesure.hauteur).toBeLessThan(mesure.ligne * 1.5)
+  // Et la case du nom reste dans la carte.
+  const boiteNom = (await elementNom.boundingBox())!
+  const boiteCarte = (await carte.boundingBox())!
+  expect(boiteNom.x + boiteNom.width).toBeLessThanOrEqual(boiteCarte.x + boiteCarte.width + 1)
 })

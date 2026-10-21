@@ -27,25 +27,49 @@ function ecran(depots = creerDepotsFactices({ cocktails: [mojito, nojito, c('d',
 
 const carte = (nom: 'Avec alcool' | 'Sans alcool') => within(screen.getByRole('list', { name: nom }))
 
+function ouvrirAjout() {
+  fireEvent.click(screen.getByRole('button', { name: '+ Ajouter un cocktail' }))
+  return within(screen.getByRole('dialog', { name: 'Ajouter des cocktails' }))
+}
+
 describe('EcranNouvellePresta', () => {
   it('préremplit la date du jour', () => {
-    ecran()
-    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe(dateDuJour())
-  })
-
-  it('ignore une date vidée', () => {
     const depots = ecran()
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-12-31' } })
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '' } })
-    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-12-31')
     fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
-    expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-12-31' }))
+    expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: dateDuJour() }))
   })
 
-  it('n’affiche pas les cocktails archivés', () => {
+  it('prend la date choisie dans le calendrier', async () => {
+    const depots = ecran()
+    fireEvent.click(screen.getByRole('button', { name: /Choisir la date/ }))
+    fireEvent.click(screen.getByRole('gridcell', { name: '28' }))
+    // Le calendrier se referme en fondu : la feuille redevient accessible ensuite.
+    fireEvent.click(await screen.findByRole('button', { name: 'Commencer la presta' }))
+    expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: `${dateDuJour().slice(0, 8)}28` }))
+  })
+
+  it('n’affiche plus la liste des cocktails dans le formulaire', () => {
     ecran()
-    expect(screen.queryByText('Vieux')).toBeNull()
-    expect(screen.getByText('Daiquiri')).toBeTruthy()
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Cocktails' })).toBeTruthy()
+  })
+
+  it('propose les cocktails actifs à cocher, sans les archivés', () => {
+    ecran()
+    const feuille = ouvrirAjout()
+    expect(feuille.queryByText('Vieux')).toBeNull()
+    expect(feuille.getAllByRole('checkbox')).toHaveLength(3)
+  })
+
+  it('titre la feuille d’ajout et filtre avec ou sans alcool, sans perdre les cases cochées', () => {
+    ecran()
+    const feuille = ouvrirAjout()
+    expect(feuille.getByRole('heading', { name: 'Ajouter des cocktails' })).toBeInTheDocument()
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
+    fireEvent.click(feuille.getByRole('button', { name: 'Sans alcool (1)' }))
+    expect(feuille.getAllByRole('checkbox').map((c) => c.closest('li')?.textContent)).toEqual(['NojitoSans alcool'])
+    fireEvent.click(feuille.getByRole('button', { name: 'Tous (3)' }))
+    expect((feuille.getByRole('checkbox', { name: /Mojito/ }) as HTMLInputElement).checked).toBe(true)
   })
 
   it('n’a plus de bouton de version par cocktail', () => {
@@ -53,63 +77,59 @@ describe('EcranNouvellePresta', () => {
     expect(screen.queryByRole('button', { name: 'Sans alcool' })).toBeNull()
   })
 
-  it('range un cocktail coché selon son booléen', () => {
+  it('ajoute les cocktails cochés à la carte, rangés selon leur booléen', () => {
     ecran()
-    fireEvent.click(screen.getByRole('checkbox', { name: /Nojito/ }))
+    const feuille = ouvrirAjout()
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Nojito/ }))
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
+    fireEvent.click(feuille.getByRole('button', { name: 'Ajouter' }))
+    expect(screen.queryByRole('dialog', { name: 'Ajouter des cocktails' })).toBeNull()
     expect(carte('Sans alcool').getByText('Nojito')).toBeTruthy()
-    expect(screen.queryByRole('list', { name: 'Avec alcool' })).toBeNull()
-  })
-
-  it('décoche un cocktail et le retire de la carte', () => {
-    ecran()
-    const case_ = screen.getByRole('checkbox', { name: /Mojito/ }) as HTMLInputElement
-    fireEvent.click(case_)
     expect(carte('Avec alcool').getByText('Mojito')).toBeTruthy()
-    fireEvent.click(case_)
-    expect(case_.checked).toBe(false)
+  })
+
+  it('annule l’ajout sans rien mettre sur la carte', () => {
+    ecran()
+    const feuille = ouvrirAjout()
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
+    fireEvent.click(feuille.getByRole('button', { name: 'Annuler' }))
     expect(screen.queryByRole('list', { name: 'Avec alcool' })).toBeNull()
   })
 
-  it('ajoute une seule ligne sans alcool pour un cocktail créé sans alcool', () => {
-    const depots = ecran()
-    fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
-    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Virgin Mary' } })
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Virgin Mary', alcool: false })
-    expect(carte('Sans alcool').getAllByRole('listitem')).toHaveLength(1)
+  it('ne repropose pas un cocktail déjà sur la carte, et le retire sans confirmation', () => {
+    ecran()
+    let feuille = ouvrirAjout()
+    fireEvent.click(feuille.getByRole('checkbox', { name: /Mojito/ }))
+    fireEvent.click(feuille.getByRole('button', { name: 'Ajouter' }))
+    feuille = ouvrirAjout()
+    expect(feuille.queryByRole('checkbox', { name: /Mojito/ })).toBeNull()
+    fireEvent.click(feuille.getByRole('button', { name: 'Annuler' }))
+    fireEvent.click(carte('Avec alcool').getByRole('button', { name: 'Retirer Mojito' }))
+    expect(screen.queryByRole('list', { name: 'Avec alcool' })).toBeNull()
   })
 
-  it('crée un cocktail à la volée et le coche', () => {
-    const depots = ecran()
-    fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
-    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true })
-    expect((screen.getByRole('checkbox', { name: /Spritz/ }) as HTMLInputElement).checked).toBe(true)
-    expect(carte('Avec alcool').getByText('Spritz')).toBeTruthy()
+  it('ne propose pas de créer un cocktail à la volée', () => {
+    ecran()
+    const feuille = ouvrirAjout()
+    expect(feuille.queryByRole('button', { name: /Créer un cocktail/ })).toBeNull()
   })
 
-  it('refuse un nom déjà pris par un cocktail archivé', () => {
-    const depots = ecran()
-    fireEvent.click(screen.getByRole('button', { name: '+ Créer un cocktail' }))
-    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'vieux' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(screen.getByRole('alert').textContent).toBe(
-      'Un cocktail “Vieux” existe déjà dans les archivés. Désarchive-le plutôt.',
+  it('choisit un type actif dans le menu, sans proposer d’en créer', async () => {
+    const depots = ecran(
+      creerDepotsFactices({
+        types: [
+          { id: 't2', nom: 'Mariage', nomNormalise: 'mariage', archive: false },
+          { id: 't1', nom: 'Anniversaire', nomNormalise: 'anniversaire', archive: false },
+          { id: 't3', nom: 'Ancien', nomNormalise: 'ancien', archive: true },
+        ],
+      }),
     )
-    expect(depots.cocktails.creer).not.toHaveBeenCalled()
-  })
-
-  it('ajoute un type à la volée et le sélectionne', () => {
-    const depots = ecran()
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: '__ajouter__' } })
-    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Mariage' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.types.creer).toHaveBeenCalledWith('Mariage')
-    const select = screen.getByLabelText('Type') as HTMLSelectElement
-    expect(select.value).toBe('nouvel-id')
-    expect(select.selectedOptions[0].textContent).toBe('Mariage')
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Type' }))
+    const options = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(options).toEqual(['Aucun', 'Anniversaire', 'Mariage'])
+    fireEvent.click(screen.getByRole('option', { name: 'Mariage' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Commencer la presta' }))
+    expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ typeId: 't2' }))
   })
 
   it('commence la presta même sans cocktail', () => {
@@ -133,10 +153,10 @@ describe('EcranNouvellePresta', () => {
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ client: null }))
   })
 
-  it('annule sans rien créer', () => {
+  it('annule sans rien créer', async () => {
     const depots = ecran()
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }))
-    expect(screen.getByText('ACCUEIL')).toBeTruthy()
+    expect(await screen.findByText('ACCUEIL')).toBeTruthy()
     expect(depots.prestas.creer).not.toHaveBeenCalled()
   })
 })

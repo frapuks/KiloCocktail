@@ -1,14 +1,18 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, Outlet, useMatch, useNavigate, useParams } from 'react-router-dom'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
-import { formatDateLongue, nomLigne, nomPresta } from '../../domain/affichage'
+import { formatDate, nomLigne, nomPresta } from '../../domain/affichage'
 import { groupes } from '../../domain/lignes'
 import { dernierVerre, totauxParLigne } from '../../domain/verres'
 import type { Ligne } from '../../domain/types'
-import { IndicateurSauvegarde } from '../../ui/IndicateurSauvegarde'
+import { PastilleType } from '../../ui/PastilleType'
+import { couleurGroupe, TitreSection } from '../../ui/TitreSection'
+import { EcranResultats } from '../resultats/EcranResultats'
 import { CarteCocktail } from './CarteCocktail'
-import './comptage.css'
 
 export function EcranComptage() {
   const { id = '' } = useParams()
@@ -18,6 +22,8 @@ export function EcranComptage() {
   const cocktails = useCocktails()
   const types = useTypes()
   const donneesVerres = useVerres(id)
+  const surModifier = useMatch('/prestas/:id/modifier') !== null
+  const [resultatsOuverts, setResultatsOuverts] = useState(false)
   // Verres dont le retrait est lancé mais pas encore reflété par un instantané.
   const enCours = useRef(new Set<string>())
   // Dernier verre servi par carte : annulé si le toucher devient un défilement (pointercancel).
@@ -35,11 +41,14 @@ export function EcranComptage() {
   }, [presta, navigate])
 
   if (!presta || !cocktails || !types || !donneesVerres) return null
-  if (presta.statut === 'terminee') return <Navigate to={`/prestas/${id}/resultats`} replace />
+  // Le comptage n'existe que pour une presta en cours : une terminée n'affiche que ses résultats (par-dessus la liste),
+  // et la feuille « Modifier » ouverte par lien y suit.
+  if (presta.statut === 'terminee')
+    return <Navigate to={`/prestas/${id}/resultats${surModifier ? '/modifier' : ''}`} replace />
 
   const totaux = totauxParLigne(donneesVerres.verres)
   const type = types.find((t) => t.id === presta.typeId)
-  const date = formatDateLongue(presta.date)
+  const date = formatDate(presta.date)
   const { avec, sans } = groupes(presta.lignes, cocktails)
 
   const retirer = (ligneId: string) => {
@@ -62,11 +71,6 @@ export function EcranComptage() {
     depots.verres.retirer(id, verreId)
   }
 
-  const terminer = () => {
-    depots.prestas.changerStatut(id, 'terminee')
-    navigate(`/prestas/${id}/resultats`)
-  }
-
   const bande = (titre: string, variante: 'avec' | 'sans', lignes: Ligne[]) => {
     const cartes = lignes.flatMap((ligne) => {
       const c = cocktails.find((k) => k.id === ligne.cocktailId)
@@ -86,40 +90,99 @@ export function EcranComptage() {
       ]
     })
     if (cartes.length === 0) return null
-    const style = {
-      '--rangees-paysage': Math.ceil(cartes.length / 2),
-      '--rangees-portrait': cartes.length,
-    } as CSSProperties
+    // Chaque bande prend une hauteur proportionnelle à son nombre de rangées de cartes
+    // (2 cartes par rangée, en paysage comme en portrait).
     return (
-      <section key={variante} className="bande" style={style}>
-        <h2 className={`bande-titre bande-titre-${variante}`}>{titre}</h2>
-        <div className="grille">{cartes}</div>
-      </section>
+      <Box
+        key={variante}
+        component="section"
+        sx={{
+          flex: `${Math.ceil(cartes.length / 2)} 1 0`,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}
+      >
+        <TitreSection titre={titre} couleur={couleurGroupe(variante)} />
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            // Le rebond de l'appui grossit la carte d'un poil au-delà de 100 % : sans ceci, une carte
+            // de la colonne de droite fait apparaître une barre de défilement horizontale.
+            overflowX: 'hidden',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            // Téléphone : cartes plus basses et plus serrées, pour en voir davantage à la fois.
+            gridAutoRows: { xs: 'minmax(88px, 1fr)', sm: 'minmax(120px, 1fr)' },
+            gap: { xs: '8px', sm: '12px' },
+            // Nombre impair de cartes : la dernière, seule sur sa rangée, prend toute la largeur.
+            '& > :last-child:nth-child(odd)': { gridColumn: '1 / -1' },
+          }}
+        >
+          {cartes}
+        </Box>
+      </Box>
     )
   }
 
   const bandes = [bande('Avec alcool', 'avec', avec), bande('Sans alcool', 'sans', sans)]
 
   return (
-    <div className="comptage">
-      <header className="comptage-entete">
-        <Link to="/" className="comptage-retour">← Prestas</Link>
-        <div className="comptage-titres">
-          <h1>{nomPresta(presta)}</h1>
-          <p>{type ? `${type.nom} · ${date}` : date}</p>
-        </div>
-        <IndicateurSauvegarde etat={donneesVerres.etat} />
-        <div className="comptage-actions">
-          <button type="button" onClick={() => navigate(`/prestas/${id}/modifier`)}>Modifier</button>
-          <button type="button" onClick={() => navigate(`/prestas/${id}/resultats`)}>Résultats</button>
-          <button type="button" onClick={terminer}>Terminer</button>
-        </div>
-      </header>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100dvh',
+        p: { xs: '8px', sm: '12px' },
+        gap: { xs: '8px', sm: '12px' },
+        // Écran tactile de comptage : pas de zoom au double tap, ni sélection ni menu au toucher long.
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+      }}
+    >
+      <Box component="header" sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 2, rowGap: 1 }}>
+        <Box sx={{ flex: '1 1 200px', minWidth: 0 }}>
+          <Typography variant="h1" sx={{ fontSize: 28, lineHeight: 1 }}>
+            {nomPresta(presta)}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 0.75 }}>
+            {type && <PastilleType nom={type.nom} />}
+            <Typography variant="body2" color="text.secondary">
+              {date}
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button variant="outlined" color="inherit" onClick={() => navigate(`/prestas/${id}/modifier`)}>
+            Modifier
+          </Button>
+          <Button variant="contained" onClick={() => setResultatsOuverts(true)}>
+            Résultats
+          </Button>
+          <Button variant="outlined" color="inherit" onClick={() => navigate('/')}>
+            Fermer
+          </Button>
+        </Box>
+      </Box>
       {bandes.every((b) => b === null) ? (
-        <p className="comptage-vide">Aucun cocktail sur la carte. Ajoute-en avec « Modifier ».</p>
+        <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 6 }}>
+          Aucun cocktail sur la carte. Ajoute-en avec « Modifier ».
+        </Typography>
       ) : (
-        <main className="bandes">{bandes}</main>
+        <Box
+          component="main"
+          sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: { xs: '8px', sm: '12px' } }}
+        >
+          {bandes}
+        </Box>
       )}
-    </div>
+      {resultatsOuverts && <EcranResultats onFermer={() => setResultatsOuverts(false)} />}
+      <Outlet />
+    </Box>
   )
 }

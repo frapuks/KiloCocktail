@@ -27,12 +27,22 @@ describe('SurLaCarte', () => {
     expect(avec.queryByText('Daiquiri')).toBeNull()
     expect(sans.getByText('Nojito')).toBeTruthy()
     expect(sans.getByText('sans alcool')).toBeTruthy()
-    expect(screen.queryByText('Retirer')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Retirer/ })).toBeNull()
   })
 
   it('n’affiche pas un groupe vide', () => {
     render(<SurLaCarte lignes={[l('1', 'd')]} cocktails={cocktails} onDeplacer={() => {}} />)
     expect(screen.queryByText('Sans alcool')).toBeNull()
+  })
+
+  it('indique une carte vide, masquées comprises', () => {
+    render(<SurLaCarte lignes={[l('1', 'd', true)]} cocktails={cocktails} onDeplacer={() => {}} />)
+    expect(screen.getByText('Aucun cocktail pour l’instant.')).toBeTruthy()
+  })
+
+  it('n’indique rien de vide dès qu’un cocktail est sur la carte', () => {
+    render(<SurLaCarte lignes={[l('1', 'd')]} cocktails={cocktails} onDeplacer={() => {}} />)
+    expect(screen.queryByText('Aucun cocktail pour l’instant.')).toBeNull()
   })
 
   it('déplace au clavier', async () => {

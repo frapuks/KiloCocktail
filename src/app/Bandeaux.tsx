@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import { surErreurEcriture } from '../data/erreurs'
 
-const styleBandeau = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '1rem',
-  padding: '10px 16px',
-  color: '#323232',
-} as const
+const styleBandeau = { borderRadius: 0, alignItems: 'center', px: 2 } as const
 
 export function Bandeaux() {
   const [erreurEcriture, setErreurEcriture] = useState(false)
@@ -23,20 +18,33 @@ export function Bandeaux() {
   return (
     <>
       {erreurEcriture && (
-        <div role="alert" style={{ ...styleBandeau, background: 'var(--moins)' }}>
-          <span>Une modification n'a pas pu être sauvegardée</span>
-          <button type="button" onClick={() => setErreurEcriture(false)}>
-            Fermer
-          </button>
-        </div>
+        <Alert
+          severity="warning"
+          variant="filled"
+          sx={styleBandeau}
+          action={
+            <Button color="inherit" onClick={() => setErreurEcriture(false)}>
+              Fermer
+            </Button>
+          }
+        >
+          Une modification n'a pas pu être sauvegardée
+        </Alert>
       )}
       {nouvelleVersion && (
-        <div role="status" style={{ ...styleBandeau, background: 'var(--avec)' }}>
-          <span>Nouvelle version disponible</span>
-          <button type="button" onClick={() => void updateServiceWorker(true)}>
-            Recharger
-          </button>
-        </div>
+        <Alert
+          role="status"
+          severity="success"
+          variant="filled"
+          sx={styleBandeau}
+          action={
+            <Button color="inherit" onClick={() => void updateServiceWorker(true)}>
+              Recharger
+            </Button>
+          }
+        >
+          Nouvelle version disponible
+        </Alert>
       )}
     </>
   )

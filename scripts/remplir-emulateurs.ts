@@ -113,6 +113,14 @@ const PRESTAS: PrestaDemo[] = [
     decalageJours: 5, client: 'Studio Pixel', typeId: 'soiree-entreprise', statut: 'en-cours', servis: [0, 0],
     cocktails: ['cosmopolitan', 'gin-tonic', 'cafe-frappe'],
   },
+  // Grande carte (6 avec alcool, 5 sans), en cours : pour éprouver l'écran de comptage avec beaucoup de cartes.
+  {
+    decalageJours: 1, client: 'Salon des vins', typeId: 'seminaire', statut: 'en-cours', servis: [0, 20],
+    cocktails: [
+      'mojito', 'pina-colada', 'spritz', 'margarita', 'cosmopolitan', 'moscow-mule',
+      'nojito', 'virgin-colada', 'virgin-mule', 'limonade-maison', 'cafe-frappe',
+    ],
+  },
   {
     decalageJours: -180, client: 'Camille Durand', typeId: 'anniversaire', statut: 'terminee', servis: [8, 30],
     cocktails: ['caipirinha', 'daiquiri', 'virgin-daiquiri', 'the-glace-peche'],

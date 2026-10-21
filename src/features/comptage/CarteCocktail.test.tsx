@@ -97,14 +97,15 @@ it('affiche nom, sous-titre et total accordé', () => {
   )
   expect(screen.getByText('Nojito')).toBeInTheDocument()
   expect(screen.getByText('sans alcool')).toBeInTheDocument()
-  const servis = () => document.querySelector('.carte-servis') as HTMLElement
+  // Compteur de servis : le parent du libellé « servi(s) ».
+  const servis = () => screen.getByText(/^servis?$/).parentElement as HTMLElement
   expect(servis()).toHaveTextContent('1 servi')
   const ordre = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
   expect(ordre(screen.getByText('Nojito'), screen.getByText('sans alcool'))).toBeTruthy()
   expect(ordre(screen.getByText('sans alcool'), servis())).toBeTruthy()
   unmount()
   render(<CarteCocktail nom="Mojito" sousTitre={null} total={14} variante="avec" onPlus={() => {}} onAnnulerPlus={() => {}} onMoins={() => true} />)
-  expect(document.querySelector('.carte-servis')).toHaveTextContent('14 servis')
+  expect(servis()).toHaveTextContent('14 servis')
 })
 
 it('nomme la carte et le bouton − avec le sous-titre', () => {

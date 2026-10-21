@@ -62,7 +62,7 @@ function ecranSansHistorique(p: Presta) {
   return depots
 }
 
-const carte = () => within(screen.getByRole('region', { name: 'Sur la carte' }))
+const carte = () => within(screen.getByRole('region', { name: 'Cocktails' }))
 const ligne = (nom: string) => carte().getByText(nom).closest('li') as HTMLElement
 const clic = (nom: string | RegExp) => fireEvent.click(screen.getByRole('button', { name: nom }))
 
@@ -73,22 +73,24 @@ describe('EcranModifierPresta', () => {
 
   it('préremplit date, client et type', () => {
     ecran()
-    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-10-17')
+    expect(screen.getByRole('group', { name: 'Date' }).textContent).toContain('17/10/2026')
     expect((screen.getByLabelText('Client') as HTMLInputElement).value).toBe('Julie Martin')
-    expect((screen.getByLabelText('Type') as HTMLSelectElement).value).toBe('t1')
-    expect(screen.getByRole('option', { name: 'Mariage' })).toBeTruthy()
+    // Type archivé : reste affiché et proposé puisque c'est celui de la presta.
+    expect(screen.getByRole('combobox', { name: 'Type' }).textContent).toBe('Mariage')
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Type' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Aucun', 'Anniversaire', 'Mariage'])
   })
 
   it('retire directement une ligne à 0', () => {
     ecran()
-    fireEvent.click(within(ligne('Spritz')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Spritz')).getByRole('button', { name: /^Retirer/ }))
     expect(carte().queryByText('Spritz')).toBeNull()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('dialog', { name: /^Retirer/ })).toBeNull()
   })
 
   it('propose trois choix pour une ligne comptée', () => {
     ecran()
-    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: /^Retirer/ }))
     const d = within(screen.getByRole('dialog', { name: 'Retirer Mojito ?' }))
     expect(d.getByRole('button', { name: 'Masquer du comptage (garder les 3 servis)' })).toBeTruthy()
     expect(d.getByRole('button', { name: 'Supprimer avec ses 3 servis' })).toBeTruthy()
@@ -98,7 +100,7 @@ describe('EcranModifierPresta', () => {
   it('nomme la version sans alcool dans le dialogue de retrait', () => {
     const p = { ...presta, lignes: [presta.lignes[0], { ...presta.lignes[2], masquee: false }] }
     ecran(creerDepotsFactices({ cocktails: [mojito, nojito], types, prestas: [p], verres }))
-    fireEvent.click(within(ligne('Nojito')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Nojito')).getByRole('button', { name: /^Retirer/ }))
     const d = within(screen.getByRole('dialog', { name: 'Retirer Nojito (sans alcool) ?' }))
     expect(d.getByRole('button', { name: 'Masquer du comptage (garder les 2 servis)' })).toBeTruthy()
     expect(d.getByRole('button', { name: 'Supprimer avec ses 2 servis' })).toBeTruthy()
@@ -106,7 +108,7 @@ describe('EcranModifierPresta', () => {
 
   it('accorde le dialogue de retrait pour un seul verre servi', () => {
     ecran(creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres: { p1: [v('1', 'L1')] } }))
-    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: /^Retirer/ }))
     const d = within(screen.getByRole('dialog', { name: 'Retirer Mojito ?' }))
     expect(d.getByRole('button', { name: 'Masquer du comptage (garder le 1 servi)' })).toBeTruthy()
     expect(d.getByRole('button', { name: 'Supprimer avec son 1 servi' })).toBeTruthy()
@@ -114,7 +116,7 @@ describe('EcranModifierPresta', () => {
 
   it('masque une ligne comptée', () => {
     const depots = ecran()
-    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: /^Retirer/ }))
     clic('Masquer du comptage (garder les 3 servis)')
     expect(carte().queryByText('Mojito')).toBeNull()
     clic('Enregistrer')
@@ -129,7 +131,7 @@ describe('EcranModifierPresta', () => {
 
   it('supprime une ligne comptée avec ses verres', () => {
     const depots = ecran()
-    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Mojito')).getByRole('button', { name: /^Retirer/ }))
     clic('Supprimer avec ses 3 servis')
     clic('Enregistrer')
     expect(depots.prestas.modifier).toHaveBeenCalledWith(
@@ -151,7 +153,7 @@ describe('EcranModifierPresta', () => {
 
   it('ajoute seulement les cocktails absents', () => {
     const depots = ecran()
-    clic('+ Ajouter')
+    clic('+ Ajouter un cocktail')
     const feuille = within(screen.getByRole('dialog', { name: 'Ajouter des cocktails' }))
     const cases = feuille.getAllByRole('checkbox')
     expect(cases).toHaveLength(1)
@@ -160,7 +162,7 @@ describe('EcranModifierPresta', () => {
     expect(feuille.queryByText('Spritz')).toBeNull()
     fireEvent.click(cases[0])
     fireEvent.click(feuille.getByRole('button', { name: 'Ajouter' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Ajouter des cocktails' })).toBeNull()
     const avec = within(screen.getByRole('list', { name: 'Avec alcool' }))
     expect(avec.getAllByRole('listitem').map((e) => e.textContent)).toEqual([
       expect.stringContaining('Mojito'),
@@ -188,7 +190,7 @@ describe('EcranModifierPresta', () => {
   it('n’applique rien avant « Enregistrer »', () => {
     const depots = ecran()
     fireEvent.change(screen.getByLabelText('Client'), { target: { value: 'Paul' } })
-    fireEvent.click(within(ligne('Spritz')).getByRole('button', { name: 'Retirer' }))
+    fireEvent.click(within(ligne('Spritz')).getByRole('button', { name: /^Retirer/ }))
     expect(depots.prestas.modifier).not.toHaveBeenCalled()
     expect(depots.prestas.supprimer).not.toHaveBeenCalled()
   })
@@ -210,10 +212,19 @@ describe('EcranModifierPresta', () => {
     fireEvent.change(screen.getByLabelText('Client'), { target: { value: 'Paul' } })
     clic('Annuler')
     expect(screen.getByRole('dialog', { name: 'Abandonner les modifications ?' })).toBeTruthy()
-    clic('Continuer à modifier')
-    expect(screen.queryByRole('dialog')).toBeNull()
+    clic('Annuler')
+    expect(screen.queryByRole('dialog', { name: 'Abandonner les modifications ?' })).toBeNull()
     expect(screen.queryByText('COMPTAGE')).toBeNull()
     clic('Annuler')
+    clic('Abandonner')
+    await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
+  })
+
+  it('traite un tap à côté de la feuille comme Annuler', async () => {
+    ecran()
+    fireEvent.change(screen.getByLabelText('Client'), { target: { value: 'Paul' } })
+    fireEvent.click(document.querySelector('.MuiBackdrop-root')!)
+    expect(screen.getByRole('dialog', { name: 'Abandonner les modifications ?' })).toBeTruthy()
     clic('Abandonner')
     await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
   })
@@ -226,7 +237,7 @@ describe('EcranModifierPresta', () => {
 
   it('supprime la presta après confirmation', async () => {
     const depots = ecran()
-    clic('Supprimer la presta')
+    clic('Supprimer')
     expect(screen.getByRole('dialog', { name: 'Supprimer “Julie Martin” et ses 5 cocktails servis ?' })).toBeTruthy()
     expect(depots.prestas.supprimer).not.toHaveBeenCalled()
     clic('Supprimer')
@@ -265,7 +276,7 @@ describe('EcranModifierPresta', () => {
     const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     vi.mocked(depots.prestas.supprimer).mockReturnValue(new Promise<void>(() => {}))
     ecran(depots)
-    clic('Supprimer la presta')
+    clic('Supprimer')
     clic('Supprimer')
     clic('Supprimer')
     expect(depots.prestas.supprimer).toHaveBeenCalledTimes(1)
@@ -279,7 +290,7 @@ describe('EcranModifierPresta', () => {
     const depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })
     vi.mocked(depots.prestas.supprimer).mockRejectedValue(new Error('hors cache'))
     ecran(depots)
-    clic('Supprimer la presta')
+    clic('Supprimer')
     clic('Supprimer')
     await waitFor(() => expect(abonne).toHaveBeenCalledTimes(1))
     expect(screen.queryByText('ACCUEIL')).toBeNull()
@@ -287,12 +298,13 @@ describe('EcranModifierPresta', () => {
     desabonner()
   })
 
-  it('ignore une date vidée', async () => {
+  it('enregistre la date choisie dans le calendrier', async () => {
     const depots = ecran()
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '' } })
-    expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-10-17')
-    clic('Enregistrer')
-    expect(depots.prestas.modifier).toHaveBeenCalledWith('p1', expect.objectContaining({ date: '2026-10-17' }), [])
+    fireEvent.click(screen.getByRole('button', { name: /Choisir la date/ }))
+    fireEvent.click(screen.getByRole('gridcell', { name: '24' }))
+    // Le calendrier se referme en fondu : l'écran redevient accessible ensuite.
+    fireEvent.click(await screen.findByRole('button', { name: 'Enregistrer' }))
+    expect(depots.prestas.modifier).toHaveBeenCalledWith('p1', expect.objectContaining({ date: '2026-10-24' }), [])
     await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
   })
 

@@ -65,4 +65,38 @@ describe('dépôt des cocktails', () => {
     const [c] = await prochaineValeur(depot.ecouter);
     expect(Object.keys(c).sort()).toEqual(['alcool', 'archive', 'id', 'nom', 'nomNormalise']);
   });
+
+  it('chiffre puis supprime un cocktail : verres effacés, retiré des cartes, autres cocktails intacts', async () => {
+    const depots = creerDepots(db, uid);
+    const supprime = depot.creer({ nom: 'Blue Lagoon', alcool: true });
+    const garde = depot.creer({ nom: 'Mojito', alcool: true });
+    const ligne = (id: string, cocktailId: string) => ({ id, cocktailId, masquee: false });
+    const p1 = depots.prestas.creer({ date: '2026-10-17', client: 'A', typeId: null, lignes: [ligne('L1', supprime), ligne('L2', garde)] });
+    const p2 = depots.prestas.creer({ date: '2026-10-18', client: 'B', typeId: null, lignes: [ligne('L3', supprime)] });
+    const p3 = depots.prestas.creer({ date: '2026-10-19', client: 'C', typeId: null, lignes: [ligne('L4', garde)] });
+    depots.verres.servir(p1, 'L1');
+    depots.verres.servir(p1, 'L1');
+    depots.verres.servir(p1, 'L2');
+    depots.verres.servir(p2, 'L3');
+    depots.verres.servir(p3, 'L4');
+    await attendre(db);
+
+    expect(await depot.impactSuppression(supprime)).toEqual({ prestas: 2, verres: 3 });
+
+    await depot.supprimer(supprime);
+    await attendre(db);
+
+    expect((await prochaineValeur(depot.ecouter)).map((c) => c.id)).toEqual([garde]);
+    const prestas = await prochaineValeur(depots.prestas.ecouterListe);
+    const lignesDe = (id: string) => prestas.find((p) => p.id === id)?.lignes.map((l) => l.id);
+    expect(lignesDe(p1)).toEqual(['L2']);
+    expect(lignesDe(p2)).toEqual([]);
+    expect(lignesDe(p3)).toEqual(['L4']);
+    const verresDe = async (prestaId: string) =>
+      (await prochaineValeur<Parameters<Parameters<typeof depots.verres.ecouter>[1]>[0]>((cb) => depots.verres.ecouter(prestaId, (v) => cb(v)))).map((v) => v.ligneId);
+    expect(await verresDe(p1)).toEqual(['L2']);
+    expect(await verresDe(p2)).toEqual([]);
+    expect(await verresDe(p3)).toEqual(['L4']);
+    expect(await depot.impactSuppression(garde)).toEqual({ prestas: 2, verres: 2 });
+  });
 });

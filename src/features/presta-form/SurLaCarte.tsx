@@ -1,8 +1,13 @@
+import CloseIcon from '@mui/icons-material/Close'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Typography from '@mui/material/Typography'
 import { groupes } from '../../domain/lignes'
 import { nomLigne } from '../../domain/affichage'
 import type { Cocktail, Ligne, Variante } from '../../domain/types'
-import { bouton } from '../../ui/FeuilleModale'
 import { ListeReordonnable } from '../../ui/ListeReordonnable'
+import { couleurGroupe, TitreSection } from '../../ui/TitreSection'
 
 interface Props {
   lignes: Ligne[]
@@ -10,6 +15,8 @@ interface Props {
   totaux?: Map<string, number>
   onDeplacer(variante: Variante, de: number, vers: number): void
   onRetirer?(ligneId: string): void
+  // Présent : bouton « + Ajouter un cocktail » sur la ligne du titre.
+  onAjouter?(): void
 }
 
 const GROUPES: { variante: Variante; titre: string }[] = [
@@ -17,19 +24,32 @@ const GROUPES: { variante: Variante; titre: string }[] = [
   { variante: 'sans', titre: 'Sans alcool' },
 ]
 
-export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer }: Props) {
+export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer, onAjouter }: Props) {
   const parGroupe = groupes(lignes, cocktails)
   return (
-    <section aria-labelledby="titre-sur-la-carte">
-      <h2 id="titre-sur-la-carte" style={{ fontFamily: 'var(--police-titre)' }}>
-        Sur la carte
-      </h2>
+    <Box component="section" aria-labelledby="titre-sur-la-carte">
+      {/* Titre simple, sans trait : ce sont les groupes « Avec alcool » / « Sans alcool » en dessous qui en ont un. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 1, mb: 1 }}>
+        <Typography variant="h2" component="h3" id="titre-sur-la-carte">
+          Cocktails
+        </Typography>
+        {onAjouter && (
+          <Button variant="outlined" color="inherit" onClick={onAjouter}>
+            + Ajouter un cocktail
+          </Button>
+        )}
+      </Box>
+      {parGroupe.avec.length === 0 && parGroupe.sans.length === 0 && (
+        <Typography color="text.secondary">Aucun cocktail pour l’instant.</Typography>
+      )}
       {GROUPES.map(({ variante, titre }) => {
         const groupe = parGroupe[variante]
         if (groupe.length === 0) return null
         return (
           <div key={variante}>
-            <h3 style={{ color: 'var(--texte-2)', fontSize: 16 }}>{titre}</h3>
+            <Box sx={{ mt: 2, mb: 0.5 }}>
+              <TitreSection titre={titre} couleur={couleurGroupe(variante)} niveau="h4" />
+            </Box>
             <ListeReordonnable
               libelle={titre}
               elements={groupe}
@@ -39,24 +59,32 @@ export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer }:
                 if (!cocktail) return null
                 const { nom, sousTitre } = nomLigne(cocktail)
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ flex: 1 }}>
                       <div>{nom}</div>
-                      {sousTitre && <div style={{ color: 'var(--texte-2)', fontSize: 14 }}>{sousTitre}</div>}
-                    </div>
-                    {totaux && <span>{totaux.get(ligne.id) ?? 0}</span>}
+                      {sousTitre && (
+                        <Typography variant="body2" color="text.secondary">
+                          {sousTitre}
+                        </Typography>
+                      )}
+                    </Box>
+                    {totaux && <Typography component="span" sx={{ fontWeight: 700 }}>{totaux.get(ligne.id) ?? 0}</Typography>}
                     {onRetirer && (
-                      <button type="button" style={bouton} onClick={() => onRetirer(ligne.id)}>
-                        Retirer
-                      </button>
+                      <IconButton
+                        aria-label={`Retirer ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
+                        color="error"
+                        onClick={() => onRetirer(ligne.id)}
+                      >
+                        <CloseIcon />
+                      </IconButton>
                     )}
-                  </div>
+                  </Box>
                 )
               }}
             />
           </div>
         )
       })}
-    </section>
+    </Box>
   )
 }

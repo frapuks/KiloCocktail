@@ -11,5 +11,6 @@ vi.mock('../data/auth', () => ({
   ecouterUtilisateur: vi.fn(),
   seConnecter: vi.fn(),
   envoyerReinitialisation: vi.fn(),
+  changerMotDePasse: vi.fn(),
   seDeconnecter: vi.fn(),
 }))

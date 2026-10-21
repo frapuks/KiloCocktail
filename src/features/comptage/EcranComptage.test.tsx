@@ -45,9 +45,11 @@ function rendreEcran(p: Presta | null = presta(), verres: Verre[] = []) {
 it('affiche l’en-tête de la presta', () => {
   rendreEcran()
   expect(screen.getByText('Julie Martin')).toBeInTheDocument()
-  expect(screen.getByText('Anniversaire · samedi 17/10/2026')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '← Prestas' })).toBeInTheDocument()
-  for (const nom of ['Modifier', 'Résultats', 'Terminer']) {
+  expect(screen.getByText('Anniversaire').closest('.MuiChip-root')).not.toBeNull()
+  expect(screen.getByText('17/10/2026')).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: '← Prestas' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Terminer la presta' })).toBeNull()
+  for (const nom of ['Modifier', 'Résultats', 'Fermer']) {
     expect(screen.getByRole('button', { name: nom })).toBeInTheDocument()
   }
 })
@@ -96,11 +98,18 @@ it('invite à passer par Modifier sans ligne visible', () => {
   expect(screen.getByText('Aucun cocktail sur la carte. Ajoute-en avec « Modifier ».')).toBeInTheDocument()
 })
 
-it('termine la presta et ouvre les résultats', () => {
+it('ferme le comptage et revient à la liste des prestas', () => {
   const depots = rendreEcran()
-  fireEvent.click(screen.getByRole('button', { name: 'Terminer' }))
-  expect(depots.prestas.changerStatut).toHaveBeenCalledWith('p1', 'terminee')
-  expect(screen.getByText('Lieu : /prestas/p1/resultats')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Fermer' }))
+  expect(screen.getByText('Lieu : /')).toBeInTheDocument()
+  expect(depots.prestas.changerStatut).not.toHaveBeenCalled()
+})
+
+it('ouvre les résultats en feuille par-dessus le comptage, sans changer de page', () => {
+  rendreEcran()
+  fireEvent.click(screen.getByRole('button', { name: 'Résultats' }))
+  expect(screen.getByRole('dialog', { name: 'Résultats' })).toBeInTheDocument()
+  expect(screen.queryByText(/^Lieu :/)).toBeNull()
 })
 
 it('redirige une presta terminée vers ses résultats', () => {

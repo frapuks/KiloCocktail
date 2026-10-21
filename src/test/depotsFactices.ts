@@ -47,6 +47,8 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
       creer: vi.fn(() => 'nouvel-id'),
       modifier: vi.fn(),
       archiver: vi.fn(),
+      impactSuppression: vi.fn(() => Promise.resolve({ prestas: 0, verres: 0 })),
+      supprimer: vi.fn(() => Promise.resolve()),
     },
     types: {
       ecouter: vi.fn((cb) => {
@@ -56,6 +58,7 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
       creer: vi.fn(() => 'nouvel-id'),
       renommer: vi.fn(),
       archiver: vi.fn(),
+      supprimer: vi.fn(() => Promise.resolve()),
       initialiserSiVide: vi.fn(() => Promise.resolve()),
     },
     prestas: {

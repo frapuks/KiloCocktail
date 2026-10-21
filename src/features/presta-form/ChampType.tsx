@@ -1,52 +1,36 @@
-import { useState } from 'react'
+import MenuItem from '@mui/material/MenuItem'
+import TextField from '@mui/material/TextField'
 import type { TypeEvenement } from '../../domain/types'
-import { champ } from '../../ui/FeuilleModale'
-import { FicheType } from '../reglages/EcranReglages'
 
 interface Props {
   types: TypeEvenement[]
   valeur: string | null
   onChange(id: string | null): void
-  onCreer(nom: string): string
 }
 
-const AJOUTER = '__ajouter__'
+const AUCUN = ''
 
-export function ChampType({ types, valeur, onChange, onCreer }: Props) {
-  const [fiche, setFiche] = useState(false)
-  const actifs = types.filter((t) => !t.archive || t.id === valeur).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+// Menu aux couleurs de l'appli. Les types se créent et se renomment dans Réglages, pas ici.
+export function ChampType({ types, valeur, onChange }: Props) {
+  // Un type archivé reste proposé s'il est déjà celui de la presta, pour ne pas le perdre en silence.
+  const proposes = types.filter((t) => !t.archive || t.id === valeur).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
 
   return (
-    <>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        Type
-        <select
-          value={valeur ?? ''}
-          onChange={(e) => {
-            if (e.target.value === AJOUTER) setFiche(true)
-            else onChange(e.target.value === '' ? null : e.target.value)
-          }}
-          style={champ}
-        >
-          <option value="">—</option>
-          {actifs.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nom}
-            </option>
-          ))}
-          <option value={AJOUTER}>+ Ajouter un type</option>
-        </select>
-      </label>
-      {fiche && (
-        <FicheType
-          types={types}
-          onAnnuler={() => setFiche(false)}
-          onEnregistrer={(nom) => {
-            onChange(onCreer(nom))
-            setFiche(false)
-          }}
-        />
-      )}
-    </>
+    <TextField
+      select
+      label="Type"
+      value={valeur ?? AUCUN}
+      onChange={(e) => onChange(e.target.value === AUCUN ? null : e.target.value)}
+      slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+    >
+      <MenuItem value={AUCUN}>
+        <em>Aucun</em>
+      </MenuItem>
+      {proposes.map((t) => (
+        <MenuItem key={t.id} value={t.id}>
+          {t.nom}
+        </MenuItem>
+      ))}
+    </TextField>
   )
 }

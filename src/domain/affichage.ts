@@ -13,15 +13,10 @@ function decouper(date: string): [number, number, number] {
   return [a, m, j];
 }
 
+// Format unique des dates dans l'appli : JJ/MM/AAAA, sans le jour de la semaine.
 export function formatDate(date: string): string {
   const [a, m, j] = decouper(date);
   return `${String(j).padStart(2, '0')}/${String(m).padStart(2, '0')}/${a}`;
-}
-
-export function formatDateLongue(date: string): string {
-  const [a, m, j] = decouper(date);
-  const jour = new Date(a, m - 1, j).toLocaleDateString('fr-FR', { weekday: 'long' });
-  return `${jour} ${formatDate(date)}`;
 }
 
 export function nomPresta(p: { client: string | null; date: string }): string {

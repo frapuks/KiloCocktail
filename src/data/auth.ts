@@ -1,8 +1,11 @@
 import {
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
 } from 'firebase/auth'
 import { waitForPendingWrites } from 'firebase/firestore'
 import type { Desabonner } from './depots'
@@ -24,6 +27,24 @@ export async function seConnecter(email: string, motDePasse: string): Promise<vo
   } catch (e) {
     const code = (e as { code?: string }).code ?? ''
     if (CODES_IDENTIFIANTS.includes(code)) throw new Error('identifiants')
+    if (code === 'auth/network-request-failed') throw new Error('reseau')
+    throw new Error('autre')
+  }
+}
+
+// Firebase exige une connexion récente pour changer le mot de passe : on revérifie l'actuel d'abord.
+// Erreurs levées : 'identifiants' (actuel faux), 'faible', 'trop-de-tentatives', 'reseau', 'autre'.
+export async function changerMotDePasse(actuel: string, nouveau: string): Promise<void> {
+  const u = auth.currentUser
+  if (!u?.email) throw new Error('autre')
+  try {
+    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, actuel))
+    await updatePassword(u, nouveau)
+  } catch (e) {
+    const code = (e as { code?: string }).code ?? ''
+    if (CODES_IDENTIFIANTS.includes(code)) throw new Error('identifiants')
+    if (code === 'auth/weak-password' || code === 'auth/password-does-not-meet-requirements') throw new Error('faible')
+    if (code === 'auth/too-many-requests') throw new Error('trop-de-tentatives')
     if (code === 'auth/network-request-failed') throw new Error('reseau')
     throw new Error('autre')
   }

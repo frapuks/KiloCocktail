@@ -1,76 +1,52 @@
-import { useEffect, useRef } from 'react'
+import { useId, type ReactNode } from 'react'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
+import Stack from '@mui/material/Stack'
+import { policeTitre } from './themeMui'
 
 interface Props {
   titre: string
-  message?: string
-  actions: { libelle: string; onClick(): void; danger?: boolean; desactive?: boolean }[]
+  message?: ReactNode
+  // danger : action destructrice, suppression comprise (rouge plein) ; principale : action attendue, réversible (vert plein).
+  actions: { libelle: string; onClick(): void; danger?: boolean; principale?: boolean; desactive?: boolean }[]
   onFermer(): void
 }
 
 export function Confirmation({ titre, message, actions, onFermer }: Props) {
-  const premiere = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    premiere.current?.focus()
-  }, [])
+  const idTitre = useId()
 
   return (
-    <div
-      onClick={onFermer}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        zIndex: 20,
-      }}
+    <Dialog
+      open
+      onClose={onFermer}
+      aria-labelledby={idTitre}
+      fullWidth
+      maxWidth="xs"
+      slotProps={{ paper: { variant: 'outlined', sx: { bgcolor: 'background.default', borderRadius: 3 } } }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titre}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onFermer()
-        }}
-        style={{
-          background: 'var(--fond)',
-          border: '1px solid var(--filet)',
-          borderRadius: 12,
-          padding: 20,
-          width: '100%',
-          maxWidth: 420,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}
-      >
-        <h2 style={{ margin: 0, fontFamily: 'var(--police-titre)', fontWeight: 600 }}>{titre}</h2>
-        {message && <p style={{ margin: 0, color: 'var(--texte-2)' }}>{message}</p>}
-        {actions.map((a, i) => (
-          <button
-            key={a.libelle}
-            ref={i === 0 ? premiere : undefined}
-            type="button"
-            disabled={a.desactive}
-            onClick={a.onClick}
-            style={{
-              minHeight: 44,
-              borderRadius: 8,
-              border: '1px solid var(--filet)',
-              background: a.danger ? 'var(--moins)' : 'transparent',
-              color: a.danger ? '#323232' : 'var(--texte)',
-              font: 'inherit',
-              fontWeight: 600,
-              opacity: a.desactive ? 0.6 : 1,
-            }}
-          >
-            {a.libelle}
-          </button>
-        ))}
-      </div>
-    </div>
+      <DialogTitle id={idTitre} sx={{ fontFamily: policeTitre, fontWeight: 600, fontSize: 24, lineHeight: 1.2 }}>
+        {titre}
+      </DialogTitle>
+      <DialogContent>
+        {message && <DialogContentText sx={{ mb: 1.5 }}>{message}</DialogContentText>}
+        <Stack spacing={1.5}>
+          {actions.map((a, i) => (
+            <Button
+              key={a.libelle}
+              autoFocus={i === 0}
+              variant={a.danger || a.principale ? 'contained' : 'outlined'}
+              color={a.danger ? 'error' : a.principale ? 'primary' : 'inherit'}
+              disabled={a.desactive}
+              onClick={a.onClick}
+            >
+              {a.libelle}
+            </Button>
+          ))}
+        </Stack>
+      </DialogContent>
+    </Dialog>
   )
 }

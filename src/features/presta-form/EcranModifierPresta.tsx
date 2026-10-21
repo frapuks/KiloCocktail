@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { signalerErreurEcriture } from '../../data/erreurs'
 import { useCocktails, usePresta, useTypes, useVerres } from '../../data/hooks'
@@ -12,13 +18,14 @@ import {
   retirer,
   typeRetrait,
 } from '../../domain/lignes'
-import { normaliserNom } from '../../domain/noms'
-import type { Cocktail, Ligne, TypeEvenement } from '../../domain/types'
+import type { Ligne } from '../../domain/types'
 import { totalPresta, totauxParLigne } from '../../domain/verres'
+import { ChampDate } from '../../ui/ChampDate'
 import { Confirmation } from '../../ui/Confirmation'
-import { bouton, champ } from '../../ui/FeuilleModale'
+import { FeuilleModale } from '../../ui/FeuilleModale'
+import { TitreSection } from '../../ui/TitreSection'
 import { ChampType } from './ChampType'
-import { SelecteurCocktails } from './SelecteurCocktails'
+import { FeuilleAjoutCocktails } from './FeuilleAjoutCocktails'
 import { SurLaCarte } from './SurLaCarte'
 
 interface Brouillon {
@@ -35,10 +42,6 @@ type Dialogue =
   | { genre: 'suppression' }
   | null
 
-function fusionner<T extends { id: string }>(base: T[], locaux: T[]): T[] {
-  return [...base, ...locaux.filter((l) => !base.some((b) => b.id === l.id))]
-}
-
 export function EcranModifierPresta() {
   const { id = '' } = useParams()
   const depots = useDepots()
@@ -48,14 +51,14 @@ export function EcranModifierPresta() {
   const cocktailsHook = useCocktails()
   const typesHook = useTypes()
   const donneesVerres = useVerres(id)
-  const [cocktailsCrees, setCocktailsCrees] = useState<Cocktail[]>([])
-  const [typesCrees, setTypesCrees] = useState<TypeEvenement[]>([])
   const [initial, setInitial] = useState<Brouillon | null>(null)
   const [brouillon, setBrouillon] = useState<Brouillon | null>(null)
   const [dialogue, setDialogue] = useState<Dialogue>(null)
-  const [ajout, setAjout] = useState<Ligne[] | null>(null)
+  const [ajout, setAjout] = useState(false)
   // Enregistrement ou suppression lancé : évite un second appel (et un double retour) sur un double tap.
   const [enCours, setEnCours] = useState(false)
+  // Navigation à faire une fois la feuille redescendue ; non nulle = feuille en train de se fermer.
+  const [sortie, setSortie] = useState<(() => void) | null>(null)
 
   useEffect(() => {
     if (presta === null) navigate('/', { replace: true })
@@ -77,8 +80,8 @@ export function EcranModifierPresta() {
 
   const verres = donneesVerres.verres
   const totaux = totauxParLigne(verres)
-  const cocktails = fusionner(cocktailsHook, cocktailsCrees)
-  const types = fusionner(typesHook, typesCrees)
+  const cocktails = cocktailsHook
+  const types = typesHook
   const modifie = JSON.stringify(brouillon) !== JSON.stringify(initial)
   const maj = (p: Partial<Brouillon>) => setBrouillon((b) => (b ? { ...b, ...p } : b))
   const masquees = brouillon.lignes.filter((l) => l.masquee)
@@ -114,7 +117,13 @@ export function EcranModifierPresta() {
   }
 
   // Retour à la page précédente ; ouvert sans historique (lien, rechargement), vers la presta elle-même.
+  // La feuille redescend d'abord, la navigation suit (onFermer).
   function retour() {
+    setDialogue(null)
+    setSortie(() => revenir)
+  }
+
+  function revenir() {
     if (location.key !== 'default') navigate(-1)
     else navigate(presta!.statut === 'en-cours' ? `/prestas/${id}` : `/prestas/${id}/resultats`, { replace: true })
   }
@@ -177,7 +186,7 @@ export function EcranModifierPresta() {
           onFermer={fermer}
           actions={[
             { libelle: 'Abandonner', danger: true, onClick: retour },
-            { libelle: 'Continuer à modifier', onClick: fermer },
+            { libelle: 'Annuler', onClick: fermer },
           ]}
         />
       )
@@ -195,33 +204,20 @@ export function EcranModifierPresta() {
   }
 
   return (
-    <main style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 32 }}>
-      <h1 style={{ fontFamily: 'var(--police-titre)', margin: 0 }}>Modifier la presta</h1>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        Date
-        <input
-          type="date"
-          value={brouillon.date}
-          onChange={(e) => {
-            // Date effacée : on garde la précédente (jamais de presta sans date).
-            if (e.target.value) maj({ date: e.target.value })
-          }}
-          style={champ}
-        />
-      </label>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        Client
-        <input type="text" value={brouillon.client} onChange={(e) => maj({ client: e.target.value })} style={champ} />
-      </label>
+    <FeuilleModale
+      libelle="Modifier la presta"
+      fermee={sortie !== null}
+      onFermer={() => sortie?.()}
+      // Tap à côté = Annuler : confirmation si des modifications seraient perdues.
+      onDemandeFermeture={annuler}
+    >
+      <Typography variant="h2">Modifier la presta</Typography>
+      <ChampDate label="Date" valeur={brouillon.date} onChange={(date) => maj({ date })} />
+      <TextField label="Client" value={brouillon.client} onChange={(e) => maj({ client: e.target.value })} />
       <ChampType
         types={types}
         valeur={brouillon.typeId}
         onChange={(t) => maj({ typeId: t })}
-        onCreer={(nom) => {
-          const nouveau = depots.types.creer(nom)
-          setTypesCrees((t) => [...t, { id: nouveau, nom, nomNormalise: normaliserNom(nom), archive: false }])
-          return nouveau
-        }}
       />
       <SurLaCarte
         lignes={brouillon.lignes}
@@ -229,126 +225,66 @@ export function EcranModifierPresta() {
         totaux={totaux}
         onDeplacer={(variante, de, vers) => maj({ lignes: deplacerDansGroupe(brouillon.lignes, cocktails, variante, de, vers) })}
         onRetirer={demanderRetrait}
+        onAjouter={() => setAjout(true)}
       />
       {masquees.length > 0 && (
-        <section aria-labelledby="titre-masquees">
-          <h2 id="titre-masquees" style={{ fontFamily: 'var(--police-titre)' }}>
-            Masquées
-          </h2>
-          <ul style={{ margin: 0, padding: 0 }}>
+        <Box component="section" aria-labelledby="titre-masquees">
+          <Box sx={{ mb: 1 }}>
+            {/* Trait gris : cocktails retirés du comptage, en retrait. */}
+            <TitreSection titre="Masquées" id="titre-masquees" niveau="h3" couleur="divider" />
+          </Box>
+          <List disablePadding>
             {masquees.map((ligne) => {
               const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
               const noms = cocktail ? nomLigne(cocktail) : null
               return (
-                <li
-                  key={ligne.id}
-                  style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}
-                >
-                  <span style={{ flex: 1 }}>
+                <ListItem key={ligne.id} disableGutters sx={{ gap: 1, minHeight: 44 }}>
+                  <Box component="span" sx={{ flex: 1 }}>
                     {noms ? (noms.sousTitre ? `${noms.nom} · ${noms.sousTitre}` : noms.nom) : ''}
-                  </span>
-                  <span>{totaux.get(ligne.id) ?? 0}</span>
-                  <button
-                    type="button"
-                    style={bouton}
+                  </Box>
+                  <Typography component="span" sx={{ fontWeight: 700 }}>
+                    {totaux.get(ligne.id) ?? 0}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
                     onClick={() => maj({ lignes: reafficher(brouillon.lignes, ligne.id) })}
                   >
                     Réafficher
-                  </button>
-                </li>
+                  </Button>
+                </ListItem>
               )
             })}
-          </ul>
-        </section>
+          </List>
+        </Box>
       )}
-      <button type="button" style={bouton} onClick={() => setAjout([])}>
-        + Ajouter
-      </button>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          onClick={() => void enregistrer()}
-          disabled={enCours}
-          style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)', opacity: enCours ? 0.6 : 1 }}
-        >
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button variant="contained" onClick={() => void enregistrer()} loading={enCours}>
           Enregistrer
-        </button>
-        <button type="button" onClick={annuler} style={bouton}>
+        </Button>
+        <Button variant="outlined" color="inherit" onClick={annuler}>
           Annuler
-        </button>
-      </div>
-      <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid var(--filet)' }}>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outlined"
+          color="error"
           onClick={() => setDialogue({ genre: 'suppression' })}
-          style={{ ...bouton, background: 'var(--moins)', borderColor: 'var(--moins)', color: '#323232' }}
+          sx={{ ml: 'auto' }}
         >
-          Supprimer la presta
-        </button>
-      </div>
+          Supprimer
+        </Button>
+      </Box>
       {ajout && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Ajouter des cocktails"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            zIndex: 10,
+        <FeuilleAjoutCocktails
+          options={optionsAbsentes(cocktails, brouillon.lignes)}
+          onAjouter={(lignes) => {
+            maj({ lignes: [...brouillon.lignes, ...lignes] })
+            setAjout(false)
           }}
-        >
-          <div
-            style={{
-              background: 'var(--fond)',
-              borderTop: '1px solid var(--filet)',
-              borderRadius: '12px 12px 0 0',
-              padding: 20,
-              width: '100%',
-              maxWidth: 520,
-              maxHeight: '100%',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <SelecteurCocktails
-              options={optionsAbsentes(cocktails, brouillon.lignes)}
-              lignes={ajout}
-              onChange={setAjout}
-              catalogue={cocktails}
-              onCreerCocktail={(d) => {
-                const nouveau = depots.cocktails.creer(d)
-                setCocktailsCrees((c) => [
-                  ...c,
-                  { id: nouveau, ...d, nomNormalise: normaliserNom(d.nom), archive: false },
-                ])
-                return nouveau
-              }}
-            />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}
-                onClick={() => {
-                  maj({ lignes: [...brouillon.lignes, ...ajout] })
-                  setAjout(null)
-                }}
-              >
-                Ajouter
-              </button>
-              <button type="button" style={bouton} onClick={() => setAjout(null)}>
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
+          onAnnuler={() => setAjout(false)}
+        />
       )}
       {rendreDialogue()}
-    </main>
+    </FeuilleModale>
   )
 }

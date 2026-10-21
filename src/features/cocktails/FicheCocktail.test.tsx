@@ -17,16 +17,16 @@ const saisirNom = (v: string) => fireEvent.change(screen.getByLabelText('Nom'), 
 const enregistrer = () => fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
 describe('FicheCocktail', () => {
-  it('sélectionne « Avec alcool » par défaut, sans champ de nom sans alcool', () => {
+  it('active l’alcool par défaut, sans champ de nom sans alcool', () => {
     monter()
-    expect((screen.getByLabelText('Avec alcool') as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByRole('switch', { name: 'Alcool' })).toBeChecked()
     expect(screen.queryByLabelText('Nom de la version sans alcool')).toBeNull()
   })
 
   it('enregistre un cocktail sans alcool', () => {
     const { onEnregistrer } = monter()
     saisirNom('  Nojito ')
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
     expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false })
   })
@@ -34,7 +34,7 @@ describe('FicheCocktail', () => {
   it('refuse un homonyme, même dans l’autre version', () => {
     const { onEnregistrer } = monter({ cocktails: [mojito] })
     saisirNom('Mojito')
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
     expect(screen.getByRole('alert').textContent).toBe('Un cocktail “Mojito” existe déjà')
     expect(onEnregistrer).not.toHaveBeenCalled()
@@ -52,7 +52,7 @@ describe('FicheCocktail', () => {
 
   it('passe en sans alcool sans changer de nom', () => {
     const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, nojito] })
-    fireEvent.click(screen.getByLabelText('Sans alcool'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
     expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false })
   })

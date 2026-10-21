@@ -16,6 +16,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
 import type { ReactNode } from 'react'
 
 interface Props<T extends { id: string }> {
@@ -42,39 +44,31 @@ function Element({ id, children }: { id: string; children: ReactNode }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id })
   return (
-    <li
+    <Box
+      component="li"
       ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 1,
         minHeight: 44,
         opacity: isDragging ? 0.6 : 1,
         listStyle: 'none',
       }}
     >
-      <button
-        type="button"
+      <IconButton
         ref={setActivatorNodeRef}
         aria-label="Déplacer"
+        disableRipple
         {...attributes}
         {...listeners}
-        style={{
-          minWidth: 44,
-          minHeight: 44,
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--texte-2)',
-          fontSize: 22,
-          touchAction: 'none',
-        }}
+        sx={{ width: 44, height: 44, color: 'text.secondary', fontSize: 22, touchAction: 'none' }}
       >
         ≡
-      </button>
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-    </li>
+      </IconButton>
+      <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
+    </Box>
   )
 }
 
@@ -99,13 +93,13 @@ export function ListeReordonnable<T extends { id: string }>({ elements, rendre, 
       accessibility={{ screenReaderInstructions: consignes, announcements: annonces }}
     >
       <SortableContext items={elements.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-        <ul aria-label={libelle} style={{ margin: 0, padding: 0 }}>
+        <Box component="ul" aria-label={libelle} sx={{ m: 0, p: 0 }}>
           {elements.map((e) => (
             <Element key={e.id} id={e.id}>
               {rendre(e)}
             </Element>
           ))}
-        </ul>
+        </Box>
       </SortableContext>
     </DndContext>
   )

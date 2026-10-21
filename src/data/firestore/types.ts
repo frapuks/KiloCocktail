@@ -1,9 +1,9 @@
-import { doc, getDocs, onSnapshot, setDoc, updateDoc, writeBatch, type Firestore } from 'firebase/firestore';
+import { doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch, type Firestore } from 'firebase/firestore';
 import { normaliserNom } from '../../domain/noms';
 import type { TypeEvenement } from '../../domain/types';
 import type { DepotTypes } from '../depots';
 import { suivreEcriture } from '../erreurs';
-import { colTypes } from './chemins';
+import { colPrestas, colTypes } from './chemins';
 
 const TYPES_DE_DEPART = [
   { id: 'anniversaire', nom: 'Anniversaire' },
@@ -28,6 +28,15 @@ export function depotTypes(db: Firestore, uid: string): DepotTypes {
     },
     archiver(id, archive) {
       suivreEcriture(updateDoc(doc(col, id), { archive }));
+    },
+    // Un seul lot : le type disparaît en même temps que des prestas qui l'utilisaient.
+    // getDocs répond depuis le cache local hors connexion ; le lot part au retour du réseau.
+    async supprimer(id) {
+      const prestas = await getDocs(query(colPrestas(db, uid), where('typeId', '==', id)));
+      const lot = writeBatch(db);
+      prestas.docs.forEach((p) => lot.update(p.ref, { typeId: null }));
+      lot.delete(doc(col, id));
+      suivreEcriture(lot.commit());
     },
     async initialiserSiVide() {
       const snap = await getDocs(col);

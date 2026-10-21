@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Cocktail } from './types';
-import { comparerCocktails, dateDuJour, formatDate, formatDateLongue, libelleServis, nomLigne, nomPresta } from './affichage';
+import { comparerCocktails, dateDuJour, formatDate, libelleServis, nomLigne, nomPresta } from './affichage';
 
 const mojito: Cocktail = { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false };
 const nojito: Cocktail = { ...mojito, id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false };
@@ -17,7 +17,7 @@ describe('affichage', () => {
   });
   it('formate les dates', () => {
     expect(formatDate('2026-10-17')).toBe('17/10/2026');
-    expect(formatDateLongue('2026-10-17')).toBe('samedi 17/10/2026');
+    expect(formatDate('2026-01-05')).toBe('05/01/2026');
   });
   it('nomme une presta par son client ou par sa date', () => {
     expect(nomPresta({ client: 'Julie Martin', date: '2026-10-17' })).toBe('Julie Martin');

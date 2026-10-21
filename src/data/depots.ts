@@ -9,12 +9,18 @@ export interface DepotCocktails {
   creer(d: DonneesCocktail): string;                        // id créé ; écriture en arrière-plan
   modifier(id: string, d: DonneesCocktail): void;
   archiver(id: string, archive: boolean): void;
+  // Ce que la suppression emporterait : prestas qui l'ont à leur carte, verres comptés pour lui.
+  impactSuppression(id: string): Promise<{ prestas: number; verres: number }>;
+  // Supprime le cocktail, le retire de la carte des prestas et efface les verres comptés pour lui.
+  supprimer(id: string): Promise<void>;
 }
 export interface DepotTypes {
   ecouter(cb: (types: TypeEvenement[]) => void): Desabonner;
   creer(nom: string): string;
   renommer(id: string, nom: string): void;
   archiver(id: string, archive: boolean): void;
+  // Supprime le type ; les prestas qui l'avaient n'ont plus de type (typeId à null).
+  supprimer(id: string): Promise<void>;
   initialiserSiVide(): Promise<void>;
 }
 export interface DepotPrestas {

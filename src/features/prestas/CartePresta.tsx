@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardActionArea from '@mui/material/CardActionArea'
+import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { formatDate, nomPresta } from '../../domain/affichage'
 import type { Presta, TypeEvenement } from '../../domain/types'
 import { CompteurServis } from '../../ui/CompteurServis'
+import { PastilleType } from '../../ui/PastilleType'
 
 export function CartePresta({ presta, types }: { presta: Presta; types: TypeEvenement[] }) {
   const depots = useDepots()
@@ -26,45 +31,41 @@ export function CartePresta({ presta, types }: { presta: Presta; types: TypeEven
   const destination = terminee ? `/prestas/${presta.id}/resultats` : `/prestas/${presta.id}`
 
   return (
-    <Link
-      to={destination}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 12,
-        minHeight: 72,
-        padding: '14px 18px',
-        border: '1px solid var(--filet)',
-        borderRadius: 12,
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
         // Terminée : fond plus sombre que le fond de page, sans ombre, pour la mettre en retrait.
-        background: terminee ? 'var(--fond-barre)' : 'var(--fond-carte)',
+        bgcolor: terminee ? 'background.paper' : 'background.carte',
         boxShadow: terminee ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.25)',
-        color: 'var(--texte)',
-        textDecoration: 'none',
       }}
     >
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-        <span style={{ fontWeight: 700, fontSize: 18 }}>{nomPresta(presta)}</span>
-        <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          {type && (
-            <span
-              style={{
-                padding: '2px 10px',
-                borderRadius: 999,
-                background: 'var(--avec-creux)',
-                color: 'var(--texte)',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              {type.nom}
-            </span>
-          )}
-          <span style={{ color: 'var(--texte-2)', fontSize: 14 }}>{formatDate(presta.date)}</span>
-        </span>
-      </span>
-      <CompteurServis total={total} />
-    </Link>
+      <CardActionArea
+        component={Link}
+        to={destination}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 1.5,
+          minHeight: 72,
+          px: 2.25,
+          py: 1.75,
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, minWidth: 0 }}>
+          <Typography component="span" sx={{ fontWeight: 700, fontSize: 18 }}>
+            {nomPresta(presta)}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+            {type && <PastilleType nom={type.nom} />}
+            <Typography component="span" color="text.secondary" sx={{ fontSize: 14 }}>
+              {formatDate(presta.date)}
+            </Typography>
+          </Box>
+        </Box>
+        <CompteurServis total={total} />
+      </CardActionArea>
+    </Card>
   )
 }

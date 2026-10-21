@@ -1,135 +1,111 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
+import EditIcon from '@mui/icons-material/Edit'
+import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useCocktails } from '../../data/hooks'
 import { comparerCocktails } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
+import { Confirmation } from '../../ui/Confirmation'
+import { EnTeteEcran } from '../../ui/EnTeteEcran'
+import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
+import { PastilleAlcool } from '../../ui/PastilleAlcool'
+import { SectionArchives } from '../../ui/SectionArchives'
+import { TitreSection } from '../../ui/TitreSection'
 import { FicheCocktail } from './FicheCocktail'
 
-const pastille: CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  padding: '3px 10px',
-  borderRadius: 999,
-  color: 'var(--texte)',
-  whiteSpace: 'nowrap',
+const pluriel = (n: number, un: string, plusieurs: string) => (n === 1 ? un : plusieurs)
+
+// Confirmation de suppression : chiffre ce qui sera perdu (calculé à l'ouverture, prestas terminées comprises).
+export function texteSuppression(impact: { prestas: number; verres: number }): string {
+  if (impact.prestas === 0) return 'Le cocktail sera supprimé de l’appli. Aucune presta ne l’a à sa carte. C’est définitif.'
+  const prestas = `${impact.prestas} ${pluriel(impact.prestas, 'presta', 'prestas')}`
+  const verres =
+    impact.verres === 0
+      ? 'aucun verre n’avait été compté pour lui'
+      : `les ${impact.verres} ${pluriel(impact.verres, 'verre compté', 'verres comptés')} pour lui seront perdus`
+  return `Le cocktail sera supprimé de l’appli et retiré de la carte de ${prestas} ; ${verres}. C’est définitif.`
 }
 
-// Largeur fixe par colonne : les pastilles restent alignées d'une ligne à l'autre, même quand une colonne est vide.
-const LARGEUR_COLONNE = 104
+function MessageSuppression({ id }: { id: string }) {
+  const depots = useDepots()
+  const [texte, setTexte] = useState<string | null>(null)
+  useEffect(() => {
+    let actif = true
+    depots.cocktails.impactSuppression(id).then(
+      (impact) => actif && setTexte(texteSuppression(impact)),
+      () => actif && setTexte('Le cocktail sera supprimé de l’appli, avec les verres comptés pour lui. C’est définitif.'),
+    )
+    return () => {
+      actif = false
+    }
+  }, [depots, id])
+  return <>{texte ?? 'Calcul des prestas et des verres concernés…'}</>
+}
 
 export function EcranCocktails() {
   const depots = useDepots()
   const cocktails = useCocktails()
   // 'nouveau' = création, Cocktail = modification, null = fiche fermée
   const [fiche, setFiche] = useState<'nouveau' | Cocktail | null>(null)
+  // Cocktail dont l'archivage (icône de sa fiche) attend confirmation.
+  const [archivageAConfirmer, setArchivageAConfirmer] = useState<Cocktail | null>(null)
+  const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
 
-  if (!cocktails) return <p style={{ padding: 16, color: 'var(--texte-2)' }}>Chargement…</p>
+  if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
-  const actifs = cocktails.filter((c) => !c.archive).sort(comparerCocktails)
-  const archives = cocktails.filter((c) => c.archive).sort(comparerCocktails)
+  const visibles = cocktails.filter(gardeAlcool[filtre])
+  const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
+  const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
 
   return (
-    <main style={{ padding: 16, paddingBottom: 96 }}>
-      {/* Même en-tête que Prestas : marge haute du h1 par défaut reprise, bouton en marge négative. */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: '1.34em' }}>
-        <h1 style={{ margin: 0, fontFamily: 'var(--police-titre)', fontWeight: 800 }}>Cocktails</h1>
-        <button
-          type="button"
-          onClick={() => setFiche('nouveau')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            minHeight: 48,
-            margin: '-6px 0',
-            padding: '0 20px',
-            border: 'none',
-            borderRadius: 12,
-            background: 'var(--avec)',
-            color: 'var(--texte)',
-            fontSize: 17,
-            fontWeight: 700,
-            fontFamily: 'inherit',
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Nouveau cocktail
-        </button>
-      </header>
+    <Box component="main" sx={{ p: 2, pb: 12 }}>
+      <EnTeteEcran titre="Cocktails" action={{ libelle: 'Nouveau cocktail', onClick: () => setFiche('nouveau') }} />
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: '16px 0' }}>
+      {/* Compteurs sur les cocktails actifs, ceux de la liste principale. */}
+      <Box sx={{ mt: 2 }}>
+        <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={cocktails.filter((c) => !c.archive)} />
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
+        <TitreSection titre="Disponibles" />
+      </Box>
+      {/* En retrait sous le titre, nom puis Modifier, qui ouvre la fiche (où se trouve l'archivage). */}
+      <List sx={{ mt: 1, mb: 3, pl: 2 }} disablePadding>
         {actifs.map((c) => (
-          <li key={c.id} style={{ borderBottom: '1px solid var(--filet)' }}>
-            <button
-              type="button"
-              onClick={() => setFiche(c)}
-              style={{
-                width: '100%',
-                minHeight: 56,
-                padding: '8px 0',
-                display: 'grid',
-                gridTemplateColumns: `1fr ${LARGEUR_COLONNE}px`,
-                alignItems: 'center',
-                columnGap: 8,
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--texte)',
-                font: 'inherit',
-                textAlign: 'left',
-              }}
-            >
-              <span style={{ fontWeight: 600, minWidth: 0 }}>{c.nom}</span>
-              <span style={{ justifySelf: 'center' }}>
-                <span style={{ ...pastille, background: c.alcool ? 'var(--avec)' : 'var(--sans)' }}>
-                  {c.alcool ? 'Avec alcool' : 'Sans alcool'}
-                </span>
-              </span>
-            </button>
-          </li>
+          <ListItem key={c.id} divider disableGutters sx={{ minHeight: 56, gap: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              {/* Une seule ligne : « … » si le nom ne rentre pas, la pastille et les icônes restent visibles. */}
+              <Typography component="span" noWrap sx={{ fontWeight: 600, minWidth: 0 }}>
+                {c.nom}
+              </Typography>
+              {/* Seuls les sans alcool sont marqués : c'est l'exception. */}
+              {!c.alcool && (
+                <Box sx={{ flexShrink: 0, display: 'flex' }}>
+                  <PastilleAlcool alcool={false} />
+                </Box>
+              )}
+            </Box>
+            <IconButton aria-label={`Modifier ${c.nom}`} onClick={() => setFiche(c)}>
+              <EditIcon />
+            </IconButton>
+          </ListItem>
         ))}
-      </ul>
+      </List>
 
-      {archives.length > 0 && (
-        <details>
-          <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', color: 'var(--texte-2)' }}>
-            Archivés
-          </summary>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {archives.map((c) => (
-              <li
-                key={c.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  minHeight: 56,
-                  borderBottom: '1px solid var(--filet)',
-                }}
-              >
-                <span style={{ color: 'var(--texte-2)' }}>{c.alcool ? c.nom : `${c.nom} · sans alcool`}</span>
-                <button
-                  type="button"
-                  onClick={() => depots.cocktails.archiver(c.id, false)}
-                  style={{
-                    minHeight: 44,
-                    padding: '0 16px',
-                    borderRadius: 8,
-                    border: '1px solid var(--filet)',
-                    background: 'transparent',
-                    color: 'var(--texte)',
-                    font: 'inherit',
-                  }}
-                >
-                  Désarchiver
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <SectionArchives
+        elements={archives}
+        libelle={(c) => (c.alcool ? c.nom : `${c.nom} · sans alcool`)}
+        onModifier={(c) => setFiche(c)}
+        onDesarchiver={(c) => depots.cocktails.archiver(c.id, false)}
+        suppression={{
+          message: (c) => <MessageSuppression id={c.id} />,
+          onSupprimer: (c) => void depots.cocktails.supprimer(c.id),
+        }}
+      />
 
       {fiche && (
         <FicheCocktail
@@ -142,16 +118,29 @@ export function EcranCocktails() {
             else depots.cocktails.modifier(fiche.id, d)
             setFiche(null)
           }}
-          onArchiver={
-            fiche === 'nouveau'
-              ? undefined
-              : () => {
-                  depots.cocktails.archiver(fiche.id, true)
-                  setFiche(null)
-                }
-          }
+          // Pas d'« Archiver » dans la fiche d'un cocktail déjà archivé.
+          onArchiver={fiche === 'nouveau' || fiche.archive ? undefined : () => setArchivageAConfirmer(fiche)}
         />
       )}
-    </main>
+      {archivageAConfirmer && (
+        <Confirmation
+          titre={`Archiver « ${archivageAConfirmer.nom} » ?`}
+          message="Il ne sera plus proposé pour les prestas. Celles qui l’ont déjà le gardent, et tu pourras le désarchiver."
+          onFermer={() => setArchivageAConfirmer(null)}
+          actions={[
+            {
+              libelle: 'Archiver',
+              principale: true,
+              onClick: () => {
+                depots.cocktails.archiver(archivageAConfirmer.id, true)
+                setArchivageAConfirmer(null)
+                setFiche(null)
+              },
+            },
+            { libelle: 'Annuler', onClick: () => setArchivageAConfirmer(null) },
+          ]}
+        />
+      )}
+    </Box>
   )
 }

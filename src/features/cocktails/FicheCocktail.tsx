@@ -1,6 +1,12 @@
 import { useState } from 'react'
+import Alert from '@mui/material/Alert'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import type { DonneesCocktail } from '../../data/depots'
-import { bouton, champ, FeuilleModale } from '../../ui/FeuilleModale'
+import { FeuilleModale } from '../../ui/FeuilleModale'
+import { BoutonsFiche } from '../../ui/BoutonsFiche'
 import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import type { Cocktail } from '../../domain/types'
 
@@ -11,11 +17,6 @@ interface Props {
   onAnnuler(): void
   onArchiver?(): void
 }
-
-const OPTIONS: { valeur: boolean; libelle: string }[] = [
-  { valeur: true, libelle: 'Avec alcool' },
-  { valeur: false, libelle: 'Sans alcool' },
-]
 
 export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, onArchiver }: Props) {
   const [nom, setNom] = useState(cocktail?.nom ?? '')
@@ -39,53 +40,35 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
   }
 
   return (
-    <FeuilleModale libelle={cocktail ? 'Modifier le cocktail' : 'Nouveau cocktail'} onSubmit={enregistrer}>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        Nom
-        <input
-          value={nom}
-          onChange={(e) => {
-            setNom(e.target.value)
-            setErreur(null)
-          }}
-          style={champ}
-        />
-      </label>
+    <FeuilleModale
+      libelle={cocktail ? 'Modifier le cocktail' : 'Nouveau cocktail'}
+      onSubmit={enregistrer}
+      // Tap à côté = Annuler : la saisie en cours est abandonnée.
+      onFermer={onAnnuler}
+    >
+      <Typography variant="h2">{cocktail ? 'Modifier le cocktail' : 'Nouveau cocktail'}</Typography>
+      <TextField
+        label="Nom"
+        value={nom}
+        error={erreur !== null}
+        onChange={(e) => {
+          setNom(e.target.value)
+          setErreur(null)
+        }}
+      />
       {renomme && (
-        <p style={{ margin: 0, color: 'var(--texte-2)' }}>Le nouveau nom s'affichera aussi dans les prestas passées.</p>
+        <Typography variant="body2" color="text.secondary">
+          Le nouveau nom s'affichera aussi dans les prestas passées.
+        </Typography>
       )}
-      <fieldset style={{ border: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <legend style={{ padding: 0, marginBottom: 4 }}>Alcool</legend>
-        {OPTIONS.map((o) => (
-          <label key={String(o.valeur)} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-            <input
-              type="radio"
-              name="alcool"
-              checked={alcool === o.valeur}
-              onChange={() => setAlcool(o.valeur)}
-            />
-            {o.libelle}
-          </label>
-        ))}
-      </fieldset>
-      {erreur && (
-        <p role="alert" style={{ margin: 0, color: 'var(--moins)' }}>
-          {erreur}
-        </p>
-      )}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="submit" style={{ ...bouton, background: 'var(--avec)', borderColor: 'var(--avec)' }}>
-          Enregistrer
-        </button>
-        <button type="button" onClick={onAnnuler} style={bouton}>
-          Annuler
-        </button>
-        {cocktail && onArchiver && (
-          <button type="button" onClick={onArchiver} style={{ ...bouton, marginLeft: 'auto' }}>
-            Archiver
-          </button>
-        )}
-      </div>
+      <FormControlLabel
+        label="Alcool"
+        labelPlacement="start"
+        control={<Switch checked={alcool} onChange={(_, v) => setAlcool(v)} />}
+        sx={{ mx: 0, justifyContent: 'space-between' }}
+      />
+      {erreur && <Alert severity="warning">{erreur}</Alert>}
+      <BoutonsFiche onAnnuler={onAnnuler} onArchiver={cocktail ? onArchiver : undefined} />
     </FeuilleModale>
   )
 }

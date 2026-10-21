@@ -1,12 +1,13 @@
 import { Outlet } from 'react-router-dom'
+import Box from '@mui/material/Box'
 import { BarreOnglets } from '../ui/BarreOnglets'
 
 export function AvecOnglets() {
   return (
     <>
-      <div style={{ paddingBottom: '4.5rem' }}>
+      <Box sx={{ pb: '4.5rem' }}>
         <Outlet />
-      </div>
+      </Box>
       <BarreOnglets />
     </>
   )
