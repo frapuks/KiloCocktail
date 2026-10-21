@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { formatDate, nomPresta } from '../../domain/affichage'
 import type { Presta, TypeEvenement } from '../../domain/types'
+import { DEPUIS_APP } from '../../app/historique'
 import { CompteurServis } from '../../ui/CompteurServis'
 import { PastilleType } from '../../ui/PastilleType'
 
@@ -43,6 +44,8 @@ export function CartePresta({ presta, types }: { presta: Presta; types: TypeEven
       <CardActionArea
         component={Link}
         to={destination}
+        // Résultats d'une presta terminée : feuille par-dessus la liste, qui y revient en arrière à la fermeture.
+        state={DEPUIS_APP}
         sx={{
           display: 'flex',
           justifyContent: 'space-between',

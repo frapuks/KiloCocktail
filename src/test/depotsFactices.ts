@@ -1,6 +1,5 @@
 import { vi } from 'vitest'
 import type { Depots } from '../data/depots'
-import type { EtatSauvegarde } from '../domain/sauvegarde'
 import type { Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
 
 interface Donnees {
@@ -8,27 +7,23 @@ interface Donnees {
   types?: TypeEvenement[]
   prestas?: Presta[]
   verres?: Record<string, Verre[]>
-  etat?: EtatSauvegarde
 }
 
 export type DepotsFactices = Depots & {
   emettre: {
-    verres(prestaId: string, v: Verre[], e?: EtatSauvegarde): void
+    verres(prestaId: string, v: Verre[]): void
     presta(p: Presta): void
   }
 }
-
-const ETAT_PAR_DEFAUT: EtatSauvegarde = { ecrituresEnAttente: false, verresEnAttente: 0 }
 
 export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
   const cocktails = donnees.cocktails ?? []
   const types = donnees.types ?? []
   const prestas = donnees.prestas ?? []
   const verres = donnees.verres ?? {}
-  const etat = donnees.etat ?? ETAT_PAR_DEFAUT
   let verresServis = 0
 
-  const ecouteursVerres = new Map<string, Set<(v: Verre[], e: EtatSauvegarde) => void>>()
+  const ecouteursVerres = new Map<string, Set<(v: Verre[]) => void>>()
   const ecouteursPresta = new Map<string, Set<(p: Presta | null) => void>>()
   const ajouter = <T>(m: Map<string, Set<T>>, cle: string, cb: T) => {
     if (!m.has(cle)) m.set(cle, new Set())
@@ -79,14 +74,14 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
     },
     verres: {
       ecouter: vi.fn((prestaId, cb) => {
-        cb(verres[prestaId] ?? [], etat)
+        cb(verres[prestaId] ?? [])
         return ajouter(ecouteursVerres, prestaId, cb)
       }),
       servir: vi.fn(() => `verre-${++verresServis}`),
       retirer: vi.fn(),
     },
     emettre: {
-      verres: (prestaId, v, e = etat) => ecouteursVerres.get(prestaId)?.forEach((cb) => cb(v, e)),
+      verres: (prestaId, v) => ecouteursVerres.get(prestaId)?.forEach((cb) => cb(v)),
       presta: (p) => ecouteursPresta.get(p.id)?.forEach((cb) => cb(p)),
     },
   }

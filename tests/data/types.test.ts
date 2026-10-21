@@ -36,6 +36,17 @@ describe('dépôt des types d’événement', () => {
     expect(liste.find((t) => t.id === 'anniversaire')?.nom).toBe('Anniv');
   });
 
+  it('ne recrée pas les types de départ une fois que l’utilisateur les a supprimés', async () => {
+    await depot.initialiserSiVide();
+    await attendre(db);
+    await depot.supprimer('anniversaire');
+    await depot.supprimer('soiree-entreprise');
+    await attendre(db);
+    await depot.initialiserSiVide();
+    await attendre(db);
+    expect(await prochaineValeur(depot.ecouter)).toEqual([]);
+  });
+
   it('crée, renomme et archive un type', async () => {
     const id = depot.creer('Mariage');
     await attendre(db);

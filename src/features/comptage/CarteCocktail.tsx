@@ -215,37 +215,42 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
         }}
       />
 
-      {/* Bas droite : retirer un verre. 40 px minimum pour rester facile à toucher. */}
-      <IconButton
-        aria-label={`Retirer un ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
-        disabled={total === 0}
-        onPointerDown={(e) => {
-          e.stopPropagation()
-          moins()
-        }}
-        onKeyDown={(e) => {
-          if (!estValidation(e)) return
-          e.preventDefault()
-          e.stopPropagation()
-          moins()
-        }}
-        sx={{
-          gridArea: 'moins',
-          alignSelf: 'end',
-          justifySelf: 'end',
-          width: 'clamp(40px, 26cqh, 56px)',
-          height: 'clamp(40px, 26cqh, 56px)',
-          border: 1,
-          borderColor: 'divider',
-          bgcolor: 'rgba(0, 0, 0, 0.18)',
-          color: 'text.primary',
-          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.28)' },
-          '&.Mui-disabled': { color: 'text.primary', opacity: 0.35 },
-        }}
+      {/* Bas droite : retirer un verre. 40 px minimum pour rester facile à toucher.
+          La zone autour arrête le toucher : désactivé (total à 0), le bouton n'en reçoit plus (MUI coupe
+          ses événements de pointeur) et un tap sur lui compterait sinon un verre sur la carte. */}
+      <Box
+        data-zone-moins
+        onPointerDown={(e) => e.stopPropagation()}
+        sx={{ gridArea: 'moins', alignSelf: 'end', justifySelf: 'end', position: 'relative', display: 'flex' }}
       >
-        {/* Icône plutôt que le caractère « − », que la police décale dans le cercle. */}
-        <RemoveIcon sx={{ fontSize: 'clamp(22px, 15cqh, 30px)' }} />
-      </IconButton>
+        <IconButton
+          aria-label={`Retirer un ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
+          disabled={total === 0}
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            moins()
+          }}
+          onKeyDown={(e) => {
+            if (!estValidation(e)) return
+            e.preventDefault()
+            e.stopPropagation()
+            moins()
+          }}
+          sx={{
+            width: 'clamp(40px, 26cqh, 56px)',
+            height: 'clamp(40px, 26cqh, 56px)',
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'rgba(0, 0, 0, 0.18)',
+            color: 'text.primary',
+            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.28)' },
+            '&.Mui-disabled': { color: 'text.primary', opacity: 0.35 },
+          }}
+        >
+          {/* Icône plutôt que le caractère « − », que la police décale dans le cercle. */}
+          <RemoveIcon sx={{ fontSize: 'clamp(22px, 15cqh, 30px)' }} />
+        </IconButton>
+      </Box>
     </Card>
   )
 }

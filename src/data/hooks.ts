@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
-import type { EtatSauvegarde } from '../domain/sauvegarde'
 import type { Depots, Desabonner } from './depots'
 import { useDepots } from './DepotsContext'
 
@@ -48,12 +47,12 @@ export function usePresta(id: string): Presta | null | undefined {
   return valeur
 }
 
-export function useVerres(prestaId: string): { verres: Verre[]; etat: EtatSauvegarde } | undefined {
+export function useVerres(prestaId: string): { verres: Verre[] } | undefined {
   const depots = useDepots()
-  const [valeur, setValeur] = useState<{ verres: Verre[]; etat: EtatSauvegarde }>()
+  const [valeur, setValeur] = useState<{ verres: Verre[] }>()
   useEffect(() => {
     setValeur(undefined)
-    return depots.verres.ecouter(prestaId, (verres, etat) => setValeur({ verres, etat }))
+    return depots.verres.ecouter(prestaId, (verres) => setValeur({ verres }))
   }, [depots, prestaId])
   return valeur
 }

@@ -37,7 +37,10 @@ function MessageSuppression({ id }: { id: string }) {
     let actif = true
     depots.cocktails.impactSuppression(id).then(
       (impact) => actif && setTexte(texteSuppression(impact)),
-      () => actif && setTexte('Le cocktail sera supprimé de l’appli, avec les verres comptés pour lui. C’est définitif.'),
+      // Hors connexion, l'impact ne peut pas être chiffré (et la suppression sera refusée).
+      () =>
+        actif &&
+        setTexte('Le cocktail sera supprimé de l’appli, avec les verres comptés pour lui. C’est définitif. Une connexion internet est nécessaire.'),
     )
     return () => {
       actif = false
@@ -103,7 +106,7 @@ export function EcranCocktails() {
         onDesarchiver={(c) => depots.cocktails.archiver(c.id, false)}
         suppression={{
           message: (c) => <MessageSuppression id={c.id} />,
-          onSupprimer: (c) => void depots.cocktails.supprimer(c.id),
+          onSupprimer: (c) => depots.cocktails.supprimer(c.id),
         }}
       />
 

@@ -1,4 +1,15 @@
-import { doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch, type Firestore } from 'firebase/firestore';
+import {
+  doc,
+  getDocFromServer,
+  getDocsFromServer,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+  writeBatch,
+  type Firestore,
+} from 'firebase/firestore';
 import { normaliserNom } from '../../domain/noms';
 import type { TypeEvenement } from '../../domain/types';
 import type { DepotTypes } from '../depots';
@@ -30,21 +41,28 @@ export function depotTypes(db: Firestore, uid: string): DepotTypes {
       suivreEcriture(updateDoc(doc(col, id), { archive }));
     },
     // Un seul lot : le type disparaît en même temps que des prestas qui l'utilisaient.
-    // getDocs répond depuis le cache local hors connexion ; le lot part au retour du réseau.
+    // Prestas lues sur le serveur (le cache local peut être incomplet) : hors connexion, la suppression est refusée.
     async supprimer(id) {
-      const prestas = await getDocs(query(colPrestas(db, uid), where('typeId', '==', id)));
+      const prestas = await getDocsFromServer(query(colPrestas(db, uid), where('typeId', '==', id)));
       const lot = writeBatch(db);
       prestas.docs.forEach((p) => lot.update(p.ref, { typeId: null }));
       lot.delete(doc(col, id));
       suivreEcriture(lot.commit());
     },
+    // Types de départ créés une seule fois par compte (marqueur sur le document de l'utilisateur) :
+    // jamais recréés après que l'utilisateur les a supprimés. Lecture sur le serveur : hors connexion,
+    // rien n'est écrit (ni sur la foi d'un cache vide), on réessaiera au prochain démarrage.
     async initialiserSiVide() {
-      const snap = await getDocs(col);
-      if (!snap.empty) return;
+      const marqueur = doc(db, 'users', uid);
+      if ((await getDocFromServer(marqueur)).get('typesInitialises')) return;
+      const snap = await getDocsFromServer(col);
       const lot = writeBatch(db);
-      for (const t of TYPES_DE_DEPART) {
-        lot.set(doc(col, t.id), { nom: t.nom, nomNormalise: normaliserNom(t.nom), archive: false });
+      if (snap.empty) {
+        for (const t of TYPES_DE_DEPART) {
+          lot.set(doc(col, t.id), { nom: t.nom, nomNormalise: normaliserNom(t.nom), archive: false });
+        }
       }
+      lot.set(marqueur, { typesInitialises: true }, { merge: true });
       suivreEcriture(lot.commit());
     },
   };

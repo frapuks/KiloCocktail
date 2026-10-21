@@ -3,6 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
       function proprietaire() { return request.auth != null && request.auth.uid == uid; }
+      // Document de l'utilisateur : seulement le marqueur d'initialisation des types de départ.
+      allow read: if proprietaire();
+      allow write: if proprietaire() && request.resource.data.keys().hasOnly(['typesInitialises']);
       match /cocktails/{id} { allow read, write: if proprietaire(); }
       match /types/{id} { allow read, write: if proprietaire(); }
       match /prestas/{prestaId} {

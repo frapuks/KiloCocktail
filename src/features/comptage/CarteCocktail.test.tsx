@@ -160,3 +160,12 @@ it('ignore l’annulation d’un autre pointeur que celui du dernier +1', () => 
   expect(onAnnulerPlus).not.toHaveBeenCalled()
   expect(screen.getByText('+2')).toBeInTheDocument()
 })
+
+it('ne compte pas de verre quand on touche le « − » grisé d’une carte à 0', () => {
+  // Désactivé, le bouton ne reçoit plus le toucher (pointer-events: none) : c'est sa zone qui le reçoit.
+  const { moins, onPlus, onMoins } = rendreCarte({ total: 0 })
+  expect(moins).toBeDisabled()
+  fireEvent.pointerDown(moins.closest('[data-zone-moins]')!)
+  expect(onPlus).not.toHaveBeenCalled()
+  expect(onMoins).not.toHaveBeenCalled()
+})

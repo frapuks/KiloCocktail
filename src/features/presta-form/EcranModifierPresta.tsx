@@ -22,6 +22,7 @@ import type { Ligne } from '../../domain/types'
 import { totalPresta, totauxParLigne } from '../../domain/verres'
 import { ChampDate } from '../../ui/ChampDate'
 import { Confirmation } from '../../ui/Confirmation'
+import { ouverteDepuisApp } from '../../app/historique'
 import { FeuilleModale } from '../../ui/FeuilleModale'
 import { TitreSection } from '../../ui/TitreSection'
 import { ChampType } from './ChampType'
@@ -124,7 +125,7 @@ export function EcranModifierPresta() {
   }
 
   function revenir() {
-    if (location.key !== 'default') navigate(-1)
+    if (ouverteDepuisApp(location)) navigate(-1)
     else navigate(presta!.statut === 'en-cours' ? `/prestas/${id}` : `/prestas/${id}/resultats`, { replace: true })
   }
 

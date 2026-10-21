@@ -163,7 +163,7 @@ export function GestionTypes({ types, onFermer }: { types: TypeEvenement[]; onFe
         onRenommer={(t, nom) => renommerType(depots, types, t, nom)}
         suppression={{
           message: (t) => messageSuppression((prestas ?? []).filter((p) => p.typeId === t.id).length),
-          onSupprimer: (t) => void depots.types.supprimer(t.id),
+          onSupprimer: (t) => depots.types.supprimer(t.id),
         }}
         niveau="h3"
       />

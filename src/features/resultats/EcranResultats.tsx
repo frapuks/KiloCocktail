@@ -5,6 +5,7 @@ import Button from '@mui/material/Button'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
+import { DEPUIS_APP, ouverteDepuisApp } from '../../app/historique'
 import { Confirmation } from '../../ui/Confirmation'
 import { FeuilleModale } from '../../ui/FeuilleModale'
 import { couleurGroupe, TitreSection } from '../../ui/TitreSection'
@@ -79,7 +80,7 @@ export function EcranResultats({ onFermer }: Props = {}) {
 
   // Presta terminée : la feuille est par-dessus la liste des prestas, on y revient.
   const revenirALaListe = () =>
-    partir(() => (location.key !== 'default' ? navigate(-1) : navigate('/', { replace: true })))
+    partir(() => (ouverteDepuisApp(location) ? navigate(-1) : navigate('/', { replace: true })))
 
   const fermer = terminee ? revenirALaListe : revenirAuComptage
 
@@ -92,7 +93,7 @@ export function EcranResultats({ onFermer }: Props = {}) {
         </Box>
         {/* Presta terminée : la modifier sans la rouvrir, depuis le coin haut droit de la feuille. */}
         {terminee && (
-          <Button variant="outlined" color="inherit" onClick={() => navigate(`/prestas/${id}/resultats/modifier`)}>
+          <Button variant="outlined" color="inherit" onClick={() => navigate(`/prestas/${id}/resultats/modifier`, { state: DEPUIS_APP })}>
             Modifier
           </Button>
         )}

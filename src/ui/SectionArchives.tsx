@@ -23,7 +23,9 @@ interface Props<T extends { id: string }> {
   onModifier?(e: T): void
   // Présent : icône « Supprimer » sur chaque ligne, avec ce message dans la confirmation
   // (il doit dire ce que la suppression emporte, elle est définitive).
-  suppression?: { message(e: T): ReactNode; onSupprimer(e: T): void }
+  // onSupprimer rejette si la suppression n'a pas pu partir (hors connexion…) : la confirmation reste ouverte
+  // et le dit.
+  suppression?: { message(e: T): ReactNode; onSupprimer(e: T): Promise<void> }
   // Niveau du titre : h2 dans un écran (cocktails), h3 dans une feuille (types d'événement).
   niveau?: 'h2' | 'h3'
 }
@@ -45,9 +47,28 @@ export function SectionArchives<T extends { id: string }>({
   const [enEdition, setEnEdition] = useState<string | null>(null)
   // Action qui attend confirmation.
   const [aConfirmer, setAConfirmer] = useState<{ action: 'desarchiver' | 'supprimer'; element: T } | null>(null)
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false)
+  const [echecSuppression, setEchecSuppression] = useState(false)
   if (elements.length === 0) return null
 
-  const fermer = () => setAConfirmer(null)
+  const fermer = () => {
+    setAConfirmer(null)
+    setEchecSuppression(false)
+  }
+
+  async function supprimer(element: T) {
+    setSuppressionEnCours(true)
+    setEchecSuppression(false)
+    try {
+      await suppression!.onSupprimer(element)
+      fermer()
+    } catch (raison) {
+      console.error('Suppression impossible :', raison)
+      setEchecSuppression(true)
+    } finally {
+      setSuppressionEnCours(false)
+    }
+  }
 
   function rendreConfirmation() {
     if (!aConfirmer) return null
@@ -76,16 +97,23 @@ export function SectionArchives<T extends { id: string }>({
     return (
       <Confirmation
         titre={`Supprimer « ${nom} » ?`}
-        message={suppression!.message(element)}
+        message={
+          <>
+            {suppression!.message(element)}
+            {echecSuppression && (
+              <Box component="span" sx={{ display: 'block', mt: 1.5, color: 'error.main' }}>
+                Suppression impossible : une connexion internet est nécessaire. Réessaie une fois connecté.
+              </Box>
+            )}
+          </>
+        }
         onFermer={fermer}
         actions={[
           {
             libelle: 'Supprimer définitivement',
             danger: true,
-            onClick: () => {
-              suppression!.onSupprimer(element)
-              fermer()
-            },
+            desactive: suppressionEnCours,
+            onClick: () => void supprimer(element),
           },
           { libelle: 'Annuler', onClick: fermer },
         ]}

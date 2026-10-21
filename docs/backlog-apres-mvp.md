@@ -10,10 +10,10 @@ Points relevés pendant les revues de code du MVP, jugés non bloquants. À repr
 ## Robustesse
 - `CarteCocktail` : la référence du dernier pointeur n'est pas effacée au `pointerup` (cas d'un pointeur réutilisé : souris, Apple Pencil).
 - « Modifier une presta » : « Annuler » / « Abandonner » restent actifs pendant l'enregistrement.
-- Suppressions en attente lancées par une purge (« Supprimer avec ses N servis ») hors ligne : l'indicateur du comptage ne les signale pas (seul le « − » est suivi).
 - `onSnapshot` sans fonction d'erreur dans les dépôts : un écran peut rester vide si une écoute échoue.
 - `seDeconnecter` : minuteur jamais effacé, rejet tardif non traité.
-- `initialiserSiVide` (types de départ) pourrait réécrire les types si la première lecture se fait sur un cache vide hors ligne.
+- Total servi des cartes de la liste (`compterServis`) : `getCountFromServer` ignore les verres encore en attente sur l'appareil ; sur réseau lent, la carte (et le total mémorisé) peut afficher moins que le comptage.
+- Liste des prestas : chaque carte lance sa propre requête de comptage à chaque affichage (N requêtes par retour sur l'onglet). Piste : ne recompter que les prestas en cours, ou stocker le total sur la presta.
 - `usePresta` / `useVerres` renvoient une fois les données de l'id précédent quand l'id change sans démontage.
 - Pas de vérification périodique d'une nouvelle version (`registration.update()`) : le bandeau n'apparaît qu'au lancement ou à la navigation.
 - L'authentification (`src/data/auth.ts`) n'est pas derrière une interface (migration vers le Pi).

@@ -9,6 +9,7 @@ import { formatDate, nomLigne, nomPresta } from '../../domain/affichage'
 import { groupes } from '../../domain/lignes'
 import { dernierVerre, totauxParLigne } from '../../domain/verres'
 import type { Ligne } from '../../domain/types'
+import { DEPUIS_APP } from '../../app/historique'
 import { PastilleType } from '../../ui/PastilleType'
 import { couleurGroupe, TitreSection } from '../../ui/TitreSection'
 import { EcranResultats } from '../resultats/EcranResultats'
@@ -158,7 +159,7 @@ export function EcranComptage() {
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" color="inherit" onClick={() => navigate(`/prestas/${id}/modifier`)}>
+          <Button variant="outlined" color="inherit" onClick={() => navigate(`/prestas/${id}/modifier`, { state: DEPUIS_APP })}>
             Modifier
           </Button>
           <Button variant="contained" onClick={() => setResultatsOuverts(true)}>

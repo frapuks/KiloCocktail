@@ -27,8 +27,8 @@ const donnees: DonneesPresta = { date: '2026-10-17', client: 'Dupont', typeId: '
 function ecouterVerres(id: string, nombre: number): Promise<Desabonner> {
   return new Promise((resolve) => {
     let pret = false;
-    const arreter = verres.ecouter(id, (v, etat) => {
-      if (pret || v.length !== nombre || etat.ecrituresEnAttente) return;
+    const arreter = verres.ecouter(id, (v) => {
+      if (pret || v.length !== nombre) return;
       pret = true;
       resolve(arreter);
     });

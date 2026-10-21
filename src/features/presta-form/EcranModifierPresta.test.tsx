@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { DEPUIS_APP } from '../../app/historique'
 import { DepotsProvider } from '../../data/DepotsContext'
 import { surErreurEcriture } from '../../data/erreurs'
 import type { Cocktail, Presta, Verre } from '../../domain/types'
@@ -23,16 +24,23 @@ const presta: Presta = {
     { id: 'L3', cocktailId: 'n', masquee: true },
   ],
 }
-const v = (id: string, ligneId: string): Verre => ({ id, ligneId, creeLe: 1, enAttente: false })
+const v = (id: string, ligneId: string): Verre => ({ id, ligneId, creeLe: 1 })
 const verres = { p1: [v('1', 'L1'), v('2', 'L1'), v('3', 'L1'), v('4', 'L3'), v('5', 'L3')] }
 const types = [
   { id: 't1', nom: 'Mariage', nomNormalise: 'mariage', archive: true },
   { id: 't2', nom: 'Anniversaire', nomNormalise: 'anniversaire', archive: false },
 ]
 
-function ecran(depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres })) {
+function ecran(
+  depots = creerDepotsFactices({ cocktails: [mojito, nojito, spritz, mule], types, prestas: [presta], verres }),
+  // Page d'avant dans l'historique, et marque « ouverte depuis l'appli » de la feuille.
+  { precedente = '/prestas/p1', depuisApp = true }: { precedente?: string; depuisApp?: boolean } = {},
+) {
   render(
-    <MemoryRouter initialEntries={['/prestas/p1', '/prestas/p1/modifier']} initialIndex={1}>
+    <MemoryRouter
+      initialEntries={[precedente, { pathname: '/prestas/p1/modifier', state: depuisApp ? DEPUIS_APP : null }]}
+      initialIndex={1}
+    >
       <DepotsProvider depots={depots}>
         <Routes>
           <Route path="/" element={<p>ACCUEIL</p>} />
@@ -231,6 +239,18 @@ describe('EcranModifierPresta', () => {
 
   it('revient directement sans modification', async () => {
     ecran()
+    clic('Annuler')
+    await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
+  })
+
+  it('ouverte depuis l’appli, revient à la page d’avant', async () => {
+    ecran(undefined, { precedente: '/' })
+    clic('Annuler')
+    await waitFor(() => expect(screen.getByText('ACCUEIL')).toBeTruthy())
+  })
+
+  it('arrivée par une redirection (sans la marque de l’appli), va au comptage plutôt qu’en arrière', async () => {
+    ecran(undefined, { precedente: '/', depuisApp: false })
     clic('Annuler')
     await waitFor(() => expect(screen.getByText('COMPTAGE')).toBeTruthy())
   })

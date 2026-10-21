@@ -15,15 +15,7 @@ import type { Presta } from '../../domain/types';
 import type { DepotPrestas, DonneesPresta } from '../depots';
 import { suivreEcriture } from '../erreurs';
 import { colPrestas, colVerres } from './chemins';
-
-const TAILLE_LOT = 500;
-const TAILLE_IN = 30;
-
-function decouper<T>(liste: T[], taille: number): T[][] {
-  const lots: T[][] = [];
-  for (let i = 0; i < liste.length; i += taille) lots.push(liste.slice(i, i + taille));
-  return lots;
-}
+import { decouper, TAILLE_IN, TAILLE_LOT } from './lots';
 
 function champs(d: DonneesPresta) {
   return { date: d.date, client: d.client, typeId: d.typeId, lignes: d.lignes.map(({ id, cocktailId, masquee }) => ({ id, cocktailId, masquee })) };

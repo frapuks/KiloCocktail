@@ -1,6 +1,6 @@
 import {
   doc,
-  getDocs,
+  getDocsFromServer,
   onSnapshot,
   query,
   setDoc,
@@ -15,15 +15,7 @@ import type { Cocktail, Ligne } from '../../domain/types';
 import type { DepotCocktails, DonneesCocktail } from '../depots';
 import { suivreEcriture } from '../erreurs';
 import { colCocktails, colPrestas, colVerres } from './chemins';
-
-const TAILLE_LOT = 500;
-const TAILLE_IN = 30;
-
-function decouper<T>(liste: T[], taille: number): T[][] {
-  const lots: T[][] = [];
-  for (let i = 0; i < liste.length; i += taille) lots.push(liste.slice(i, i + taille));
-  return lots;
-}
+import { decouper, TAILLE_IN, TAILLE_LOT } from './lots';
 
 function champs(d: DonneesCocktail) {
   return {
@@ -37,22 +29,26 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
   const col = colCocktails(db, uid);
 
   // Prestas qui ont le cocktail à leur carte (lignes masquées comprises), avec les verres comptés pour lui.
-  // getDocs répond depuis le cache local hors connexion.
+  // Lu sur le serveur, jamais dans le cache local (qui peut ne pas avoir tous les verres) : hors connexion,
+  // la lecture échoue et la suppression est refusée plutôt que de laisser des verres orphelins.
   async function concernes(id: string) {
-    const prestas = await getDocs(colPrestas(db, uid));
-    const resultat: { ref: DocumentReference; lignes: Ligne[]; verres: DocumentReference[] }[] = [];
-    for (const p of prestas.docs) {
+    const prestas = await getDocsFromServer(colPrestas(db, uid));
+    const touchees = prestas.docs.flatMap((p) => {
       const lignes = (p.get('lignes') as Ligne[] | undefined) ?? [];
       const ids = lignes.filter((l) => l.cocktailId === id).map((l) => l.id);
-      if (ids.length === 0) continue;
-      const verres: DocumentReference[] = [];
-      for (const lot of decouper(ids, TAILLE_IN)) {
-        const snap = await getDocs(query(colVerres(db, uid, p.id), where('ligneId', 'in', lot)));
-        snap.docs.forEach((v) => verres.push(v.ref));
-      }
-      resultat.push({ ref: p.ref, lignes: lignes.filter((l) => l.cocktailId !== id), verres });
-    }
-    return resultat;
+      return ids.length === 0 ? [] : [{ p, lignes, ids }];
+    });
+    return Promise.all(
+      touchees.map(async ({ p, lignes, ids }) => {
+        const snaps = await Promise.all(
+          decouper(ids, TAILLE_IN).map((lot) =>
+            getDocsFromServer(query(colVerres(db, uid, p.id), where('ligneId', 'in', lot))),
+          ),
+        );
+        const verres: DocumentReference[] = snaps.flatMap((s) => s.docs.map((v) => v.ref));
+        return { ref: p.ref, lignes: lignes.filter((l) => l.cocktailId !== id), verres };
+      }),
+    );
   }
 
   return {

@@ -12,7 +12,7 @@ const cocktail = (id: string, nom: string, extra: Partial<Cocktail> = {}): Cockt
 const ligne = (id: string, cocktailId: string, masquee = false): Ligne => ({
   id, cocktailId, masquee,
 })
-const verre = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe, enAttente: false })
+const verre = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe })
 
 const cocktails = [
   cocktail('c1', 'Mojito'),

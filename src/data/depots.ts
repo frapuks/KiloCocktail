@@ -1,5 +1,4 @@
 import type { Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
-import type { EtatSauvegarde } from '../domain/sauvegarde';
 
 export type Desabonner = () => void;
 export interface DonneesCocktail { nom: string; alcool: boolean }
@@ -34,7 +33,7 @@ export interface DepotPrestas {
   dernierTotalServis(id: string): number | null;            // total en cache local, sans attendre le serveur
 }
 export interface DepotVerres {
-  ecouter(prestaId: string, cb: (verres: Verre[], etat: EtatSauvegarde) => void): Desabonner;
+  ecouter(prestaId: string, cb: (verres: Verre[]) => void): Desabonner;
   servir(prestaId: string, ligneId: string): string;          // id du verre créé ; écriture en arrière-plan
   retirer(prestaId: string, verreId: string): void;
 }

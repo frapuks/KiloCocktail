@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { Verre } from './types';
 import { totauxParLigne, totalLigne, dernierVerre, totalPresta } from './verres';
 
-const v = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe, enAttente: false });
+const v = (id: string, ligneId: string, creeLe: number): Verre => ({ id, ligneId, creeLe });
 const verres = [v('a', 'L1', 10), v('b', 'L1', 30), v('c', 'L1', 20), v('d', 'L2', 5)];
 
 describe('verres', () => {

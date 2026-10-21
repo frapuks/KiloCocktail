@@ -176,6 +176,20 @@ describe('EcranReglages', () => {
     expect(depots.types.supprimer).toHaveBeenCalledWith('3')
   })
 
+  it('garde la confirmation ouverte et le dit si la suppression échoue (hors connexion)', async () => {
+    const depots = creerDepotsFactices({ types: [t('3', 'Ancien', true)] })
+    vi.mocked(depots.types.supprimer).mockRejectedValue(new Error('unavailable'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    rendre(<EcranReglages />, { depots })
+    ouvrir()
+    fireEvent.click(screen.getByRole('switch', { name: 'Afficher les archivés' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer Ancien' }))
+    const confirmation = within(screen.getByRole('dialog', { name: 'Supprimer « Ancien » ?' }))
+    fireEvent.click(confirmation.getByRole('button', { name: 'Supprimer définitivement' }))
+    expect(await confirmation.findByText(/une connexion internet est nécessaire/)).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Supprimer « Ancien » ?' })).toBeInTheDocument()
+  })
+
   it('n’efface rien si la suppression est annulée', () => {
     const depots = creerDepotsFactices({ types: [t('3', 'Ancien', true)] })
     rendre(<EcranReglages />, { depots })
