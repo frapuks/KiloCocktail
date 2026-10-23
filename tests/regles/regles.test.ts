@@ -10,6 +10,9 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
 let env: RulesTestEnvironment
 
+// Doit être l'uid écrit dans la fonction admin() de firestore.rules.
+const UID_ADMIN = 'UID_ADMIN_A_RENSEIGNER'
+
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-kilococktail',
@@ -49,6 +52,16 @@ describe('règles de sécurité Firestore', () => {
     await assertSucceeds(setDoc(ref('u1'), { nom: 'Rhum', nomNormalise: 'rhum', archive: false }))
     await assertSucceeds(getDoc(ref('u1')))
     await assertFails(getDoc(ref('u2')))
+  })
+
+  it('donne à l’admin les mêmes droits que le propriétaire', async () => {
+    const db = env.authenticatedContext(UID_ADMIN).firestore()
+    await assertSucceeds(setDoc(doc(db, 'users/u1/cocktails/c1'), { nom: 'Mojito' }))
+    await assertSucceeds(getDoc(doc(db, 'users/u1/cocktails/c1')))
+    await assertSucceeds(setDoc(doc(db, 'users/u1/prestas/p1/verres/v1'), verreConforme))
+    await assertSucceeds(setDoc(doc(db, 'users/u1'), { typesInitialises: true }))
+    // Les contrôles de champs valent aussi pour lui.
+    await assertFails(setDoc(doc(db, 'users/u1/prestas/p1/verres/v2'), { ...verreConforme, intrus: 1 }))
   })
 
   it('refuse un autre compte', async () => {

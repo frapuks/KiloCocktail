@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { verifierConfiguration } from './configuration';
+import { uidDonnees, verifierConfiguration } from './configuration';
+
+describe('espace de données ouvert après connexion', () => {
+  it('ouvre l’espace fixé par VITE_UID_DONNEES, quel que soit le compte connecté', () => {
+    expect(uidDonnees('admin', 'barman')).toBe('barman');
+    expect(uidDonnees('barman', ' barman ')).toBe('barman');
+  });
+
+  it('ouvre l’espace du compte connecté sans VITE_UID_DONNEES', () => {
+    expect(uidDonnees('u1', undefined)).toBe('u1');
+    expect(uidDonnees('u1', '')).toBe('u1');
+  });
+});
 
 describe('vérification de la configuration Firebase', () => {
   it('refuse les émulateurs dans un build de production', () => {

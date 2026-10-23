@@ -11,13 +11,14 @@ import '@fontsource/figtree/700.css'
 import CssBaseline from '@mui/material/CssBaseline'
 import { themeMui } from './ui/themeMui'
 import { App } from './app/App'
+import { uidDonnees } from './data/configuration'
 import { db } from './data/firebase'
 import { creerDepots } from './data/firestore'
 
 // Demande au navigateur de ne pas purger le stockage local (résultat ignoré).
 navigator.storage?.persist?.()?.catch(() => {})
 
-const fabriqueDepots = (uid: string) => creerDepots(db, uid)
+const fabriqueDepots = (uid: string) => creerDepots(db, uidDonnees(uid, import.meta.env.VITE_UID_DONNEES))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
