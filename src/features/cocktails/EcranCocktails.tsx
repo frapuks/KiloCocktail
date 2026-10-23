@@ -8,7 +8,7 @@ import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useBases, useCocktails } from '../../data/hooks'
-import { comparerNoms } from '../../domain/affichage'
+import { comparerCocktails } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
@@ -69,8 +69,8 @@ export function EcranCocktails() {
 
   const deLaBase = cocktails.filter(gardeBase(filtreBase))
   const visibles = deLaBase.filter(gardeAlcool[filtre])
-  const actifs = visibles.filter((c) => !c.archive).sort(comparerNoms)
-  const archives = visibles.filter((c) => c.archive).sort(comparerNoms)
+  const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
+  const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
 
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>

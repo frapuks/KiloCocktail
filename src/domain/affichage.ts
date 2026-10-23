@@ -9,6 +9,11 @@ export function comparerNoms(a: { nom: string }, b: { nom: string }): number {
   return a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
 }
 
+// Ordre des listes de cocktails : alphabétique ; à nom égal, la version avec alcool d'abord.
+export function comparerCocktails(a: { nom: string; alcool: boolean }, b: { nom: string; alcool: boolean }): number {
+  return comparerNoms(a, b) || Number(b.alcool) - Number(a.alcool);
+}
+
 function decouper(date: string): [number, number, number] {
   const [a, m, j] = date.split('-').map(Number);
   return [a, m, j];
