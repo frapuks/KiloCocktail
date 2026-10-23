@@ -10,6 +10,9 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
 let env: RulesTestEnvironment
 
+// Doit être l'uid écrit dans la fonction admin() de firestore.rules.
+const UID_ADMIN = 'NpmS7OylCWPMCts197NdJ9Xil962'
+
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-kilococktail',
@@ -42,6 +45,23 @@ describe('règles de sécurité Firestore', () => {
     const ref = doc(db, 'users/u1/cocktails/c1')
     await assertSucceeds(setDoc(ref, { nom: 'Mojito' }))
     await assertSucceeds(getDoc(ref))
+  })
+
+  it('autorise le propriétaire à gérer ses bases, pas un autre compte', async () => {
+    const ref = (uid: string) => doc(env.authenticatedContext(uid).firestore(), 'users/u1/bases/b1')
+    await assertSucceeds(setDoc(ref('u1'), { nom: 'Rhum', nomNormalise: 'rhum', archive: false }))
+    await assertSucceeds(getDoc(ref('u1')))
+    await assertFails(getDoc(ref('u2')))
+  })
+
+  it('donne à l’admin les mêmes droits que le propriétaire', async () => {
+    const db = env.authenticatedContext(UID_ADMIN).firestore()
+    await assertSucceeds(setDoc(doc(db, 'users/u1/cocktails/c1'), { nom: 'Mojito' }))
+    await assertSucceeds(getDoc(doc(db, 'users/u1/cocktails/c1')))
+    await assertSucceeds(setDoc(doc(db, 'users/u1/prestas/p1/verres/v1'), verreConforme))
+    await assertSucceeds(setDoc(doc(db, 'users/u1'), { typesInitialises: true }))
+    // Les contrôles de champs valent aussi pour lui.
+    await assertFails(setDoc(doc(db, 'users/u1/prestas/p1/verres/v2'), { ...verreConforme, intrus: 1 }))
   })
 
   it('refuse un autre compte', async () => {

@@ -1,10 +1,11 @@
 import { vi } from 'vitest'
 import type { Depots } from '../data/depots'
-import type { Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
+import type { Base, Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
 
 interface Donnees {
   cocktails?: Cocktail[]
   types?: TypeEvenement[]
+  bases?: Base[]
   prestas?: Presta[]
   verres?: Record<string, Verre[]>
 }
@@ -19,6 +20,7 @@ export type DepotsFactices = Depots & {
 export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
   const cocktails = donnees.cocktails ?? []
   const types = donnees.types ?? []
+  const bases = donnees.bases ?? []
   const prestas = donnees.prestas ?? []
   const verres = donnees.verres ?? {}
   let verresServis = 0
@@ -55,6 +57,16 @@ export function creerDepotsFactices(donnees: Donnees = {}): DepotsFactices {
       archiver: vi.fn(),
       supprimer: vi.fn(() => Promise.resolve()),
       initialiserSiVide: vi.fn(() => Promise.resolve()),
+    },
+    bases: {
+      ecouter: vi.fn((cb) => {
+        cb(bases)
+        return () => {}
+      }),
+      creer: vi.fn(() => 'nouvel-id'),
+      renommer: vi.fn(),
+      archiver: vi.fn(),
+      supprimer: vi.fn(() => Promise.resolve()),
     },
     prestas: {
       ecouterListe: vi.fn((cb) => {

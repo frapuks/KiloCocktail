@@ -21,9 +21,9 @@ async function creerCocktail(page: Page, nom: string, alcool = true): Promise<vo
   await page.getByRole('link', { name: 'Cocktails' }).click()
   await page.getByRole('button', { name: 'Nouveau cocktail' }).click()
   await page.getByLabel('Nom', { exact: true }).fill(nom)
-  if (!alcool) await page.getByLabel('Alcool', { exact: true }).uncheck()
+  if (!alcool) await page.getByRole('dialog').getByRole('button', { name: 'Sans alcool', exact: true }).click()
   await page.getByRole('button', { name: 'Enregistrer' }).click()
-  await expect(page.getByRole('button', { name: `Modifier ${nom}`, exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Modifier ${nom}${alcool ? '' : ' sans alcool'}`, exact: true })).toBeVisible()
 }
 
 async function demarrerPresta(page: Page, client: string, cocktails: string[]): Promise<void> {
@@ -33,7 +33,9 @@ async function demarrerPresta(page: Page, client: string, cocktails: string[]): 
   await page.getByRole('button', { name: '+ Ajouter un cocktail' }).click()
   for (const nom of cocktails) await page.getByRole('checkbox', { name: new RegExp(nom) }).check()
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
-  await page.getByRole('button', { name: 'Commencer la presta' }).click()
+  await page.getByRole('button', { name: 'Créer la presta' }).click()
+  // La création ramène à la liste : le comptage s'ouvre depuis la carte de la presta.
+  await page.getByRole('region', { name: 'En cours' }).getByRole('link').filter({ hasText: client }).click()
 }
 
 test('parcours complet : cocktail, presta, comptage, résultats', async ({ page }) => {

@@ -26,7 +26,7 @@ describe('SurLaCarte', () => {
     expect(avec.getByText('Mojito')).toBeTruthy()
     expect(avec.queryByText('Daiquiri')).toBeNull()
     expect(sans.getByText('Nojito')).toBeTruthy()
-    expect(sans.getByText('sans alcool')).toBeTruthy()
+    expect(sans.queryByText('sans alcool')).toBeNull()
     expect(screen.queryByRole('button', { name: /^Retirer/ })).toBeNull()
   })
 

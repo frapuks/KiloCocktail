@@ -24,7 +24,7 @@ describe('EcranCocktails', () => {
     })
     rendre(<EcranCocktails />, { depots })
     expect(lignes()).toEqual(['Mojito', 'NojitoSans alcool', 'Spritz'])
-    for (const nom of ['Mojito', 'Nojito', 'Spritz']) {
+    for (const nom of ['Mojito', 'Nojito sans alcool', 'Spritz']) {
       expect(screen.getByRole('button', { name: `Modifier ${nom}` })).toBeInTheDocument()
     }
     // L'archivage se fait depuis la fiche, plus depuis la liste.
@@ -44,6 +44,75 @@ describe('EcranCocktails', () => {
     expect(noms()).toEqual(['Spritz'])
     fireEvent.click(screen.getByRole('button', { name: 'Tous (2)' }))
     expect(noms()).toEqual(['NojitoSans alcool', 'Spritz'])
+  })
+
+  it('filtre par base, avec toutes les bases actives même sans cocktail, combiné au filtre alcool', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [
+        c('1', 'Mojito', { baseId: 'r' }),
+        c('2', 'Nojito', { alcool: false, baseId: 'r' }),
+        c('3', 'Spritz'),
+      ],
+      bases: [
+        { id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false },
+        { id: 'g', nom: 'Gin', nomNormalise: 'gin', archive: false },
+        { id: 'w', nom: 'Whisky', nomNormalise: 'whisky', archive: true },
+      ],
+    })
+    rendre(<EcranCocktails />, { depots })
+    const choisir = (nom: string) => {
+      fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+      fireEvent.click(screen.getByRole('option', { name: nom }))
+    }
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Toutes', 'Gin', 'Rhum', 'Sans base'])
+    fireEvent.click(screen.getByRole('option', { name: 'Rhum' }))
+    expect(lignes()).toEqual(['Mojito', 'NojitoSans alcool'])
+    // Les compteurs du filtre alcool suivent la base choisie.
+    fireEvent.click(screen.getByRole('button', { name: 'Avec alcool (1)' }))
+    expect(lignes()).toEqual(['Mojito'])
+    fireEvent.click(screen.getByRole('button', { name: 'Tous (2)' }))
+    choisir('Sans base')
+    expect(lignes()).toEqual(['Spritz'])
+    choisir('Gin')
+    expect(lignes()).toEqual([])
+  })
+
+  it('range sous « Sans base » un cocktail dont la base n’existe plus', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Orphelin', { baseId: 'disparue' }), c('2', 'Mojito', { baseId: 'r' })],
+      bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Sans base' }))
+    expect(lignes()).toEqual(['Orphelin'])
+  })
+
+  it('propose une base archivée tant que des cocktails l’ont', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Old Fashioned', { baseId: 'w' }), c('2', 'Spritz')],
+      bases: [
+        { id: 'w', nom: 'Whisky', nomNormalise: 'whisky', archive: true },
+        { id: 'c', nom: 'Cognac', nomNormalise: 'cognac', archive: true },
+      ],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Toutes', 'Whisky (archivée)', 'Sans base'])
+    fireEvent.click(screen.getByRole('option', { name: 'Whisky (archivée)' }))
+    expect(lignes()).toEqual(['Old Fashioned'])
+  })
+
+  it('montre la base dans la fiche en lecture seule', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Mojito', { description: 'Menthe', baseId: 'r' })],
+      bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.click(screen.getByRole('button', { name: 'Voir Mojito' }))
+    expect(within(screen.getByRole('dialog', { name: 'Mojito' })).getByText('Base : Rhum')).toBeTruthy()
   })
 
   it('masque les archivés derrière un interrupteur et désarchive', () => {
@@ -105,20 +174,30 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: '', baseId: null })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('crée un cocktail sans alcool en coupant l’interrupteur', () => {
+  it('crée un cocktail sans alcool', () => {
     const depots = creerDepotsFactices()
     rendre(<EcranCocktails />, { depots })
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Nojito' } })
-    const alcool = screen.getByRole('switch', { name: 'Alcool' })
-    expect(alcool).toBeChecked()
-    fireEvent.click(alcool)
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Nouveau cocktail' })).getByRole('button', { name: 'Sans alcool' }))
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '', baseId: null })
+  })
+
+  it('crée les deux versions d’un cocktail en une fois', () => {
+    const depots = creerDepotsFactices()
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
+    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Mojito' } })
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Nouveau cocktail' })).getByRole('button', { name: 'Les deux' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(depots.cocktails.creer).toHaveBeenCalledTimes(2)
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: true, description: '', baseId: null })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '', baseId: null })
   })
 
   it('ferme la fiche sans enregistrer au tap à côté', async () => {
@@ -137,8 +216,23 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Modifier Daiquiri' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Daiquiri fraise' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true })
+    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true, description: '', baseId: null })
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('montre la description en lecture seule, puis passe à la fiche avec « Modifier »', async () => {
+    const depots = creerDepotsFactices({ cocktails: [c('1', 'Mojito', { description: 'Rhum, menthe' }), c('2', 'Spritz')] })
+    rendre(<EcranCocktails />, { depots })
+    // Pas d'icône Voir sans description.
+    expect(screen.queryByRole('button', { name: 'Voir Spritz' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Voir Mojito' }))
+    const infos = within(screen.getByRole('dialog', { name: 'Mojito' }))
+    expect(infos.getByText('Rhum, menthe')).toBeTruthy()
+    expect(infos.queryByRole('textbox')).toBeNull()
+    fireEvent.click(infos.getByRole('button', { name: 'Modifier' }))
+    // La fiche de saisie s'ouvre une fois la feuille en lecture seule redescendue.
+    expect(await screen.findByLabelText('Description')).toHaveValue('Rhum, menthe')
+    expect(screen.queryByRole('dialog', { name: 'Mojito' })).toBeNull()
   })
 
   it('archive depuis la fiche, après confirmation', () => {

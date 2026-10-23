@@ -4,7 +4,9 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import type { Cocktail, Ligne } from '../../domain/types'
 import { FeuilleModale } from '../../ui/FeuilleModale'
+import { useBases } from '../../data/hooks'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
+import { basesProposees, FiltreBase, filtreApplique, gardeBase, TOUTES } from '../../ui/FiltreBase'
 import { SelecteurCocktails } from './SelecteurCocktails'
 
 interface Props {
@@ -15,18 +17,26 @@ interface Props {
 }
 
 // Feuille « Ajouter des cocktails », commune à la création et à la modification d'une presta.
-// Le filtre ne fait que masquer : un cocktail coché reste coché en changeant de filtre.
+// Les filtres ne font que masquer : un cocktail coché reste coché en changeant de filtre.
 export function FeuilleAjoutCocktails({ options, onAjouter, onAnnuler }: Props) {
+  const bases = useBases()
   const [ajout, setAjout] = useState<Ligne[]>([])
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
-  const visibles = options.filter(gardeAlcool[filtre])
+  const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
+  const basesFiltre = basesProposees(bases ?? [], options)
+  const base = filtreApplique(filtreBase, basesFiltre)
+  const deLaBase = options.filter(gardeBase(base, bases))
+  const visibles = deLaBase.filter(gardeAlcool[filtre])
 
   return (
     <FeuilleModale libelle="Ajouter des cocktails" onFermer={onAnnuler}>
       <Typography variant="h2">Ajouter des cocktails</Typography>
       {options.length > 0 ? (
         <>
-          <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={options} />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+            <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={deLaBase} />
+            <FiltreBase valeur={base} onChange={setFiltreBase} bases={basesFiltre} />
+          </Box>
           <SelecteurCocktails options={visibles} lignes={ajout} onChange={setAjout} />
         </>
       ) : (

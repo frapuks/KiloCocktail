@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
 import EditIcon from '@mui/icons-material/Edit'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
-import { useCocktails } from '../../data/hooks'
-import { comparerNoms } from '../../domain/affichage'
+import { useBases, useCocktails } from '../../data/hooks'
+import { comparerCocktails, nomAccessible } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
+import { basesProposees, FiltreBase, filtreApplique, gardeBase, TOUTES } from '../../ui/FiltreBase'
 import { PastilleAlcool } from '../../ui/PastilleAlcool'
 import { SectionArchives } from '../../ui/SectionArchives'
 import { TitreSection } from '../../ui/TitreSection'
 import { FicheCocktail } from './FicheCocktail'
+import { InfosCocktail } from './InfosCocktail'
 
 const pluriel = (n: number, un: string, plusieurs: string) => (n === 1 ? un : plusieurs)
 
@@ -52,25 +55,35 @@ function MessageSuppression({ id }: { id: string }) {
 export function EcranCocktails() {
   const depots = useDepots()
   const cocktails = useCocktails()
+  const bases = useBases()
   // 'nouveau' = création, Cocktail = modification, null = fiche fermée
   const [fiche, setFiche] = useState<'nouveau' | Cocktail | null>(null)
+  // Id du cocktail dont la fiche en lecture seule (description) est ouverte : elle suit ses modifications.
+  const [infosId, setInfosId] = useState<string | null>(null)
   // Cocktail dont l'archivage (icône de sa fiche) attend confirmation.
   const [archivageAConfirmer, setArchivageAConfirmer] = useState<Cocktail | null>(null)
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
+  const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
 
-  if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
+  // Bases attendues aussi : une fiche ouverte avant elles montrerait « Aucune » pour un cocktail qui en a une.
+  if (!cocktails || !bases) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
-  const visibles = cocktails.filter(gardeAlcool[filtre])
-  const actifs = visibles.filter((c) => !c.archive).sort(comparerNoms)
-  const archives = visibles.filter((c) => c.archive).sort(comparerNoms)
+  const basesFiltre = basesProposees(bases, cocktails)
+  const base = filtreApplique(filtreBase, basesFiltre)
+  const deLaBase = cocktails.filter(gardeBase(base, bases))
+  const visibles = deLaBase.filter(gardeAlcool[filtre])
+  const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
+  const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
+  const infos = cocktails.find((c) => c.id === infosId)
 
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>
       <EnTeteEcran titre="Cocktails" action={{ libelle: 'Nouveau cocktail', onClick: () => setFiche('nouveau') }} />
 
-      {/* Compteurs sur les cocktails actifs, ceux de la liste principale. */}
-      <Box sx={{ mt: 2 }}>
-        <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={cocktails.filter((c) => !c.archive)} />
+      {/* Compteurs sur les cocktails actifs de la base choisie, ceux de la liste principale. */}
+      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+        <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={deLaBase.filter((c) => !c.archive)} />
+        <FiltreBase valeur={base} onChange={setFiltreBase} bases={basesFiltre} />
       </Box>
 
       <Box sx={{ mt: 3 }}>
@@ -92,7 +105,12 @@ export function EcranCocktails() {
                 </Box>
               )}
             </Box>
-            <IconButton aria-label={`Modifier ${c.nom}`} onClick={() => setFiche(c)}>
+            {c.description && (
+              <IconButton aria-label={`Voir ${nomAccessible(c)}`} onClick={() => setInfosId(c.id)}>
+                <InfoOutlinedIcon />
+              </IconButton>
+            )}
+            <IconButton aria-label={`Modifier ${nomAccessible(c)}`} onClick={() => setFiche(c)}>
               <EditIcon />
             </IconButton>
           </ListItem>
@@ -110,15 +128,28 @@ export function EcranCocktails() {
         }}
       />
 
+      {infos && (
+        <InfosCocktail
+          key={infos.id}
+          cocktail={infos}
+          base={bases.find((b) => b.id === infos.baseId)}
+          onModifier={() => {
+            setFiche(infos)
+            setInfosId(null)
+          }}
+          onFermer={() => setInfosId(null)}
+        />
+      )}
       {fiche && (
         <FicheCocktail
           key={fiche === 'nouveau' ? 'nouveau' : fiche.id}
           cocktail={fiche === 'nouveau' ? undefined : fiche}
           cocktails={cocktails}
+          bases={bases}
           onAnnuler={() => setFiche(null)}
-          onEnregistrer={(d) => {
-            if (fiche === 'nouveau') depots.cocktails.creer(d)
-            else depots.cocktails.modifier(fiche.id, d)
+          onEnregistrer={(liste) => {
+            if (fiche === 'nouveau') liste.forEach((d) => depots.cocktails.creer(d))
+            else depots.cocktails.modifier(fiche.id, liste[0])
             setFiche(null)
           }}
           // Pas d'« Archiver » dans la fiche d'un cocktail déjà archivé.

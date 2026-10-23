@@ -21,8 +21,11 @@ export function trouverDoublon<T extends { id: string; nom: string; archive: boo
   return elements.find((e) => e.id !== idExclu && normaliserNom(e.nom) === cible) ?? null;
 }
 
-export function messageDoublon(article: 'Un cocktail' | 'Un type', doublon: { nom: string; archive: boolean }): string {
+export function messageDoublon(
+  article: 'Un cocktail avec alcool' | 'Un cocktail sans alcool' | 'Un type' | 'Une base',
+  doublon: { nom: string; archive: boolean },
+): string {
   return doublon.archive
-    ? `${article} “${doublon.nom}” existe déjà dans les archivés. Désarchive-le plutôt.`
+    ? `${article} “${doublon.nom}” existe déjà dans les archivés. Désarchive-${article === 'Une base' ? 'la' : 'le'} plutôt.`
     : `${article} “${doublon.nom}” existe déjà`;
 }

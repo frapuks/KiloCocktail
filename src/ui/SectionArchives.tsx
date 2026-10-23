@@ -28,6 +28,8 @@ interface Props<T extends { id: string }> {
   suppression?: { message(e: T): ReactNode; onSupprimer(e: T): Promise<void> }
   // Niveau du titre : h2 dans un écran (cocktails), h3 dans une feuille (types d'événement).
   niveau?: 'h2' | 'h3'
+  // Message de la confirmation de désarchivage (par défaut au masculin).
+  messageDesarchivage?: string
 }
 
 // Section « Archivés », commune aux cocktails et aux types d'événement : un titre,
@@ -41,6 +43,7 @@ export function SectionArchives<T extends { id: string }>({
   onModifier,
   suppression,
   niveau = 'h2',
+  messageDesarchivage = 'Il sera de nouveau proposé.',
 }: Props<T>) {
   const [affiches, setAffiches] = useState(false)
   // Élément dont le nom est en cours de modification.
@@ -78,7 +81,7 @@ export function SectionArchives<T extends { id: string }>({
       return (
         <Confirmation
           titre={`Désarchiver « ${nom} » ?`}
-          message="Il sera de nouveau proposé."
+          message={messageDesarchivage}
           onFermer={fermer}
           actions={[
             {

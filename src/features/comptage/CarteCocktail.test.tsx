@@ -70,14 +70,28 @@ it('compte chaque tap d’une rafale', () => {
   expect(screen.getByText('+10')).toBeInTheDocument()
 })
 
-it('retire 1 avec le bouton − et cumule −N', () => {
+it('retire 1 avec le bouton − et cumule −N ; un tap fait remonter le bilan', () => {
   const { carte, moins, onMoins } = rendreCarte()
   fireEvent.click(moins)
   fireEvent.click(moins)
   expect(onMoins).toHaveBeenCalledTimes(2)
   expect(screen.getByText('−2')).toBeInTheDocument()
   fireEvent.pointerDown(carte)
-  expect(screen.getByText('+1')).toBeInTheDocument()
+  expect(screen.getByText('−1')).toBeInTheDocument()
+})
+
+it('fait baisser un +N encore affiché avec le bouton −', () => {
+  const { carte, moins, onMoins } = rendreCarte()
+  for (let i = 0; i < 3; i++) fireEvent.pointerDown(carte)
+  expect(screen.getByText('+3')).toBeInTheDocument()
+  fireEvent.click(moins)
+  expect(onMoins).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('+2')).toBeInTheDocument()
+  expect(screen.queryByText('−1')).not.toBeInTheDocument()
+  // Après effacement, un retrait repart de −1.
+  avancer(1300)
+  fireEvent.click(moins)
+  expect(screen.getByText('−1')).toBeInTheDocument()
 })
 
 it('le bouton − ne déclenche pas le +1', () => {

@@ -46,12 +46,48 @@ const TYPES = [
   { id: 'soiree-privee', nom: 'Soirée privée' },
 ];
 
-const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean }[] = [
-  { id: 'mojito', nom: 'Mojito', alcool: true },
-  { id: 'nojito', nom: 'Nojito', alcool: false },
+// Gin sans cocktail (le filtre propose quand même la base), Whisky archivée.
+const BASES = [
+  { id: 'rhum', nom: 'Rhum' },
+  { id: 'vodka', nom: 'Vodka' },
+  { id: 'gin', nom: 'Gin' },
+  { id: 'tequila', nom: 'Tequila' },
+  { id: 'vin-petillant', nom: 'Vin pétillant' },
+  { id: 'jus-de-fruits', nom: 'Jus de fruits' },
+  { id: 'whisky', nom: 'Whisky', archive: true },
+];
+
+// Base de chaque cocktail ; les autres n'en ont pas.
+const BASE_DES_COCKTAILS: Record<string, string> = {
+  mojito: 'rhum',
+  'pina-colada': 'rhum',
+  caipirinha: 'rhum',
+  daiquiri: 'rhum',
+  'blue-lagoon': 'vodka',
+  cosmopolitan: 'vodka',
+  'moscow-mule': 'vodka',
+  'espresso-martini': 'vodka',
+  'sex-on-the-beach': 'vodka',
+  margarita: 'tequila',
+  'tequila-sunrise': 'tequila',
+  spritz: 'vin-petillant',
+  bellini: 'vin-petillant',
+  'virgin-colada': 'jus-de-fruits',
+  'safe-sex-on-the-beach': 'jus-de-fruits',
+  sunrise: 'jus-de-fruits',
+};
+
+const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean; description?: string }[] = [
+  {
+    id: 'mojito',
+    nom: 'Mojito',
+    alcool: true,
+    description: 'Rhum blanc, citron vert, menthe fraîche, sucre de canne, eau gazeuse.\nPiler la menthe avec le sucre et le citron, glace pilée, compléter à l’eau gazeuse.',
+  },
+  { id: 'nojito', nom: 'Nojito', alcool: false, description: 'Le Mojito sans rhum : citron vert, menthe, sucre de canne, eau gazeuse.' },
   { id: 'pina-colada', nom: 'Piña Colada', alcool: true },
   { id: 'virgin-colada', nom: 'Virgin Colada', alcool: false },
-  { id: 'spritz', nom: 'Spritz', alcool: true },
+  { id: 'spritz', nom: 'Spritz', alcool: true, description: 'Apérol, prosecco, eau gazeuse, rondelle d’orange.' },
   { id: 'margarita', nom: 'Margarita', alcool: true },
   { id: 'cosmopolitan', nom: 'Cosmopolitan', alcool: true },
   { id: 'moscow-mule', nom: 'Moscow Mule', alcool: true },
@@ -203,12 +239,17 @@ async function main() {
   for (const t of TYPES) {
     lot.set(doc(db, ...racine, 'types', t.id), { nom: t.nom, nomNormalise: normaliserNom(t.nom), archive: t.archive ?? false });
   }
+  for (const b of BASES) {
+    lot.set(doc(db, ...racine, 'bases', b.id), { nom: b.nom, nomNormalise: normaliserNom(b.nom), archive: b.archive ?? false });
+  }
   for (const c of COCKTAILS) {
     lot.set(doc(db, ...racine, 'cocktails', c.id), {
       nom: c.nom,
       nomNormalise: normaliserNom(c.nom),
       alcool: c.alcool,
       archive: c.archive ?? false,
+      description: c.description ?? '',
+      baseId: BASE_DES_COCKTAILS[c.id] ?? null,
     });
   }
   await lot.commit();
@@ -244,7 +285,7 @@ async function main() {
     console.log(`  ${date}  ${(p.client ?? '(sans client)').padEnd(16)} ${p.statut.padEnd(9)} ${verres.length} verres`);
   }
 
-  console.log(`\n${TYPES.length} types, ${COCKTAILS.length} cocktails, ${PRESTAS.length} prestas, ${totalVerres} verres.`);
+  console.log(`\n${TYPES.length} types, ${BASES.length} bases, ${COCKTAILS.length} cocktails, ${PRESTAS.length} prestas, ${totalVerres} verres.`);
   console.log(`Connexion : ${EMAIL} / ${MOT_DE_PASSE}`);
   await terminate(db);
   process.exit(0);

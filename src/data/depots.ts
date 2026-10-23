@@ -1,7 +1,8 @@
-import type { Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
+import type { Base, Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
 
 export type Desabonner = () => void;
-export interface DonneesCocktail { nom: string; alcool: boolean }
+// description : '' = aucune ; baseId : null = sans base
+export interface DonneesCocktail { nom: string; alcool: boolean; description: string; baseId: string | null }
 export interface DonneesPresta { date: string; client: string | null; typeId: string | null; lignes: Ligne[] }
 export interface DepotCocktails {
   ecouter(cb: (cocktails: Cocktail[]) => void): Desabonner;  // tous, archivés compris
@@ -13,15 +14,21 @@ export interface DepotCocktails {
   // Supprime le cocktail, le retire de la carte des prestas et efface les verres comptés pour lui.
   supprimer(id: string): Promise<void>;
 }
-export interface DepotTypes {
-  ecouter(cb: (types: TypeEvenement[]) => void): Desabonner;
+// Liste de noms gérée dans Réglages (types d'événement, bases).
+export interface DepotListe<T> {
+  ecouter(cb: (elements: T[]) => void): Desabonner;
   creer(nom: string): string;
   renommer(id: string, nom: string): void;
   archiver(id: string, archive: boolean): void;
-  // Supprime le type ; les prestas qui l'avaient n'ont plus de type (typeId à null).
+  // Supprime l'élément et le retire de ce qui l'utilisait (référence mise à null).
   supprimer(id: string): Promise<void>;
+}
+// Supprimer un type : les prestas qui l'avaient n'ont plus de type (typeId à null).
+export interface DepotTypes extends DepotListe<TypeEvenement> {
   initialiserSiVide(): Promise<void>;
 }
+// Supprimer une base : les cocktails qui l'avaient n'ont plus de base (baseId à null).
+export type DepotBases = DepotListe<Base>;
 export interface DepotPrestas {
   ecouterListe(cb: (prestas: Presta[]) => void): Desabonner;
   ecouter(id: string, cb: (presta: Presta | null) => void): Desabonner;
@@ -38,4 +45,4 @@ export interface DepotVerres {
   // Rejette si le serveur refuse le retrait (le bandeau d'erreur est déjà affiché) ; reste en attente hors connexion.
   retirer(prestaId: string, verreId: string): Promise<void>;
 }
-export interface Depots { cocktails: DepotCocktails; types: DepotTypes; prestas: DepotPrestas; verres: DepotVerres }
+export interface Depots { cocktails: DepotCocktails; types: DepotTypes; bases: DepotBases; prestas: DepotPrestas; verres: DepotVerres }

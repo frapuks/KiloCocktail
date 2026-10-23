@@ -35,7 +35,7 @@ function ouvrirAjout() {
 describe('EcranNouvellePresta', () => {
   it('préremplit la date du jour', () => {
     const depots = ecran()
-    fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: dateDuJour() }))
   })
 
@@ -44,7 +44,7 @@ describe('EcranNouvellePresta', () => {
     fireEvent.click(screen.getByRole('button', { name: /Choisir la date/ }))
     fireEvent.click(screen.getByRole('gridcell', { name: '28' }))
     // Le calendrier se referme en fondu : la feuille redevient accessible ensuite.
-    fireEvent.click(await screen.findByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ date: `${dateDuJour().slice(0, 8)}28` }))
   })
 
@@ -70,6 +70,20 @@ describe('EcranNouvellePresta', () => {
     expect(feuille.getAllByRole('checkbox').map((c) => c.closest('li')?.textContent)).toEqual(['NojitoSans alcool'])
     fireEvent.click(feuille.getByRole('button', { name: 'Tous (3)' }))
     expect((feuille.getByRole('checkbox', { name: /Mojito/ }) as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('filtre la feuille d’ajout par base', () => {
+    ecran(
+      creerDepotsFactices({
+        cocktails: [c('m', 'Mojito', { baseId: 'r' }), c('d', 'Daiquiri', { baseId: 'r' }), c('s', 'Spritz')],
+        bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+      }),
+    )
+    const feuille = ouvrirAjout()
+    fireEvent.mouseDown(feuille.getByRole('combobox', { name: 'Base' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Rhum' }))
+    expect(feuille.getAllByRole('checkbox').map((c) => c.closest('li')?.textContent)).toEqual(['Daiquiri', 'Mojito'])
+    expect(feuille.getByRole('button', { name: 'Tous (2)' })).toBeInTheDocument()
   })
 
   it('n’a plus de bouton de version par cocktail', () => {
@@ -128,36 +142,37 @@ describe('EcranNouvellePresta', () => {
     const options = screen.getAllByRole('option').map((o) => o.textContent)
     expect(options).toEqual(['Aucun', 'Anniversaire', 'Mariage'])
     fireEvent.click(screen.getByRole('option', { name: 'Mariage' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ typeId: 't2' }))
   })
 
-  it('ne crée qu’une presta sur un double tap de « Commencer la presta »', () => {
+  it('ne crée qu’une presta sur un double tap de « Créer la presta »', () => {
     const depots = ecran()
-    const bouton = screen.getByRole('button', { name: 'Commencer la presta' })
+    const bouton = screen.getByRole('button', { name: 'Créer la presta' })
     fireEvent.click(bouton)
     fireEvent.click(bouton)
     expect(depots.prestas.creer).toHaveBeenCalledTimes(1)
   })
 
-  it('commence la presta même sans cocktail', () => {
+  it('crée la presta même sans cocktail, puis revient à la liste sans ouvrir le comptage', async () => {
     const depots = ecran()
-    fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith({ date: dateDuJour(), client: null, typeId: null, lignes: [] })
-    expect(screen.getByText('COMPTAGE')).toBeTruthy()
+    expect(await screen.findByText('ACCUEIL')).toBeTruthy()
+    expect(screen.queryByText('COMPTAGE')).toBeNull()
   })
 
   it('enregistre le client saisi', () => {
     const depots = ecran()
     fireEvent.change(screen.getByLabelText('Client'), { target: { value: '  Léa  ' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ client: 'Léa' }))
   })
 
   it('enregistre un client composé d’espaces comme null', () => {
     const depots = ecran()
     fireEvent.change(screen.getByLabelText('Client'), { target: { value: '   ' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Commencer la presta' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Créer la presta' }))
     expect(depots.prestas.creer).toHaveBeenCalledWith(expect.objectContaining({ client: null }))
   })
 

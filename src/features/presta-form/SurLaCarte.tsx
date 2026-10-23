@@ -3,8 +3,8 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+import { nomAccessible } from '../../domain/affichage'
 import { groupes } from '../../domain/lignes'
-import { nomLigne } from '../../domain/affichage'
 import type { Cocktail, Ligne, Variante } from '../../domain/types'
 import { ListeReordonnable } from '../../ui/ListeReordonnable'
 import { couleurGroupe, TitreSection } from '../../ui/TitreSection'
@@ -57,21 +57,16 @@ export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer, o
               rendre={(ligne) => {
                 const cocktail = cocktails.find((c) => c.id === ligne.cocktailId)
                 if (!cocktail) return null
-                const { nom, sousTitre } = nomLigne(cocktail)
+                // Pas de sous-titre « sans alcool » : le groupe le dit déjà.
+                const nom = cocktail.nom
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ flex: 1 }}>
-                      <div>{nom}</div>
-                      {sousTitre && (
-                        <Typography variant="body2" color="text.secondary">
-                          {sousTitre}
-                        </Typography>
-                      )}
-                    </Box>
+                    <Box sx={{ flex: 1 }}>{nom}</Box>
                     {totaux && <Typography component="span" sx={{ fontWeight: 700 }}>{totaux.get(ligne.id) ?? 0}</Typography>}
                     {onRetirer && (
                       <IconButton
-                        aria-label={`Retirer ${nom}${sousTitre ? ` ${sousTitre}` : ''}`}
+                        // « sans alcool » reste dans le nom accessible : deux lignes peuvent porter le même nom.
+                        aria-label={`Retirer ${nomAccessible(cocktail)}`}
                         color="error"
                         onClick={() => onRetirer(ligne.id)}
                       >

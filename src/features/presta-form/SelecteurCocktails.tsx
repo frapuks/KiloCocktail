@@ -29,7 +29,8 @@ export function SelecteurCocktails({ options, lignes, onChange }: Props) {
             label={
               <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {cocktail.nom}
-                <PastilleAlcool alcool={cocktail.alcool} />
+                {/* Seuls les sans alcool sont marqués, comme dans l'onglet Cocktails. */}
+                {!cocktail.alcool && <PastilleAlcool alcool={false} />}
               </Box>
             }
           />
