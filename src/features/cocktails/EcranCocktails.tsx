@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import EditIcon from '@mui/icons-material/Edit'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
@@ -16,6 +17,7 @@ import { PastilleAlcool } from '../../ui/PastilleAlcool'
 import { SectionArchives } from '../../ui/SectionArchives'
 import { TitreSection } from '../../ui/TitreSection'
 import { FicheCocktail } from './FicheCocktail'
+import { InfosCocktail } from './InfosCocktail'
 
 const pluriel = (n: number, un: string, plusieurs: string) => (n === 1 ? un : plusieurs)
 
@@ -54,6 +56,8 @@ export function EcranCocktails() {
   const cocktails = useCocktails()
   // 'nouveau' = création, Cocktail = modification, null = fiche fermée
   const [fiche, setFiche] = useState<'nouveau' | Cocktail | null>(null)
+  // Cocktail dont la fiche en lecture seule (description) est ouverte.
+  const [infos, setInfos] = useState<Cocktail | null>(null)
   // Cocktail dont l'archivage (icône de sa fiche) attend confirmation.
   const [archivageAConfirmer, setArchivageAConfirmer] = useState<Cocktail | null>(null)
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
@@ -92,6 +96,11 @@ export function EcranCocktails() {
                 </Box>
               )}
             </Box>
+            {c.description && (
+              <IconButton aria-label={`Voir ${c.nom}`} onClick={() => setInfos(c)}>
+                <InfoOutlinedIcon />
+              </IconButton>
+            )}
             <IconButton aria-label={`Modifier ${c.nom}`} onClick={() => setFiche(c)}>
               <EditIcon />
             </IconButton>
@@ -110,6 +119,17 @@ export function EcranCocktails() {
         }}
       />
 
+      {infos && (
+        <InfosCocktail
+          key={infos.id}
+          cocktail={infos}
+          onModifier={() => {
+            setFiche(infos)
+            setInfos(null)
+          }}
+          onFermer={() => setInfos(null)}
+        />
+      )}
       {fiche && (
         <FicheCocktail
           key={fiche === 'nouveau' ? 'nouveau' : fiche.id}

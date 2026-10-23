@@ -28,7 +28,7 @@ describe('FicheCocktail', () => {
     saisirNom('  Nojito ')
     fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false })
+    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '' })
   })
 
   it('refuse un homonyme, même dans l’autre version', () => {
@@ -54,7 +54,20 @@ describe('FicheCocktail', () => {
     const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, nojito] })
     fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false })
+    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '' })
+  })
+
+  it('enregistre la description, sans les espaces autour', () => {
+    const { onEnregistrer } = monter()
+    saisirNom('Spritz')
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: '  Apérol, prosecco\n' } })
+    enregistrer()
+    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: 'Apérol, prosecco' })
+  })
+
+  it('reprend la description en modification', () => {
+    monter({ cocktail: { ...mojito, description: 'Rhum, menthe' }, cocktails: [mojito] })
+    expect(screen.getByLabelText('Description')).toHaveValue('Rhum, menthe')
   })
 
   it('refuse un nom vide', () => {

@@ -21,6 +21,7 @@ interface Props {
 export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, onArchiver }: Props) {
   const [nom, setNom] = useState(cocktail?.nom ?? '')
   const [alcool, setAlcool] = useState(cocktail?.alcool ?? true)
+  const [description, setDescription] = useState(cocktail?.description ?? '')
   const [erreur, setErreur] = useState<string | null>(null)
 
   const renomme = cocktail !== undefined && nom.trim() !== cocktail.nom
@@ -36,7 +37,7 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
       setErreur(messageDoublon('Un cocktail', doublon))
       return
     }
-    onEnregistrer({ nom: nomPropre, alcool })
+    onEnregistrer({ nom: nomPropre, alcool, description: description.trim() })
   }
 
   return (
@@ -66,6 +67,14 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
         labelPlacement="start"
         control={<Switch checked={alcool} onChange={(_, v) => setAlcool(v)} />}
         sx={{ mx: 0, justifyContent: 'space-between' }}
+      />
+      <TextField
+        label="Description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        multiline
+        minRows={3}
+        maxRows={10}
       />
       {erreur && <Alert severity="warning">{erreur}</Alert>}
       <BoutonsFiche onAnnuler={onAnnuler} onArchiver={cocktail ? onArchiver : undefined} />

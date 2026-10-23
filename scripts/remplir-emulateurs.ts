@@ -46,12 +46,17 @@ const TYPES = [
   { id: 'soiree-privee', nom: 'Soirée privée' },
 ];
 
-const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean }[] = [
-  { id: 'mojito', nom: 'Mojito', alcool: true },
-  { id: 'nojito', nom: 'Nojito', alcool: false },
+const COCKTAILS: { id: string; nom: string; alcool: boolean; archive?: boolean; description?: string }[] = [
+  {
+    id: 'mojito',
+    nom: 'Mojito',
+    alcool: true,
+    description: 'Rhum blanc, citron vert, menthe fraîche, sucre de canne, eau gazeuse.\nPiler la menthe avec le sucre et le citron, glace pilée, compléter à l’eau gazeuse.',
+  },
+  { id: 'nojito', nom: 'Nojito', alcool: false, description: 'Le Mojito sans rhum : citron vert, menthe, sucre de canne, eau gazeuse.' },
   { id: 'pina-colada', nom: 'Piña Colada', alcool: true },
   { id: 'virgin-colada', nom: 'Virgin Colada', alcool: false },
-  { id: 'spritz', nom: 'Spritz', alcool: true },
+  { id: 'spritz', nom: 'Spritz', alcool: true, description: 'Apérol, prosecco, eau gazeuse, rondelle d’orange.' },
   { id: 'margarita', nom: 'Margarita', alcool: true },
   { id: 'cosmopolitan', nom: 'Cosmopolitan', alcool: true },
   { id: 'moscow-mule', nom: 'Moscow Mule', alcool: true },
@@ -209,6 +214,7 @@ async function main() {
       nomNormalise: normaliserNom(c.nom),
       alcool: c.alcool,
       archive: c.archive ?? false,
+      description: c.description ?? '',
     });
   }
   await lot.commit();

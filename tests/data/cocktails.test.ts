@@ -19,7 +19,7 @@ beforeEach(async () => {
 
 describe('dépôt des cocktails', () => {
   it('crée un cocktail avec son nom normalisé', async () => {
-    const id = depot.creer({ nom: 'Caïpirinha', alcool: true });
+    const id = depot.creer({ nom: 'Caïpirinha', alcool: true, description: '' });
     await attendre(db);
     const liste = await prochaineValeur(depot.ecouter);
     expect(liste).toEqual([
@@ -28,8 +28,8 @@ describe('dépôt des cocktails', () => {
   });
 
   it('modifie et recalcule le nom normalisé', async () => {
-    const id = depot.creer({ nom: 'Mojito', alcool: true });
-    depot.modifier(id, { nom: 'Môjito Royal', alcool: false });
+    const id = depot.creer({ nom: 'Mojito', alcool: true, description: '' });
+    depot.modifier(id, { nom: 'Môjito Royal', alcool: false, description: '' });
     await attendre(db);
     const liste = await prochaineValeur(depot.ecouter);
     expect(liste).toEqual([
@@ -37,8 +37,17 @@ describe('dépôt des cocktails', () => {
     ]);
   });
 
+  it('enregistre une description, puis l’efface', async () => {
+    const id = depot.creer({ nom: 'Mojito', alcool: true, description: 'Rhum, menthe' });
+    await attendre(db);
+    expect((await prochaineValeur(depot.ecouter))[0].description).toBe('Rhum, menthe');
+    depot.modifier(id, { nom: 'Mojito', alcool: true, description: '' });
+    await attendre(db);
+    expect((await prochaineValeur(depot.ecouter))[0]).not.toHaveProperty('description');
+  });
+
   it('archive puis désarchive', async () => {
-    const id = depot.creer({ nom: 'Mojito', alcool: true });
+    const id = depot.creer({ nom: 'Mojito', alcool: true, description: '' });
     depot.archiver(id, true);
     await attendre(db);
     expect((await prochaineValeur(depot.ecouter))[0].archive).toBe(true);
@@ -68,8 +77,8 @@ describe('dépôt des cocktails', () => {
 
   it('chiffre puis supprime un cocktail : verres effacés, retiré des cartes, autres cocktails intacts', async () => {
     const depots = creerDepots(db, uid);
-    const supprime = depot.creer({ nom: 'Blue Lagoon', alcool: true });
-    const garde = depot.creer({ nom: 'Mojito', alcool: true });
+    const supprime = depot.creer({ nom: 'Blue Lagoon', alcool: true, description: '' });
+    const garde = depot.creer({ nom: 'Mojito', alcool: true, description: '' });
     const ligne = (id: string, cocktailId: string) => ({ id, cocktailId, masquee: false });
     const p1 = depots.prestas.creer({ date: '2026-10-17', client: 'A', typeId: null, lignes: [ligne('L1', supprime), ligne('L2', garde)] });
     const p2 = depots.prestas.creer({ date: '2026-10-18', client: 'B', typeId: null, lignes: [ligne('L3', supprime)] });

@@ -105,7 +105,7 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: '' })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -118,7 +118,7 @@ describe('EcranCocktails', () => {
     expect(alcool).toBeChecked()
     fireEvent.click(alcool)
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '' })
   })
 
   it('ferme la fiche sans enregistrer au tap à côté', async () => {
@@ -137,8 +137,22 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Modifier Daiquiri' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Daiquiri fraise' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true })
+    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true, description: '' })
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('montre la description en lecture seule, puis passe à la fiche avec « Modifier »', () => {
+    const depots = creerDepotsFactices({ cocktails: [c('1', 'Mojito', { description: 'Rhum, menthe' }), c('2', 'Spritz')] })
+    rendre(<EcranCocktails />, { depots })
+    // Pas d'icône Voir sans description.
+    expect(screen.queryByRole('button', { name: 'Voir Spritz' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Voir Mojito' }))
+    const infos = within(screen.getByRole('dialog', { name: 'Mojito' }))
+    expect(infos.getByText('Rhum, menthe')).toBeTruthy()
+    expect(infos.queryByRole('textbox')).toBeNull()
+    fireEvent.click(infos.getByRole('button', { name: 'Modifier' }))
+    expect(screen.getByLabelText('Description')).toHaveValue('Rhum, menthe')
+    expect(screen.queryByRole('dialog', { name: 'Mojito' })).toBeNull()
   })
 
   it('archive depuis la fiche, après confirmation', () => {
