@@ -34,17 +34,17 @@ it('ouvre « Nouvelle presta »', async () => {
   expect(screen.getByText('Lieu : /prestas/nouvelle')).toBeInTheDocument()
 })
 
-it('sépare « En cours » et « Terminées », triées par date décroissante', () => {
+it('sépare « En cours » (la plus tôt d’abord) et « Terminées » (la plus récente d’abord)', () => {
   rendreEcran([
-    presta({ id: 'a', client: 'Ancienne', date: '2026-01-01' }),
-    presta({ id: 'b', client: 'Récente', date: '2026-09-01' }),
+    presta({ id: 'b', client: 'Plus tard', date: '2026-09-01' }),
+    presta({ id: 'a', client: 'Prochaine', date: '2026-01-01' }),
     presta({ id: 'c', client: 'Finie', date: '2026-05-01', statut: 'terminee' }),
     presta({ id: 'd', client: 'Finie récente', date: '2026-06-01', statut: 'terminee' }),
   ])
   const enCours = screen.getByRole('region', { name: 'En cours' })
   expect(within(enCours).getAllByRole('link').map((l) => l.textContent)).toEqual([
-    expect.stringContaining('Récente'),
-    expect.stringContaining('Ancienne'),
+    expect.stringContaining('Prochaine'),
+    expect.stringContaining('Plus tard'),
   ])
   const terminees = screen.getByRole('region', { name: 'Terminées' })
   expect(within(terminees).getAllByRole('link').map((l) => l.textContent)).toEqual([
