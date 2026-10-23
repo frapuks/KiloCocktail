@@ -15,38 +15,72 @@ function monter(props: Partial<ComponentProps<typeof FicheCocktail>> = {}) {
 }
 const saisirNom = (v: string) => fireEvent.change(screen.getByLabelText('Nom'), { target: { value: v } })
 const enregistrer = () => fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+const version = (nom: string) => screen.getByRole('button', { name: nom })
 
 describe('FicheCocktail', () => {
-  it('active l’alcool par défaut, sans champ de nom sans alcool', () => {
+  it('crée avec alcool par défaut, avec le choix Avec / Sans / Les deux', () => {
     monter()
-    expect(screen.getByRole('switch', { name: 'Alcool' })).toBeChecked()
-    expect(screen.queryByLabelText('Nom de la version sans alcool')).toBeNull()
+    expect(version('Avec alcool')).toHaveAttribute('aria-pressed', 'true')
+    expect(version('Les deux')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.queryByRole('switch', { name: 'Alcool' })).toBeNull()
   })
 
   it('enregistre un cocktail sans alcool', () => {
     const { onEnregistrer } = monter()
     saisirNom('  Nojito ')
-    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
+    fireEvent.click(version('Sans alcool'))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '' })
+    expect(onEnregistrer).toHaveBeenCalledWith([{ nom: 'Nojito', alcool: false, description: '' }])
   })
 
-  it('refuse un homonyme, même dans l’autre version', () => {
+  it('accepte un homonyme dans l’autre version', () => {
     const { onEnregistrer } = monter({ cocktails: [mojito] })
     saisirNom('Mojito')
-    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
+    fireEvent.click(version('Sans alcool'))
     enregistrer()
-    expect(screen.getByRole('alert').textContent).toBe('Un cocktail “Mojito” existe déjà')
+    expect(onEnregistrer).toHaveBeenCalledWith([{ nom: 'Mojito', alcool: false, description: '' }])
+  })
+
+  it('signale un homonyme archivé de la même version', () => {
+    const { onEnregistrer } = monter({ cocktails: [{ ...nojito, archive: true }] })
+    saisirNom('nojito')
+    fireEvent.click(version('Sans alcool'))
+    enregistrer()
+    expect(
+      screen.getByText('Un cocktail sans alcool “Nojito” existe déjà dans les archivés. Désarchive-le plutôt.'),
+    ).toBeTruthy()
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
-  it('signale un homonyme archivé', () => {
-    const { onEnregistrer } = monter({ cocktails: [{ ...nojito, archive: true }] })
-    saisirNom('nojito')
+  it('crée les deux versions, chacune avec sa description', () => {
+    const { onEnregistrer } = monter()
+    saisirNom('Mojito')
+    fireEvent.click(version('Les deux'))
+    fireEvent.change(screen.getByLabelText('Description avec alcool'), { target: { value: 'Rhum, menthe' } })
+    fireEvent.change(screen.getByLabelText('Description sans alcool'), { target: { value: 'Menthe' } })
     enregistrer()
-    expect(
-      screen.getByText('Un cocktail “Nojito” existe déjà dans les archivés. Désarchive-le plutôt.'),
-    ).toBeTruthy()
+    expect(onEnregistrer).toHaveBeenCalledWith([
+      { nom: 'Mojito', alcool: true, description: 'Rhum, menthe' },
+      { nom: 'Mojito', alcool: false, description: 'Menthe' },
+    ])
+  })
+
+  it('copie la description avec alcool vers la version sans alcool', () => {
+    monter()
+    fireEvent.click(version('Les deux'))
+    const copier = screen.getByRole('button', { name: 'Copier vers la version sans alcool' })
+    expect(copier).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Description avec alcool'), { target: { value: 'Rhum, menthe' } })
+    fireEvent.click(copier)
+    expect(screen.getByLabelText('Description sans alcool')).toHaveValue('Rhum, menthe')
+  })
+
+  it('refuse « Les deux » si l’une des versions existe déjà', () => {
+    const { onEnregistrer } = monter({ cocktails: [{ ...nojito, nom: 'Mojito', nomNormalise: 'mojito' }] })
+    saisirNom('Mojito')
+    fireEvent.click(version('Les deux'))
+    enregistrer()
+    expect(screen.getByRole('alert').textContent).toBe('Un cocktail sans alcool “Mojito” existe déjà')
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
@@ -54,7 +88,16 @@ describe('FicheCocktail', () => {
     const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, nojito] })
     fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '' })
+    expect(onEnregistrer).toHaveBeenCalledWith([{ nom: 'Mojito', alcool: false, description: '' }])
+  })
+
+  it('refuse de passer en sans alcool si ce nom existe déjà sans alcool', () => {
+    const mojitoSans = { ...nojito, nom: 'Mojito', nomNormalise: 'mojito' }
+    const { onEnregistrer } = monter({ cocktail: mojito, cocktails: [mojito, mojitoSans] })
+    fireEvent.click(screen.getByRole('switch', { name: 'Alcool' }))
+    enregistrer()
+    expect(screen.getByRole('alert').textContent).toBe('Un cocktail sans alcool “Mojito” existe déjà')
+    expect(onEnregistrer).not.toHaveBeenCalled()
   })
 
   it('enregistre la description, sans les espaces autour', () => {
@@ -62,7 +105,7 @@ describe('FicheCocktail', () => {
     saisirNom('Spritz')
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: '  Apérol, prosecco\n' } })
     enregistrer()
-    expect(onEnregistrer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: 'Apérol, prosecco' })
+    expect(onEnregistrer).toHaveBeenCalledWith([{ nom: 'Spritz', alcool: true, description: 'Apérol, prosecco' }])
   })
 
   it('reprend la description en modification', () => {
@@ -82,7 +125,7 @@ describe('FicheCocktail', () => {
     const { onEnregistrer } = monter({ cocktails: [mojito] })
     saisirNom('mojito')
     enregistrer()
-    expect(screen.getByText('Un cocktail “Mojito” existe déjà')).toBeTruthy()
+    expect(screen.getByText('Un cocktail avec alcool “Mojito” existe déjà')).toBeTruthy()
     expect(onEnregistrer).not.toHaveBeenCalled()
   })
 

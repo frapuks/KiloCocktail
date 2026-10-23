@@ -136,9 +136,9 @@ export function EcranCocktails() {
           cocktail={fiche === 'nouveau' ? undefined : fiche}
           cocktails={cocktails}
           onAnnuler={() => setFiche(null)}
-          onEnregistrer={(d) => {
-            if (fiche === 'nouveau') depots.cocktails.creer(d)
-            else depots.cocktails.modifier(fiche.id, d)
+          onEnregistrer={(liste) => {
+            if (fiche === 'nouveau') liste.forEach((d) => depots.cocktails.creer(d))
+            else depots.cocktails.modifier(fiche.id, liste[0])
             setFiche(null)
           }}
           // Pas d'« Archiver » dans la fiche d'un cocktail déjà archivé.

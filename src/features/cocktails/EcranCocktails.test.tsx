@@ -109,16 +109,26 @@ describe('EcranCocktails', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('crée un cocktail sans alcool en coupant l’interrupteur', () => {
+  it('crée un cocktail sans alcool', () => {
     const depots = creerDepotsFactices()
     rendre(<EcranCocktails />, { depots })
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Nojito' } })
-    const alcool = screen.getByRole('switch', { name: 'Alcool' })
-    expect(alcool).toBeChecked()
-    fireEvent.click(alcool)
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sans alcool' }))
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '' })
+  })
+
+  it('crée les deux versions d’un cocktail en une fois', () => {
+    const depots = creerDepotsFactices()
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
+    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Mojito' } })
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Les deux' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(depots.cocktails.creer).toHaveBeenCalledTimes(2)
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: true, description: '' })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '' })
   })
 
   it('ferme la fiche sans enregistrer au tap à côté', async () => {
