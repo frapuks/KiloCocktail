@@ -5,10 +5,11 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { ecouterUtilisateur, seDeconnecter } from '../../data/auth'
-import { useTypes } from '../../data/hooks'
+import { useBases, useTypes } from '../../data/hooks'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
 import { TitreSection } from '../../ui/TitreSection'
 import { FicheMotDePasse } from './FicheMotDePasse'
+import { GestionBases } from './GestionBases'
 import { GestionTypes } from './GestionTypes'
 
 const MESSAGE_EN_ATTENTE =
@@ -76,9 +77,10 @@ function Compte() {
 
 export function EcranReglages() {
   const types = useTypes()
-  const [gestionOuverte, setGestionOuverte] = useState(false)
+  const bases = useBases()
+  const [gestion, setGestion] = useState<'types' | 'bases' | null>(null)
 
-  if (!types) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
+  if (!types || !bases) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>
@@ -86,14 +88,22 @@ export function EcranReglages() {
 
       <Stack component="section" spacing={1.5} sx={{ mt: 3, alignItems: 'flex-start' }}>
         <TitreSection titre="Types d'événement" />
-        <Button variant="outlined" color="inherit" onClick={() => setGestionOuverte(true)}>
+        <Button variant="outlined" color="inherit" onClick={() => setGestion('types')}>
           Modifier les types
+        </Button>
+      </Stack>
+
+      <Stack component="section" spacing={1.5} sx={{ mt: 4, alignItems: 'flex-start' }}>
+        <TitreSection titre="Bases des cocktails" />
+        <Button variant="outlined" color="inherit" onClick={() => setGestion('bases')}>
+          Modifier les bases
         </Button>
       </Stack>
 
       <Compte />
 
-      {gestionOuverte && <GestionTypes types={types} onFermer={() => setGestionOuverte(false)} />}
+      {gestion === 'types' && <GestionTypes types={types} onFermer={() => setGestion(null)} />}
+      {gestion === 'bases' && <GestionBases bases={bases} onFermer={() => setGestion(null)} />}
     </Box>
   )
 }

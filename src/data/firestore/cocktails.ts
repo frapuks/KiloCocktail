@@ -24,6 +24,7 @@ function champs(d: DonneesCocktail) {
     nomNormalise: normaliserNom(d.nom),
     alcool: d.alcool,
     description: d.description,
+    baseId: d.baseId,
   };
 }
 
@@ -65,8 +66,9 @@ export function depotCocktails(db: Firestore, uid: string): DepotCocktails {
               nomNormalise: data.nomNormalise,
               alcool: data.alcool ?? true,
               archive: data.archive,
-              // Description vide (ou cocktail d'avant les descriptions) : pas de clé.
+              // Description vide, sans base (ou cocktail d'avant ces champs) : pas de clé.
               ...(data.description ? { description: data.description } : {}),
+              ...(data.baseId ? { baseId: data.baseId } : {}),
             } as Cocktail;
           }),
         );

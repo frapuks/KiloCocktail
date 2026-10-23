@@ -7,12 +7,13 @@ import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
-import { useCocktails } from '../../data/hooks'
+import { useBases, useCocktails } from '../../data/hooks'
 import { comparerNoms } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
+import { FiltreBase, gardeBase, TOUTES } from '../../ui/FiltreBase'
 import { PastilleAlcool } from '../../ui/PastilleAlcool'
 import { SectionArchives } from '../../ui/SectionArchives'
 import { TitreSection } from '../../ui/TitreSection'
@@ -54,6 +55,7 @@ function MessageSuppression({ id }: { id: string }) {
 export function EcranCocktails() {
   const depots = useDepots()
   const cocktails = useCocktails()
+  const bases = useBases()
   // 'nouveau' = création, Cocktail = modification, null = fiche fermée
   const [fiche, setFiche] = useState<'nouveau' | Cocktail | null>(null)
   // Cocktail dont la fiche en lecture seule (description) est ouverte.
@@ -61,10 +63,12 @@ export function EcranCocktails() {
   // Cocktail dont l'archivage (icône de sa fiche) attend confirmation.
   const [archivageAConfirmer, setArchivageAConfirmer] = useState<Cocktail | null>(null)
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
+  const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
 
   if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
-  const visibles = cocktails.filter(gardeAlcool[filtre])
+  const deLaBase = cocktails.filter(gardeBase(filtreBase))
+  const visibles = deLaBase.filter(gardeAlcool[filtre])
   const actifs = visibles.filter((c) => !c.archive).sort(comparerNoms)
   const archives = visibles.filter((c) => c.archive).sort(comparerNoms)
 
@@ -72,9 +76,10 @@ export function EcranCocktails() {
     <Box component="main" sx={{ p: 2, pb: 12 }}>
       <EnTeteEcran titre="Cocktails" action={{ libelle: 'Nouveau cocktail', onClick: () => setFiche('nouveau') }} />
 
-      {/* Compteurs sur les cocktails actifs, ceux de la liste principale. */}
-      <Box sx={{ mt: 2 }}>
-        <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={cocktails.filter((c) => !c.archive)} />
+      {/* Compteurs sur les cocktails actifs de la base choisie, ceux de la liste principale. */}
+      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+        <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={deLaBase.filter((c) => !c.archive)} />
+        <FiltreBase valeur={filtreBase} onChange={setFiltreBase} bases={bases ?? []} />
       </Box>
 
       <Box sx={{ mt: 3 }}>
@@ -123,6 +128,7 @@ export function EcranCocktails() {
         <InfosCocktail
           key={infos.id}
           cocktail={infos}
+          base={bases?.find((b) => b.id === infos.baseId)}
           onModifier={() => {
             setFiche(infos)
             setInfos(null)
@@ -135,6 +141,7 @@ export function EcranCocktails() {
           key={fiche === 'nouveau' ? 'nouveau' : fiche.id}
           cocktail={fiche === 'nouveau' ? undefined : fiche}
           cocktails={cocktails}
+          bases={bases ?? []}
           onAnnuler={() => setFiche(null)}
           onEnregistrer={(liste) => {
             if (fiche === 'nouveau') liste.forEach((d) => depots.cocktails.creer(d))

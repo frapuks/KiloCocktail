@@ -8,6 +8,7 @@ service cloud.firestore {
       allow write: if proprietaire() && request.resource.data.keys().hasOnly(['typesInitialises']);
       match /cocktails/{id} { allow read, write: if proprietaire(); }
       match /types/{id} { allow read, write: if proprietaire(); }
+      match /bases/{id} { allow read, write: if proprietaire(); }
       match /prestas/{prestaId} {
         allow read, write: if proprietaire();
         match /verres/{verreId} {

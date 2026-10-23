@@ -202,6 +202,55 @@ describe('EcranReglages', () => {
     expect(depots.types.supprimer).not.toHaveBeenCalled()
   })
 
+  describe('bases des cocktails', () => {
+    const b = (id: string, nom: string, archive = false) => ({ id, nom, nomNormalise: nom.toLowerCase(), archive })
+    const ouvrirBases = () => fireEvent.click(screen.getByRole('button', { name: 'Modifier les bases' }))
+
+    it('ajoute une base, et refuse un doublon archivé au féminin', () => {
+      const depots = creerDepotsFactices({ bases: [b('r', 'Rhum', true)] })
+      rendre(<EcranReglages />, { depots })
+      ouvrirBases()
+      expect(screen.getByRole('dialog', { name: 'Bases' })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: '+ Ajouter une base' }))
+      const champ = screen.getByRole('textbox', { name: 'Nom de la nouvelle base' })
+      fireEvent.change(champ, { target: { value: 'rhum' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Valider' }))
+      expect(screen.getByText('Une base “Rhum” existe déjà dans les archivés. Désarchive-la plutôt.')).toBeTruthy()
+      fireEvent.change(champ, { target: { value: ' Vodka ' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Valider' }))
+      expect(depots.bases.creer).toHaveBeenCalledWith('Vodka')
+    })
+
+    it('archive une base avec un message au féminin', () => {
+      const depots = creerDepotsFactices({ bases: [b('r', 'Rhum')] })
+      rendre(<EcranReglages />, { depots })
+      ouvrirBases()
+      fireEvent.click(screen.getByRole('button', { name: 'Archiver Rhum' }))
+      const confirmation = within(screen.getByRole('dialog', { name: 'Archiver « Rhum » ?' }))
+      expect(confirmation.getByText(/Elle ne sera plus proposée pour les cocktails/)).toBeTruthy()
+      fireEvent.click(confirmation.getByRole('button', { name: 'Archiver' }))
+      expect(depots.bases.archiver).toHaveBeenCalledWith('r', true)
+    })
+
+    it('supprime une base archivée en disant combien de cocktails la perdent', () => {
+      const depots = creerDepotsFactices({
+        bases: [b('r', 'Rhum', true)],
+        cocktails: [
+          { id: 'm', nom: 'Mojito', nomNormalise: 'mojito', alcool: true, archive: false, baseId: 'r' },
+          { id: 'n', nom: 'Nojito', nomNormalise: 'nojito', alcool: false, archive: false },
+        ],
+      })
+      rendre(<EcranReglages />, { depots })
+      ouvrirBases()
+      fireEvent.click(screen.getByRole('switch', { name: 'Afficher les archivés' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer Rhum' }))
+      const confirmation = within(screen.getByRole('dialog', { name: 'Supprimer « Rhum » ?' }))
+      expect(confirmation.getByText(/1 cocktail l’utilise : il n’aura plus de base\./)).toBeTruthy()
+      fireEvent.click(confirmation.getByRole('button', { name: 'Supprimer définitivement' }))
+      expect(depots.bases.supprimer).toHaveBeenCalledWith('r')
+    })
+  })
+
   it('affiche l’e-mail connecté', () => {
     rendre(<EcranReglages />, { depots: creerDepotsFactices() })
     expect(screen.getByText('barman@exemple.fr')).toBeTruthy()

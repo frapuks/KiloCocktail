@@ -12,7 +12,8 @@ import type { DonneesCocktail } from '../../data/depots'
 import { FeuilleModale } from '../../ui/FeuilleModale'
 import { BoutonsFiche } from '../../ui/BoutonsFiche'
 import { messageDoublon, trouverDoublon } from '../../domain/noms'
-import type { Cocktail, Variante } from '../../domain/types'
+import type { Base, Cocktail, Variante } from '../../domain/types'
+import { ChampChoix } from '../../ui/ChampChoix'
 
 // « les-deux » (création seulement) : deux cocktails du même nom, un avec et un sans alcool.
 type Versions = Variante | 'les-deux'
@@ -20,6 +21,7 @@ type Versions = Variante | 'les-deux'
 interface Props {
   cocktail?: Cocktail
   cocktails: Cocktail[]
+  bases: Base[]
   // Un cocktail, ou deux en création « Les deux » (avec alcool d'abord).
   onEnregistrer(d: DonneesCocktail[]): void
   onAnnuler(): void
@@ -30,11 +32,13 @@ function ChampDescription({ label, valeur, onChange }: { label: string; valeur: 
   return <TextField label={label} value={valeur} onChange={(e) => onChange(e.target.value)} multiline minRows={3} maxRows={10} />
 }
 
-export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, onArchiver }: Props) {
+export function FicheCocktail({ cocktail, cocktails, bases, onEnregistrer, onAnnuler, onArchiver }: Props) {
   const [nom, setNom] = useState(cocktail?.nom ?? '')
   const [versions, setVersions] = useState<Versions>(cocktail && !cocktail.alcool ? 'sans' : 'avec')
+  const [baseId, setBaseId] = useState<string | null>(cocktail?.baseId ?? null)
   const [description, setDescription] = useState(cocktail?.description ?? '')
-  // Description de la version sans alcool, en création « Les deux ».
+  // Base et description de la version sans alcool, en création « Les deux ».
+  const [baseIdSans, setBaseIdSans] = useState<string | null>(null)
   const [descriptionSans, setDescriptionSans] = useState('')
   const [erreur, setErreur] = useState<string | null>(null)
 
@@ -54,10 +58,10 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
     }
     const donnees: DonneesCocktail[] = lesDeux
       ? [
-          { nom: nomPropre, alcool: true, description: description.trim() },
-          { nom: nomPropre, alcool: false, description: descriptionSans.trim() },
+          { nom: nomPropre, alcool: true, description: description.trim(), baseId },
+          { nom: nomPropre, alcool: false, description: descriptionSans.trim(), baseId: baseIdSans },
         ]
-      : [{ nom: nomPropre, alcool: versions === 'avec', description: description.trim() }]
+      : [{ nom: nomPropre, alcool: versions === 'avec', description: description.trim(), baseId }]
     // Le nom est unique par version : un « Mojito » avec alcool et un « Mojito » sans alcool peuvent coexister.
     for (const { alcool } of donnees) {
       const doublon = trouverDoublon(cocktails.filter((c) => c.alcool === alcool), nomPropre, cocktail?.id)
@@ -115,16 +119,28 @@ export function FicheCocktail({ cocktail, cocktails, onEnregistrer, onAnnuler, o
       )}
       {lesDeux ? (
         <>
+          <ChampChoix label="Base avec alcool" libelleAucun="Aucune" elements={bases} valeur={baseId} onChange={setBaseId} />
           <ChampDescription label="Description avec alcool" valeur={description} onChange={setDescription} />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button size="small" disabled={!description.trim()} onClick={() => setDescriptionSans(description)}>
+            <Button
+              size="small"
+              disabled={!description.trim() && baseId === null}
+              onClick={() => {
+                setBaseIdSans(baseId)
+                setDescriptionSans(description)
+              }}
+            >
               Copier vers la version sans alcool
             </Button>
           </Box>
+          <ChampChoix label="Base sans alcool" libelleAucun="Aucune" elements={bases} valeur={baseIdSans} onChange={setBaseIdSans} />
           <ChampDescription label="Description sans alcool" valeur={descriptionSans} onChange={setDescriptionSans} />
         </>
       ) : (
-        <ChampDescription label="Description" valeur={description} onChange={setDescription} />
+        <>
+          <ChampChoix label="Base" libelleAucun="Aucune" elements={bases} valeur={baseId} onChange={setBaseId} />
+          <ChampDescription label="Description" valeur={description} onChange={setDescription} />
+        </>
       )}
       {erreur && <Alert severity="warning">{erreur}</Alert>}
       <BoutonsFiche onAnnuler={onAnnuler} onArchiver={cocktail ? onArchiver : undefined} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
+import type { Base, Cocktail, Presta, TypeEvenement, Verre } from '../domain/types'
 import type { Depots, Desabonner } from './depots'
 import { useDepots } from './DepotsContext'
 
@@ -33,7 +33,11 @@ export function useTypes(): TypeEvenement[] | undefined {
   return useListeMemorisee('types', (d, cb) => d.types.ecouter(cb))
 }
 
-export function usePrestas(): Presta[] | undefined {
+export function useBases(): Base[] | undefined {
+  return useListeMemorisee('bases', (d, cb) => d.bases.ecouter(cb))
+}
+
+export function usePrestas():Presta[] | undefined {
   return useListeMemorisee('prestas', (d, cb) => d.prestas.ecouterListe(cb))
 }
 

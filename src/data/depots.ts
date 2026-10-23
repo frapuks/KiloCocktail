@@ -1,7 +1,8 @@
-import type { Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
+import type { Base, Cocktail, Ligne, Presta, StatutPresta, TypeEvenement, Verre } from '../domain/types';
 
 export type Desabonner = () => void;
-export interface DonneesCocktail { nom: string; alcool: boolean; description: string }  // description : '' = aucune
+// description : '' = aucune ; baseId : null = sans base
+export interface DonneesCocktail { nom: string; alcool: boolean; description: string; baseId: string | null }
 export interface DonneesPresta { date: string; client: string | null; typeId: string | null; lignes: Ligne[] }
 export interface DepotCocktails {
   ecouter(cb: (cocktails: Cocktail[]) => void): Desabonner;  // tous, archivés compris
@@ -22,6 +23,14 @@ export interface DepotTypes {
   supprimer(id: string): Promise<void>;
   initialiserSiVide(): Promise<void>;
 }
+export interface DepotBases {
+  ecouter(cb: (bases: Base[]) => void): Desabonner;
+  creer(nom: string): string;
+  renommer(id: string, nom: string): void;
+  archiver(id: string, archive: boolean): void;
+  // Supprime la base ; les cocktails qui l'avaient n'ont plus de base.
+  supprimer(id: string): Promise<void>;
+}
 export interface DepotPrestas {
   ecouterListe(cb: (prestas: Presta[]) => void): Desabonner;
   ecouter(id: string, cb: (presta: Presta | null) => void): Desabonner;
@@ -38,4 +47,4 @@ export interface DepotVerres {
   // Rejette si le serveur refuse le retrait (le bandeau d'erreur est déjà affiché) ; reste en attente hors connexion.
   retirer(prestaId: string, verreId: string): Promise<void>;
 }
-export interface Depots { cocktails: DepotCocktails; types: DepotTypes; prestas: DepotPrestas; verres: DepotVerres }
+export interface Depots { cocktails: DepotCocktails; types: DepotTypes; bases: DepotBases; prestas: DepotPrestas; verres: DepotVerres }

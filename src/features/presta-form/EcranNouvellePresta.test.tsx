@@ -72,6 +72,20 @@ describe('EcranNouvellePresta', () => {
     expect((feuille.getByRole('checkbox', { name: /Mojito/ }) as HTMLInputElement).checked).toBe(true)
   })
 
+  it('filtre la feuille d’ajout par base', () => {
+    ecran(
+      creerDepotsFactices({
+        cocktails: [c('m', 'Mojito', { baseId: 'r' }), c('d', 'Daiquiri', { baseId: 'r' }), c('s', 'Spritz')],
+        bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+      }),
+    )
+    const feuille = ouvrirAjout()
+    fireEvent.mouseDown(feuille.getByRole('combobox', { name: 'Base' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Rhum' }))
+    expect(feuille.getAllByRole('checkbox').map((c) => c.closest('li')?.textContent)).toEqual(['Daiquiri', 'Mojito'])
+    expect(feuille.getByRole('button', { name: 'Tous (2)' })).toBeInTheDocument()
+  })
+
   it('n’a plus de bouton de version par cocktail', () => {
     ecran()
     expect(screen.queryByRole('button', { name: 'Sans alcool' })).toBeNull()

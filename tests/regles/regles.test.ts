@@ -44,6 +44,13 @@ describe('règles de sécurité Firestore', () => {
     await assertSucceeds(getDoc(ref))
   })
 
+  it('autorise le propriétaire à gérer ses bases, pas un autre compte', async () => {
+    const ref = (uid: string) => doc(env.authenticatedContext(uid).firestore(), 'users/u1/bases/b1')
+    await assertSucceeds(setDoc(ref('u1'), { nom: 'Rhum', nomNormalise: 'rhum', archive: false }))
+    await assertSucceeds(getDoc(ref('u1')))
+    await assertFails(getDoc(ref('u2')))
+  })
+
   it('refuse un autre compte', async () => {
     const ref = (c: ReturnType<typeof env.authenticatedContext>) =>
       doc(c.firestore(), 'users/u1/cocktails/c1')

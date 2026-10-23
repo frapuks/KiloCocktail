@@ -22,5 +22,8 @@ describe('noms', () => {
     expect(messageDoublon('Un cocktail sans alcool', { nom: 'Mojito', archive: true })).toBe(
       'Un cocktail sans alcool “Mojito” existe déjà dans les archivés. Désarchive-le plutôt.',
     );
+    expect(messageDoublon('Une base', { nom: 'Rhum', archive: true })).toBe(
+      'Une base “Rhum” existe déjà dans les archivés. Désarchive-la plutôt.',
+    );
   });
 });

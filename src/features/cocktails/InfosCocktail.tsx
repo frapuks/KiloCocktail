@@ -1,12 +1,13 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import type { Cocktail } from '../../domain/types'
+import type { Base, Cocktail } from '../../domain/types'
 import { FeuilleModale, useFermerFeuille } from '../../ui/FeuilleModale'
 import { PastilleAlcool } from '../../ui/PastilleAlcool'
 
 interface Props {
   cocktail: Cocktail
+  base?: Base
   onModifier(): void
   onFermer(): void
 }
@@ -27,13 +28,14 @@ function Boutons({ onModifier }: { onModifier(): void }) {
 }
 
 // Fiche en lecture seule d'un cocktail ; « Modifier » ouvre la fiche de saisie.
-export function InfosCocktail({ cocktail, onModifier, onFermer }: Props) {
+export function InfosCocktail({ cocktail, base, onModifier, onFermer }: Props) {
   return (
     <FeuilleModale libelle={cocktail.nom} onFermer={onFermer}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Typography variant="h2">{cocktail.nom}</Typography>
         {!cocktail.alcool && <PastilleAlcool alcool={false} />}
       </Box>
+      {base && <Typography color="text.secondary">Base : {base.nom}</Typography>}
       {/* pre-wrap : les retours à la ligne saisis sont gardés. */}
       <Typography sx={{ whiteSpace: 'pre-wrap' }}>{cocktail.description}</Typography>
       <Boutons onModifier={onModifier} />

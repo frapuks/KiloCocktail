@@ -46,6 +46,49 @@ describe('EcranCocktails', () => {
     expect(noms()).toEqual(['NojitoSans alcool', 'Spritz'])
   })
 
+  it('filtre par base, avec toutes les bases actives même sans cocktail, combiné au filtre alcool', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [
+        c('1', 'Mojito', { baseId: 'r' }),
+        c('2', 'Nojito', { alcool: false, baseId: 'r' }),
+        c('3', 'Spritz'),
+      ],
+      bases: [
+        { id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false },
+        { id: 'g', nom: 'Gin', nomNormalise: 'gin', archive: false },
+        { id: 'w', nom: 'Whisky', nomNormalise: 'whisky', archive: true },
+      ],
+    })
+    rendre(<EcranCocktails />, { depots })
+    const choisir = (nom: string) => {
+      fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+      fireEvent.click(screen.getByRole('option', { name: nom }))
+    }
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Toutes', 'Gin', 'Rhum', 'Sans base'])
+    fireEvent.click(screen.getByRole('option', { name: 'Rhum' }))
+    expect(lignes()).toEqual(['Mojito', 'NojitoSans alcool'])
+    // Les compteurs du filtre alcool suivent la base choisie.
+    fireEvent.click(screen.getByRole('button', { name: 'Avec alcool (1)' }))
+    expect(lignes()).toEqual(['Mojito'])
+    fireEvent.click(screen.getByRole('button', { name: 'Tous (2)' }))
+    choisir('Sans base')
+    expect(lignes()).toEqual(['Spritz'])
+    choisir('Gin')
+    expect(lignes()).toEqual([])
+  })
+
+  it('montre la base dans la fiche en lecture seule', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Mojito', { description: 'Menthe', baseId: 'r' })],
+      bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.click(screen.getByRole('button', { name: 'Voir Mojito' }))
+    expect(within(screen.getByRole('dialog', { name: 'Mojito' })).getByText('Base : Rhum')).toBeTruthy()
+  })
+
   it('masque les archivés derrière un interrupteur et désarchive', () => {
     const depots = creerDepotsFactices({ cocktails: [c('4', 'Vieux', { archive: true })] })
     rendre(<EcranCocktails />, { depots })
@@ -105,7 +148,7 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nouveau cocktail' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Spritz' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: '' })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Spritz', alcool: true, description: '', baseId: null })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -116,7 +159,7 @@ describe('EcranCocktails', () => {
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Nojito' } })
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sans alcool' }))
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '' })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Nojito', alcool: false, description: '', baseId: null })
   })
 
   it('crée les deux versions d’un cocktail en une fois', () => {
@@ -127,8 +170,8 @@ describe('EcranCocktails', () => {
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Les deux' }))
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(depots.cocktails.creer).toHaveBeenCalledTimes(2)
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: true, description: '' })
-    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '' })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: true, description: '', baseId: null })
+    expect(depots.cocktails.creer).toHaveBeenCalledWith({ nom: 'Mojito', alcool: false, description: '', baseId: null })
   })
 
   it('ferme la fiche sans enregistrer au tap à côté', async () => {
@@ -147,7 +190,7 @@ describe('EcranCocktails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Modifier Daiquiri' }))
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Daiquiri fraise' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true, description: '' })
+    expect(depots.cocktails.modifier).toHaveBeenCalledWith('1', { nom: 'Daiquiri fraise', alcool: true, description: '', baseId: null })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
