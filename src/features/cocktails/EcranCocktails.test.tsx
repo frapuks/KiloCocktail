@@ -79,6 +79,17 @@ describe('EcranCocktails', () => {
     expect(lignes()).toEqual([])
   })
 
+  it('range sous « Sans base » un cocktail dont la base n’existe plus', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Orphelin', { baseId: 'disparue' }), c('2', 'Mojito', { baseId: 'r' })],
+      bases: [{ id: 'r', nom: 'Rhum', nomNormalise: 'rhum', archive: false }],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Sans base' }))
+    expect(lignes()).toEqual(['Orphelin'])
+  })
+
   it('propose une base archivée tant que des cocktails l’ont', () => {
     const depots = creerDepotsFactices({
       cocktails: [c('1', 'Old Fashioned', { baseId: 'w' }), c('2', 'Spritz')],
@@ -209,7 +220,7 @@ describe('EcranCocktails', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('montre la description en lecture seule, puis passe à la fiche avec « Modifier »', () => {
+  it('montre la description en lecture seule, puis passe à la fiche avec « Modifier »', async () => {
     const depots = creerDepotsFactices({ cocktails: [c('1', 'Mojito', { description: 'Rhum, menthe' }), c('2', 'Spritz')] })
     rendre(<EcranCocktails />, { depots })
     // Pas d'icône Voir sans description.
@@ -219,7 +230,8 @@ describe('EcranCocktails', () => {
     expect(infos.getByText('Rhum, menthe')).toBeTruthy()
     expect(infos.queryByRole('textbox')).toBeNull()
     fireEvent.click(infos.getByRole('button', { name: 'Modifier' }))
-    expect(screen.getByLabelText('Description')).toHaveValue('Rhum, menthe')
+    // La fiche de saisie s'ouvre une fois la feuille en lecture seule redescendue.
+    expect(await screen.findByLabelText('Description')).toHaveValue('Rhum, menthe')
     expect(screen.queryByRole('dialog', { name: 'Mojito' })).toBeNull()
   })
 

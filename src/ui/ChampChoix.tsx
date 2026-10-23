@@ -17,12 +17,14 @@ const AUCUN = ''
 export function ChampChoix({ label, libelleAucun, elements, valeur, onChange }: Props) {
   // Un élément archivé reste proposé s'il est déjà celui choisi, pour ne pas le perdre en silence.
   const proposes = elements.filter((e) => !e.archive || e.id === valeur).sort(comparerNoms)
+  // Élément disparu (supprimé ailleurs) : affiché comme « aucun », sans changer la valeur tant qu'on n'y touche pas.
+  const affichee = valeur !== null && proposes.some((e) => e.id === valeur) ? valeur : AUCUN
 
   return (
     <TextField
       select
       label={label}
-      value={valeur ?? AUCUN}
+      value={affichee}
       onChange={(e) => onChange(e.target.value === AUCUN ? null : e.target.value)}
       slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
     >

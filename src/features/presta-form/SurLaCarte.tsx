@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+import { nomAccessible } from '../../domain/affichage'
 import { groupes } from '../../domain/lignes'
 import type { Cocktail, Ligne, Variante } from '../../domain/types'
 import { ListeReordonnable } from '../../ui/ListeReordonnable'
@@ -65,7 +66,7 @@ export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer, o
                     {onRetirer && (
                       <IconButton
                         // « sans alcool » reste dans le nom accessible : deux lignes peuvent porter le même nom.
-                        aria-label={`Retirer ${nom}${cocktail.alcool ? '' : ' sans alcool'}`}
+                        aria-label={`Retirer ${nomAccessible(cocktail)}`}
                         color="error"
                         onClick={() => onRetirer(ligne.id)}
                       >

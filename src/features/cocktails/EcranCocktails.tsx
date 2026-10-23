@@ -8,7 +8,7 @@ import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
 import { useDepots } from '../../data/DepotsContext'
 import { useBases, useCocktails } from '../../data/hooks'
-import { comparerCocktails } from '../../domain/affichage'
+import { comparerCocktails, nomAccessible } from '../../domain/affichage'
 import type { Cocktail } from '../../domain/types'
 import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
@@ -21,9 +21,6 @@ import { FicheCocktail } from './FicheCocktail'
 import { InfosCocktail } from './InfosCocktail'
 
 const pluriel = (n: number, un: string, plusieurs: string) => (n === 1 ? un : plusieurs)
-
-// Nom pour les lecteurs d'écran : distingue les deux versions d'un même nom, que seule la pastille sépare à l'œil.
-const nomAccessible = (c: Cocktail) => (c.alcool ? c.nom : `${c.nom} sans alcool`)
 
 // Confirmation de suppression : chiffre ce qui sera perdu (calculé à l'ouverture, prestas terminées comprises).
 export function texteSuppression(impact: { prestas: number; verres: number }): string {
@@ -68,11 +65,12 @@ export function EcranCocktails() {
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
   const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
 
-  if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
+  // Bases attendues aussi : une fiche ouverte avant elles montrerait « Aucune » pour un cocktail qui en a une.
+  if (!cocktails || !bases) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
-  const basesFiltre = basesProposees(bases ?? [], cocktails)
+  const basesFiltre = basesProposees(bases, cocktails)
   const base = filtreApplique(filtreBase, basesFiltre)
-  const deLaBase = cocktails.filter(gardeBase(base))
+  const deLaBase = cocktails.filter(gardeBase(base, bases))
   const visibles = deLaBase.filter(gardeAlcool[filtre])
   const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
   const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
@@ -134,7 +132,7 @@ export function EcranCocktails() {
         <InfosCocktail
           key={infos.id}
           cocktail={infos}
-          base={bases?.find((b) => b.id === infos.baseId)}
+          base={bases.find((b) => b.id === infos.baseId)}
           onModifier={() => {
             setFiche(infos)
             setInfosId(null)
@@ -147,7 +145,7 @@ export function EcranCocktails() {
           key={fiche === 'nouveau' ? 'nouveau' : fiche.id}
           cocktail={fiche === 'nouveau' ? undefined : fiche}
           cocktails={cocktails}
-          bases={bases ?? []}
+          bases={bases}
           onAnnuler={() => setFiche(null)}
           onEnregistrer={(liste) => {
             if (fiche === 'nouveau') liste.forEach((d) => depots.cocktails.creer(d))
