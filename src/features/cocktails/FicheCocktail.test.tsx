@@ -88,6 +88,12 @@ describe('FicheCocktail', () => {
     ])
   })
 
+  it('efface à l’enregistrement une base qui n’existe plus', () => {
+    const { onEnregistrer } = monter({ cocktail: { ...mojito, baseId: 'disparue' }, cocktails: [mojito], bases: [rhum] })
+    enregistrer()
+    expect(onEnregistrer).toHaveBeenCalledWith([{ nom: 'Mojito', alcool: true, description: '', baseId: null }])
+  })
+
   it('propose les bases actives, et garde l’archivée déjà choisie', () => {
     const vieille = { ...vodka, archive: true }
     const { onEnregistrer } = monter({ cocktail: { ...mojito, baseId: 'v' }, cocktails: [mojito], bases: [rhum, vieille] })

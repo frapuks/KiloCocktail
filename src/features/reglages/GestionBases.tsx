@@ -3,10 +3,13 @@ import { useCocktails } from '../../data/hooks'
 import type { Base } from '../../domain/types'
 import { GestionListe, type TextesListe } from './GestionListe'
 
-// Confirmation de suppression : dit combien de cocktails perdent leur base (archivés compris).
-export function messageSuppressionBase(nbCocktails: number): string {
+// Confirmation de suppression : dit combien de cocktails perdent leur base (archivés compris) ;
+// null tant que les cocktails ne sont pas chargés.
+export function messageSuppressionBase(nbCocktails: number | null): string {
   const impact =
-    nbCocktails === 0
+    nbCocktails === null
+      ? 'Les cocktails qui l’utilisent n’auront plus de base.'
+      : nbCocktails === 0
       ? 'Aucun cocktail ne l’utilise.'
       : nbCocktails === 1
         ? '1 cocktail l’utilise : il n’aura plus de base.'
@@ -33,7 +36,7 @@ export function GestionBases({ bases, onFermer }: { bases: Base[]; onFermer(): v
       elements={bases}
       depot={depots.bases}
       textes={TEXTES}
-      messageSuppression={(b) => messageSuppressionBase((cocktails ?? []).filter((c) => c.baseId === b.id).length)}
+      messageSuppression={(b) => messageSuppressionBase(cocktails ? cocktails.filter((c) => c.baseId === b.id).length : null)}
       onFermer={onFermer}
     />
   )

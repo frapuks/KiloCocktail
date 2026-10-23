@@ -20,10 +20,10 @@ export function filtreApplique(filtre: FiltreBase, proposees: Base[]): FiltreBas
 }
 
 // « Sans base » compte aussi un cocktail dont la base n'existe plus (supprimée sur un autre appareil pendant
-// qu'il la recevait hors connexion).
-export function gardeBase(filtre: FiltreBase, bases: Base[]): (c: Cocktail) => boolean {
+// qu'il la recevait hors connexion), une fois les bases chargées (bases undefined : pas encore).
+export function gardeBase(filtre: FiltreBase, bases: Base[] | undefined): (c: Cocktail) => boolean {
   if (filtre === TOUTES) return () => true
-  if (filtre === SANS_BASE) return (c) => !c.baseId || !bases.some((b) => b.id === c.baseId)
+  if (filtre === SANS_BASE) return (c) => !c.baseId || (bases !== undefined && !bases.some((b) => b.id === c.baseId))
   return (c) => c.baseId === filtre
 }
 

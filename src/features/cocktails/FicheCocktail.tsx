@@ -35,7 +35,10 @@ function ChampDescription({ label, valeur, onChange }: { label: string; valeur: 
 export function FicheCocktail({ cocktail, cocktails, bases, onEnregistrer, onAnnuler, onArchiver }: Props) {
   const [nom, setNom] = useState(cocktail?.nom ?? '')
   const [versions, setVersions] = useState<Versions>(cocktail && !cocktail.alcool ? 'sans' : 'avec')
-  const [baseId, setBaseId] = useState<string | null>(cocktail?.baseId ?? null)
+  // Base disparue (supprimée ailleurs) : enregistrer la fiche efface la référence morte.
+  const [baseId, setBaseId] = useState<string | null>(() =>
+    cocktail?.baseId && bases.some((b) => b.id === cocktail.baseId) ? cocktail.baseId : null,
+  )
   const [description, setDescription] = useState(cocktail?.description ?? '')
   // Base et description de la version sans alcool, en création « Les deux ».
   const [baseIdSans, setBaseIdSans] = useState<string | null>(null)

@@ -3,10 +3,13 @@ import { usePrestas } from '../../data/hooks'
 import type { TypeEvenement } from '../../domain/types'
 import { GestionListe, type TextesListe } from './GestionListe'
 
-// Confirmation de suppression : dit combien de prestas perdent leur type (prestas terminées comprises).
-export function messageSuppression(nbPrestas: number): string {
+// Confirmation de suppression : dit combien de prestas perdent leur type (prestas terminées comprises) ;
+// null tant que les prestas ne sont pas chargées.
+export function messageSuppression(nbPrestas: number | null): string {
   const impact =
-    nbPrestas === 0
+    nbPrestas === null
+      ? 'Les prestas qui l’utilisent n’auront plus de type.'
+      : nbPrestas === 0
       ? 'Aucune presta ne l’utilise.'
       : nbPrestas === 1
         ? '1 presta l’utilise : elle n’aura plus de type.'
@@ -31,7 +34,7 @@ export function GestionTypes({ types, onFermer }: { types: TypeEvenement[]; onFe
       elements={types}
       depot={depots.types}
       textes={TEXTES}
-      messageSuppression={(t) => messageSuppression((prestas ?? []).filter((p) => p.typeId === t.id).length)}
+      messageSuppression={(t) => messageSuppression(prestas ? prestas.filter((p) => p.typeId === t.id).length : null)}
       onFermer={onFermer}
     />
   )

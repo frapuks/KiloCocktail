@@ -25,7 +25,7 @@ export function FeuilleAjoutCocktails({ options, onAjouter, onAnnuler }: Props) 
   const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
   const basesFiltre = basesProposees(bases ?? [], options)
   const base = filtreApplique(filtreBase, basesFiltre)
-  const deLaBase = options.filter(gardeBase(base, bases ?? []))
+  const deLaBase = options.filter(gardeBase(base, bases))
   const visibles = deLaBase.filter(gardeAlcool[filtre])
 
   return (
