@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { annulerTap, cumulerTap, DUREE_CUMUL_MS, type Cumul } from '../../domain/cumul'
 
-// Cumul « +N » / « −N » d'une carte : effacé DUREE_CUMUL_MS après le dernier tap.
+// Bilan « +N » / « −N » d'une carte (un − fait baisser un + encore affiché) : effacé DUREE_CUMUL_MS après le
+// dernier tap.
 export function useCumul(): { cumul: Cumul; taper(signe: 1 | -1): void; annuler(): void } {
   const [cumul, setCumul] = useState<Cumul>(null)
   const minuteur = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
