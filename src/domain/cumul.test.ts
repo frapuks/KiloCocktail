@@ -18,12 +18,19 @@ describe('cumul', () => {
     const moinsDeux = cumulerTap(cumulerTap(null, -1, 0), -1, 100);
     expect(cumulerTap(moinsDeux, 1, 200)).toEqual({ n: -1, expireA: 1500 });
   });
-  it('disparaît quand le bilan revient à zéro', () => {
-    expect(cumulerTap(cumulerTap(null, 1, 0), -1, 100)).toBeNull();
+  it('n’affiche rien quand le bilan revient à zéro', () => {
+    const zero = cumulerTap(cumulerTap(null, 1, 0), -1, 100);
+    expect(zero).toEqual({ n: 0, expireA: 1400 });
+    expect(libelleCumul(zero)).toBeNull();
   });
   it('affiche le cumul avec le vrai signe moins', () => {
     expect(libelleCumul({ n: 3, expireA: 0 })).toBe('+3');
     expect(libelleCumul({ n: -2, expireA: 0 })).toBe('−2');
+    expect(libelleCumul(null)).toBeNull();
+  });
+  it('un +1 annulé qui avait ramené le bilan à zéro refait apparaître le −1', () => {
+    const zero = cumulerTap(cumulerTap(null, -1, 0), 1, 100);
+    expect(annulerTap(zero)).toEqual({ n: -1, expireA: 1400 });
   });
   it('annule le dernier tap : N−1, ou plus rien si c’était le premier', () => {
     const deux = cumulerTap(cumulerTap(null, 1, 0), 1, 100);

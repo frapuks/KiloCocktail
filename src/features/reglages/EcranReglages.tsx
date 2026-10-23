@@ -80,30 +80,30 @@ export function EcranReglages() {
   const bases = useBases()
   const [gestion, setGestion] = useState<'types' | 'bases' | null>(null)
 
-  if (!types || !bases) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
-
+  // Le compte (dont la déconnexion) reste accessible pendant le chargement des listes : un compte sans accès
+  // aux données ne les reçoit jamais.
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>
       <EnTeteEcran titre="Réglages" />
 
       <Stack component="section" spacing={1.5} sx={{ mt: 3, alignItems: 'flex-start' }}>
         <TitreSection titre="Types d'événement" />
-        <Button variant="outlined" color="inherit" onClick={() => setGestion('types')}>
+        <Button variant="outlined" color="inherit" disabled={!types} onClick={() => setGestion('types')}>
           Modifier les types
         </Button>
       </Stack>
 
       <Stack component="section" spacing={1.5} sx={{ mt: 4, alignItems: 'flex-start' }}>
         <TitreSection titre="Bases des cocktails" />
-        <Button variant="outlined" color="inherit" onClick={() => setGestion('bases')}>
+        <Button variant="outlined" color="inherit" disabled={!bases} onClick={() => setGestion('bases')}>
           Modifier les bases
         </Button>
       </Stack>
 
       <Compte />
 
-      {gestion === 'types' && <GestionTypes types={types} onFermer={() => setGestion(null)} />}
-      {gestion === 'bases' && <GestionBases bases={bases} onFermer={() => setGestion(null)} />}
+      {gestion === 'types' && types && <GestionTypes types={types} onFermer={() => setGestion(null)} />}
+      {gestion === 'bases' && bases && <GestionBases bases={bases} onFermer={() => setGestion(null)} />}
     </Box>
   )
 }

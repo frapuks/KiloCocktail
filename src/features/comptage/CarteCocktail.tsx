@@ -42,6 +42,7 @@ const estValidation = (e: KeyboardEvent) => e.key === 'Enter' || e.key === ' '
 
 export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnulerPlus, onMoins }: Props) {
   const { cumul, taper, annuler } = useCumul()
+  const bilan = libelleCumul(cumul)
   // Pointeur du dernier +1, tant qu'il peut encore être annulé par un pointercancel (défilement).
   const dernierPlus = useRef<{ pointerId: number } | null>(null)
   // Relance le rebond du total à chaque tap.
@@ -181,7 +182,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
         component="span"
         aria-hidden="true"
         // Opacité en style direct : l'apparition doit être immédiate au tap.
-        style={{ opacity: cumul ? 1 : 0 }}
+        style={{ opacity: bilan ? 1 : 0 }}
         sx={(t) => ({
           gridArea: 'cumul',
           alignSelf: 'start',
@@ -202,7 +203,7 @@ export function CarteCocktail({ nom, sousTitre, total, variante, onPlus, onAnnul
           lineHeight: 1,
         })}
       >
-        {cumul ? libelleCumul(cumul) : ''}
+        {bilan ?? ''}
       </Box>
 
       {/* Bas gauche : total servi. */}

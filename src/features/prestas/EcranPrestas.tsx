@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import Stack from '@mui/material/Stack'
+import { DEPUIS_APP } from '../../app/historique'
 import { usePrestas, useTypes } from '../../data/hooks'
 import type { Presta } from '../../domain/types'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
@@ -25,7 +26,7 @@ export function EcranPrestas() {
 
   return (
     <Stack spacing={3} sx={{ p: 2 }}>
-      <EnTeteEcran titre="Prestas" action={{ libelle: 'Nouvelle presta', onClick: () => navigate('/prestas/nouvelle') }} />
+      <EnTeteEcran titre="Prestas" action={{ libelle: 'Nouvelle presta', onClick: () => navigate('/prestas/nouvelle', { state: DEPUIS_APP }) }} />
       {sections
         .filter((s) => s.liste.length > 0)
         .map((s) => (

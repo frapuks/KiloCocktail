@@ -64,7 +64,8 @@ export function SurLaCarte({ lignes, cocktails, totaux, onDeplacer, onRetirer, o
                     {totaux && <Typography component="span" sx={{ fontWeight: 700 }}>{totaux.get(ligne.id) ?? 0}</Typography>}
                     {onRetirer && (
                       <IconButton
-                        aria-label={`Retirer ${nom}`}
+                        // « sans alcool » reste dans le nom accessible : deux lignes peuvent porter le même nom.
+                        aria-label={`Retirer ${nom}${cocktail.alcool ? '' : ' sans alcool'}`}
                         color="error"
                         onClick={() => onRetirer(ligne.id)}
                       >

@@ -6,7 +6,7 @@ import type { Cocktail, Ligne } from '../../domain/types'
 import { FeuilleModale } from '../../ui/FeuilleModale'
 import { useBases } from '../../data/hooks'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
-import { FiltreBase, gardeBase, TOUTES } from '../../ui/FiltreBase'
+import { basesProposees, FiltreBase, filtreApplique, gardeBase, TOUTES } from '../../ui/FiltreBase'
 import { SelecteurCocktails } from './SelecteurCocktails'
 
 interface Props {
@@ -23,7 +23,9 @@ export function FeuilleAjoutCocktails({ options, onAjouter, onAnnuler }: Props) 
   const [ajout, setAjout] = useState<Ligne[]>([])
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
   const [filtreBase, setFiltreBase] = useState<FiltreBase>(TOUTES)
-  const deLaBase = options.filter(gardeBase(filtreBase))
+  const basesFiltre = basesProposees(bases ?? [], options)
+  const base = filtreApplique(filtreBase, basesFiltre)
+  const deLaBase = options.filter(gardeBase(base))
   const visibles = deLaBase.filter(gardeAlcool[filtre])
 
   return (
@@ -33,7 +35,7 @@ export function FeuilleAjoutCocktails({ options, onAjouter, onAnnuler }: Props) 
         <>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
             <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={deLaBase} />
-            <FiltreBase valeur={filtreBase} onChange={setFiltreBase} bases={bases ?? []} />
+            <FiltreBase valeur={base} onChange={setFiltreBase} bases={basesFiltre} />
           </Box>
           <SelecteurCocktails options={visibles} lignes={ajout} onChange={setAjout} />
         </>

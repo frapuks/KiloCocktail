@@ -24,7 +24,7 @@ describe('EcranCocktails', () => {
     })
     rendre(<EcranCocktails />, { depots })
     expect(lignes()).toEqual(['Mojito', 'NojitoSans alcool', 'Spritz'])
-    for (const nom of ['Mojito', 'Nojito', 'Spritz']) {
+    for (const nom of ['Mojito', 'Nojito sans alcool', 'Spritz']) {
       expect(screen.getByRole('button', { name: `Modifier ${nom}` })).toBeInTheDocument()
     }
     // L'archivage se fait depuis la fiche, plus depuis la liste.
@@ -77,6 +77,21 @@ describe('EcranCocktails', () => {
     expect(lignes()).toEqual(['Spritz'])
     choisir('Gin')
     expect(lignes()).toEqual([])
+  })
+
+  it('propose une base archivée tant que des cocktails l’ont', () => {
+    const depots = creerDepotsFactices({
+      cocktails: [c('1', 'Old Fashioned', { baseId: 'w' }), c('2', 'Spritz')],
+      bases: [
+        { id: 'w', nom: 'Whisky', nomNormalise: 'whisky', archive: true },
+        { id: 'c', nom: 'Cognac', nomNormalise: 'cognac', archive: true },
+      ],
+    })
+    rendre(<EcranCocktails />, { depots })
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Base' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Toutes', 'Whisky (archivée)', 'Sans base'])
+    fireEvent.click(screen.getByRole('option', { name: 'Whisky (archivée)' }))
+    expect(lignes()).toEqual(['Old Fashioned'])
   })
 
   it('montre la base dans la fiche en lecture seule', () => {

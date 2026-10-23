@@ -37,7 +37,7 @@ export function useBases(): Base[] | undefined {
   return useListeMemorisee('bases', (d, cb) => d.bases.ecouter(cb))
 }
 
-export function usePrestas():Presta[] | undefined {
+export function usePrestas(): Presta[] | undefined {
   return useListeMemorisee('prestas', (d, cb) => d.prestas.ecouterListe(cb))
 }
 

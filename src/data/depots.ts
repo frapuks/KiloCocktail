@@ -14,23 +14,21 @@ export interface DepotCocktails {
   // Supprime le cocktail, le retire de la carte des prestas et efface les verres comptés pour lui.
   supprimer(id: string): Promise<void>;
 }
-export interface DepotTypes {
-  ecouter(cb: (types: TypeEvenement[]) => void): Desabonner;
+// Liste de noms gérée dans Réglages (types d'événement, bases).
+export interface DepotListe<T> {
+  ecouter(cb: (elements: T[]) => void): Desabonner;
   creer(nom: string): string;
   renommer(id: string, nom: string): void;
   archiver(id: string, archive: boolean): void;
-  // Supprime le type ; les prestas qui l'avaient n'ont plus de type (typeId à null).
+  // Supprime l'élément et le retire de ce qui l'utilisait (référence mise à null).
   supprimer(id: string): Promise<void>;
+}
+// Supprimer un type : les prestas qui l'avaient n'ont plus de type (typeId à null).
+export interface DepotTypes extends DepotListe<TypeEvenement> {
   initialiserSiVide(): Promise<void>;
 }
-export interface DepotBases {
-  ecouter(cb: (bases: Base[]) => void): Desabonner;
-  creer(nom: string): string;
-  renommer(id: string, nom: string): void;
-  archiver(id: string, archive: boolean): void;
-  // Supprime la base ; les cocktails qui l'avaient n'ont plus de base.
-  supprimer(id: string): Promise<void>;
-}
+// Supprimer une base : les cocktails qui l'avaient n'ont plus de base (baseId à null).
+export type DepotBases = DepotListe<Base>;
 export interface DepotPrestas {
   ecouterListe(cb: (prestas: Presta[]) => void): Desabonner;
   ecouter(id: string, cb: (presta: Presta | null) => void): Desabonner;

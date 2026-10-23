@@ -1,16 +1,19 @@
 export const DUREE_CUMUL_MS = 1300;
 
-// Bilan des taps rapprochés d'une carte : n > 0 pour « +n », n < 0 pour « −n » (jamais 0).
+// Bilan des taps rapprochés d'une carte : n > 0 pour « +n », n < 0 pour « −n », n = 0 : rien d'affiché
+// (bilan revenu à zéro, gardé pour qu'un +1 annulé ensuite le refasse passer à −1).
 export type Cumul = { n: number; expireA: number } | null;
 
-// Ajoute un tap (+1 ou −1) au bilan encore affiché : « +3 » puis un −1 donne « +2 ». Revenu à 0, le bilan
-// disparaît ; après expiration, il repart de zéro.
+// Ajoute un tap (+1 ou −1) au bilan encore en cours : « +3 » puis un −1 donne « +2 ». Après expiration,
+// il repart de zéro.
 export function cumulerTap(c: Cumul, signe: 1 | -1, maintenant: number): Cumul {
   const n = (c !== null && maintenant < c.expireA ? c.n : 0) + signe;
-  return n === 0 ? null : { n, expireA: maintenant + DUREE_CUMUL_MS };
+  return { n, expireA: maintenant + DUREE_CUMUL_MS };
 }
 
-export function libelleCumul(c: Exclude<Cumul, null>): string {
+// Bilan à afficher, ou null s'il n'y a rien à montrer.
+export function libelleCumul(c: Cumul): string | null {
+  if (c === null || c.n === 0) return null;
   return c.n > 0 ? `+${c.n}` : `−${-c.n}`;
 }
 

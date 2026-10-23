@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ouverteDepuisApp } from '../../app/historique'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
@@ -20,6 +21,7 @@ import { SurLaCarte } from './SurLaCarte'
 export function EcranNouvellePresta() {
   const depots = useDepots()
   const navigate = useNavigate()
+  const location = useLocation()
   const cocktailsHook = useCocktails()
   const typesHook = useTypes()
   const [date, setDate] = useState(() => dateDuJour())
@@ -36,6 +38,9 @@ export function EcranNouvellePresta() {
   // Un second tap avant que la feuille se referme ne crée pas une seconde presta.
   const creee = useRef(false)
 
+  // Retour à la liste sans laisser la feuille dans l'historique : le bouton retour ne la rouvre pas.
+  const fermer = () => (ouverteDepuisApp(location) ? navigate(-1) : navigate('/', { replace: true }))
+
   // On reste sur la liste des prestas : le comptage s'ouvre depuis la carte de la presta.
   function creer() {
     if (creee.current) return
@@ -45,7 +50,7 @@ export function EcranNouvellePresta() {
   }
 
   return (
-    <FeuilleModale libelle="Nouvelle presta" onFermer={() => navigate('/')} fermee={fermee}>
+    <FeuilleModale libelle="Nouvelle presta" onFermer={fermer} fermee={fermee}>
       <Typography variant="h2">Nouvelle presta</Typography>
       <ChampDate label="Date" valeur={date} onChange={setDate} />
       <TextField label="Client" value={client} onChange={(e) => setClient(e.target.value)} />

@@ -13,7 +13,7 @@ import type { Cocktail } from '../../domain/types'
 import { ConfirmationArchivage } from '../../ui/ConfirmationArchivage'
 import { EnTeteEcran } from '../../ui/EnTeteEcran'
 import { FiltreAlcool, gardeAlcool } from '../../ui/FiltreAlcool'
-import { FiltreBase, gardeBase, TOUTES } from '../../ui/FiltreBase'
+import { basesProposees, FiltreBase, filtreApplique, gardeBase, TOUTES } from '../../ui/FiltreBase'
 import { PastilleAlcool } from '../../ui/PastilleAlcool'
 import { SectionArchives } from '../../ui/SectionArchives'
 import { TitreSection } from '../../ui/TitreSection'
@@ -21,6 +21,9 @@ import { FicheCocktail } from './FicheCocktail'
 import { InfosCocktail } from './InfosCocktail'
 
 const pluriel = (n: number, un: string, plusieurs: string) => (n === 1 ? un : plusieurs)
+
+// Nom pour les lecteurs d'écran : distingue les deux versions d'un même nom, que seule la pastille sépare à l'œil.
+const nomAccessible = (c: Cocktail) => (c.alcool ? c.nom : `${c.nom} sans alcool`)
 
 // Confirmation de suppression : chiffre ce qui sera perdu (calculé à l'ouverture, prestas terminées comprises).
 export function texteSuppression(impact: { prestas: number; verres: number }): string {
@@ -58,8 +61,8 @@ export function EcranCocktails() {
   const bases = useBases()
   // 'nouveau' = création, Cocktail = modification, null = fiche fermée
   const [fiche, setFiche] = useState<'nouveau' | Cocktail | null>(null)
-  // Cocktail dont la fiche en lecture seule (description) est ouverte.
-  const [infos, setInfos] = useState<Cocktail | null>(null)
+  // Id du cocktail dont la fiche en lecture seule (description) est ouverte : elle suit ses modifications.
+  const [infosId, setInfosId] = useState<string | null>(null)
   // Cocktail dont l'archivage (icône de sa fiche) attend confirmation.
   const [archivageAConfirmer, setArchivageAConfirmer] = useState<Cocktail | null>(null)
   const [filtre, setFiltre] = useState<FiltreAlcool>('tous')
@@ -67,10 +70,13 @@ export function EcranCocktails() {
 
   if (!cocktails) return <Typography sx={{ p: 2 }} color="text.secondary">Chargement…</Typography>
 
-  const deLaBase = cocktails.filter(gardeBase(filtreBase))
+  const basesFiltre = basesProposees(bases ?? [], cocktails)
+  const base = filtreApplique(filtreBase, basesFiltre)
+  const deLaBase = cocktails.filter(gardeBase(base))
   const visibles = deLaBase.filter(gardeAlcool[filtre])
   const actifs = visibles.filter((c) => !c.archive).sort(comparerCocktails)
   const archives = visibles.filter((c) => c.archive).sort(comparerCocktails)
+  const infos = cocktails.find((c) => c.id === infosId)
 
   return (
     <Box component="main" sx={{ p: 2, pb: 12 }}>
@@ -79,7 +85,7 @@ export function EcranCocktails() {
       {/* Compteurs sur les cocktails actifs de la base choisie, ceux de la liste principale. */}
       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
         <FiltreAlcool valeur={filtre} onChange={setFiltre} cocktails={deLaBase.filter((c) => !c.archive)} />
-        <FiltreBase valeur={filtreBase} onChange={setFiltreBase} bases={bases ?? []} />
+        <FiltreBase valeur={base} onChange={setFiltreBase} bases={basesFiltre} />
       </Box>
 
       <Box sx={{ mt: 3 }}>
@@ -102,11 +108,11 @@ export function EcranCocktails() {
               )}
             </Box>
             {c.description && (
-              <IconButton aria-label={`Voir ${c.nom}`} onClick={() => setInfos(c)}>
+              <IconButton aria-label={`Voir ${nomAccessible(c)}`} onClick={() => setInfosId(c.id)}>
                 <InfoOutlinedIcon />
               </IconButton>
             )}
-            <IconButton aria-label={`Modifier ${c.nom}`} onClick={() => setFiche(c)}>
+            <IconButton aria-label={`Modifier ${nomAccessible(c)}`} onClick={() => setFiche(c)}>
               <EditIcon />
             </IconButton>
           </ListItem>
@@ -131,9 +137,9 @@ export function EcranCocktails() {
           base={bases?.find((b) => b.id === infos.baseId)}
           onModifier={() => {
             setFiche(infos)
-            setInfos(null)
+            setInfosId(null)
           }}
-          onFermer={() => setInfos(null)}
+          onFermer={() => setInfosId(null)}
         />
       )}
       {fiche && (

@@ -7,6 +7,7 @@ import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import Typography from '@mui/material/Typography'
+import type { DepotListe } from '../../data/depots'
 import { comparerNoms } from '../../domain/affichage'
 import { messageDoublon, trouverDoublon } from '../../domain/noms'
 import { ChampNom } from '../../ui/ChampNom'
@@ -16,12 +17,8 @@ import { SectionArchives } from '../../ui/SectionArchives'
 
 export interface ElementListe { id: string; nom: string; archive: boolean }
 
-export interface DepotListe {
-  creer(nom: string): string
-  renommer(id: string, nom: string): void
-  archiver(id: string, archive: boolean): void
-  supprimer(id: string): Promise<void>
-}
+// Ce dont la feuille a besoin du dépôt (la liste lui est passée déjà chargée).
+type Depot = Omit<DepotListe<unknown>, 'ecouter'>
 
 // Libellés d'une liste (types d'événement, bases), accordés en genre.
 export interface TextesListe {
@@ -38,7 +35,7 @@ export interface TextesListe {
 
 interface Props<T extends ElementListe> {
   elements: T[]
-  depot: DepotListe
+  depot: Depot
   textes: TextesListe
   // Message de confirmation de suppression : doit dire ce que la suppression emporte.
   messageSuppression(e: T): string
@@ -53,7 +50,7 @@ function erreurNom(elements: ElementListe[], textes: TextesListe, nom: string, i
 }
 
 // Renommage (actif ou archivé) : null si accepté et enregistré, sinon le message d'erreur.
-function renommer(depot: DepotListe, elements: ElementListe[], textes: TextesListe, e: ElementListe, nom: string) {
+function renommer(depot: Depot, elements: ElementListe[], textes: TextesListe, e: ElementListe, nom: string) {
   if (nom === e.nom) return null
   const erreur = erreurNom(elements, textes, nom, e.id)
   if (erreur) return erreur
@@ -62,7 +59,7 @@ function renommer(depot: DepotListe, elements: ElementListe[], textes: TextesLis
 }
 
 // Un élément actif : son nom, puis « Modifier » (le nom devient un champ) et « Archiver » (avec confirmation).
-function LigneElement({ element, elements, depot, textes }: { element: ElementListe; elements: ElementListe[]; depot: DepotListe; textes: TextesListe }) {
+function LigneElement({ element, elements, depot, textes }: { element: ElementListe; elements: ElementListe[]; depot: Depot; textes: TextesListe }) {
   const [edition, setEdition] = useState(false)
   const [confirmation, setConfirmation] = useState(false)
 
