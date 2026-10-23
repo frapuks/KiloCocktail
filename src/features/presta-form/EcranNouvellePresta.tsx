@@ -27,22 +27,25 @@ export function EcranNouvellePresta() {
   const [typeId, setTypeId] = useState<string | null>(null)
   const [lignes, setLignes] = useState<Ligne[]>([])
   const [ajout, setAjout] = useState(false)
+  // Passé à true une fois la presta créée : la feuille redescend, puis retour à la liste.
+  const [fermee, setFermee] = useState(false)
 
   const cocktails = cocktailsHook ?? []
   const types = typesHook ?? []
 
-  // Un second tap avant que l'écran change ne crée pas une seconde presta.
+  // Un second tap avant que la feuille se referme ne crée pas une seconde presta.
   const creee = useRef(false)
 
-  function commencer() {
+  // On reste sur la liste des prestas : le comptage s'ouvre depuis la carte de la presta.
+  function creer() {
     if (creee.current) return
     creee.current = true
-    const id = depots.prestas.creer({ date, client: client.trim() || null, typeId, lignes })
-    navigate(`/prestas/${id}`, { replace: true })
+    depots.prestas.creer({ date, client: client.trim() || null, typeId, lignes })
+    setFermee(true)
   }
 
   return (
-    <FeuilleModale libelle="Nouvelle presta" onFermer={() => navigate('/')}>
+    <FeuilleModale libelle="Nouvelle presta" onFermer={() => navigate('/')} fermee={fermee}>
       <Typography variant="h2">Nouvelle presta</Typography>
       <ChampDate label="Date" valeur={date} onChange={setDate} />
       <TextField label="Client" value={client} onChange={(e) => setClient(e.target.value)} />
@@ -70,8 +73,8 @@ export function EcranNouvellePresta() {
         />
       )}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button variant="contained" onClick={commencer}>
-          Commencer la presta
+        <Button variant="contained" onClick={creer}>
+          Créer la presta
         </Button>
         <BoutonAnnulerFeuille />
       </Box>
