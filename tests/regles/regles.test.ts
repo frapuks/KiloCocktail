@@ -11,7 +11,7 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 let env: RulesTestEnvironment
 
 // Doit être l'uid écrit dans la fonction admin() de firestore.rules.
-const UID_ADMIN = 'UID_ADMIN_A_RENSEIGNER'
+const UID_ADMIN = 'NpmS7OylCWPMCts197NdJ9Xil962'
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({

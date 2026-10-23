@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Compte admin (uid Firebase Auth) : mêmes droits que le propriétaire sur chaque espace, pour vérifier
     // la production avec ses propres identifiants (l'appli ouvre l'espace du barman, cf. VITE_UID_DONNEES).
-    function admin() { return request.auth != null && request.auth.uid == 'UID_ADMIN_A_RENSEIGNER'; }
+    function admin() { return request.auth != null && request.auth.uid == 'NpmS7OylCWPMCts197NdJ9Xil962'; }
     match /users/{uid} {
       // Le propriétaire de l'espace, ou l'admin.
       function proprietaire() { return request.auth != null && (request.auth.uid == uid || admin()); }
